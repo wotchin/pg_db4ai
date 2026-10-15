@@ -1,0 +1,11 @@
+build/
+*.o
+*.bc
+*.so
+*.a
+*.dylib
+results/
+regression.diffs
+regression.out
+*.log
+__pycache__/

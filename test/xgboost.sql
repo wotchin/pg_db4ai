@@ -1,0 +1,22 @@
+\set ON_ERROR_STOP 1
+SELECT db4ai.train('xgb_ubj','xgboost_regression_squarederror',
+ 'SELECT y,x,x2 FROM public.regression','{"max_iterations":80,"learning_rate":0.15,"max_depth":3}');
+SELECT db4ai.train('xgb_json','xgboost_regression_squarederror',
+ 'SELECT y,x,x2 FROM public.regression','{"max_iterations":80,"learning_rate":0.15,"max_depth":3}','json');
+SELECT public.assert_true((SELECT model_format='ubj' FROM db4ai.pg_db4ai_models WHERE model_name='xgb_ubj'),'UBJSON default');
+SELECT public.assert_true((convert_from(db4ai.export_model('xgb_json'),'UTF8')::jsonb) ? 'learner','export is reloadable model JSON');
+SELECT public.assert_true(abs(db4ai.predict_float8('xgb_json',ARRAY[0.25,0.0625])-db4ai.predict_float8('xgb_ubj',ARRAY[0.25,0.0625]))<1e-7,'JSON and UBJSON predict equally');
+SELECT public.assert_true(abs(db4ai.predict_float8('xgb_ubj',ARRAY[0.25,0.0625])-1.3125)<0.3,'XGBoost regression');
+SELECT db4ai.train('xgb_classifier','xgboost_binary_logistic','SELECT label,x FROM public.classification',
+                  '{"max_iterations":40,"learning_rate":0.2,"min_child_weight":0}');
+SELECT public.assert_true(db4ai.predict_bool('xgb_classifier',ARRAY[1.0]) AND NOT db4ai.predict_bool('xgb_classifier',ARRAY[-1.0]),'XGBoost classification');
+SELECT db4ai.train('xgb_gamma','xgboost_regression_gamma','SELECT x+2,x FROM public.regression','{"max_iterations":5}');
+SELECT db4ai.train('xgb_logistic','xgboost_regression_logistic','SELECT (x+1)/2,x FROM public.regression','{"max_iterations":5}');
+SELECT public.assert_true(db4ai.predict_float8('xgb_gamma',ARRAY[0.0])>0,'gamma objective');
+SELECT public.assert_true(db4ai.predict_float8('xgb_logistic',ARRAY[0.0]) BETWEEN 0 AND 1,'logistic regression objective');
+SELECT public.expect_error($q$SELECT db4ai.train('bad_gamma','xgboost_regression_gamma','SELECT -1,1')$q$,'22023');
+SELECT public.expect_error($q$SELECT db4ai.train('bad_label','xgboost_binary_logistic','SELECT 2,1')$q$,'22023');
+SET db4ai.xgboost_max_input_mb=1;
+SELECT public.expect_error($q$SELECT db4ai.train('too_large','xgboost_regression_squarederror','SELECT i::float8,i::float8 FROM generate_series(1,140000) i','{"max_iterations":1}')$q$,'54000');
+RESET db4ai.xgboost_max_input_mb;
+SELECT 'XGBoost tests passed' AS result;

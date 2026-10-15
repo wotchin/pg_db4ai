@@ -1,0 +1,56 @@
+name: Build and integration tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {pg: '16', xgboost: '1'}
+          - {pg: '17', xgboost: '1'}
+          - {pg: '18', xgboost: '1'}
+          - {pg: '18', xgboost: '0'}
+    steps:
+      - uses: actions/checkout@v4
+      - name: PostgreSQL build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-common ca-certificates curl
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-${{ matrix.pg }} postgresql-server-dev-${{ matrix.pg }} build-essential cmake
+      - name: Verify vendored source integrity
+        run: python3 tools/vendor_xgboost.py --verify
+      - name: Build from repository sources
+        run: make -j2 PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} XGB_JOBS=2
+      - name: Install
+        run: sudo make PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} install
+      - name: Integration tests
+        run: |
+          set -o pipefail
+          PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} sh test/run.sh | tee integration-test.log
+      - name: Dynamic dependency check
+        run: |
+          ldd pg_db4ai.so | tee dynamic-dependencies.log
+          ! grep -E 'libxgboost|libdmlc' dynamic-dependencies.log
+          if test '${{ matrix.xgboost }}' = 0; then
+            ! grep 'libstdc++' dynamic-dependencies.log
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-pg${{ matrix.pg }}-xgb${{ matrix.xgboost }}
+          path: |
+            integration-test.log
+            dynamic-dependencies.log
+          if-no-files-found: ignore
