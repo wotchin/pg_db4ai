@@ -1,0 +1,61 @@
+/**
+ * Copyright 2020-2025, XGBoost contributors
+ */
+#pragma once
+
+#if defined(__CUDACC__)
+#include "../../src/data/ellpack_page.cuh"
+#endif
+
+#include <xgboost/data.h>  // for SparsePage
+
+#include "./helpers.h"  // for RandomDataGenerator
+
+namespace xgboost {
+#if defined(__CUDACC__)
+namespace detail {
+class HistogramCutsWrapper : public common::HistogramCuts {
+ public:
+  using SuperT = common::HistogramCuts;
+  HistogramCutsWrapper() : SuperT{0} {}
+  void SetValues(std::vector<float> cuts) { SuperT::cut_values_.HostVector() = std::move(cuts); }
+  void SetPtrs(std::vector<uint32_t> ptrs) { SuperT::cut_ptrs_.HostVector() = std::move(ptrs); }
+};
+}  // namespace detail
+
+inline std::unique_ptr<EllpackPageImpl> BuildEllpackPage(Context const* ctx, int n_rows, int n_cols,
+                                                         bst_float sparsity = 0) {
+  auto dmat = RandomDataGenerator(n_rows, n_cols, sparsity).Seed(3).GenerateDMatrix();
+  const SparsePage& batch = *dmat->GetBatches<xgboost::SparsePage>().begin();
+
+  auto cmat = std::make_shared<detail::HistogramCutsWrapper>();
+  cmat->SetPtrs({0, 3, 6, 9, 12, 15, 18, 21, 24});
+  // 24 cut fields, 3 cut fields for each feature (column).
+  cmat->SetValues({0.30f, 0.67f, 1.64f, 0.32f, 0.77f, 1.95f, 0.29f, 0.70f,
+                   1.80f, 0.32f, 0.75f, 1.85f, 0.18f, 0.59f, 1.69f, 0.25f,
+                   0.74f, 2.00f, 0.26f, 0.74f, 1.98f, 0.26f, 0.71f, 1.83f});
+
+  bst_idx_t row_stride = 0;
+  const auto& offset_vec = batch.offset.ConstHostVector();
+  for (size_t i = 1; i < offset_vec.size(); ++i) {
+    row_stride = std::max(row_stride, offset_vec[i] - offset_vec[i - 1]);
+  }
+
+  auto page = std::unique_ptr<EllpackPageImpl>(
+      new EllpackPageImpl(ctx, cmat, batch, dmat->IsDense(), row_stride, {}));
+
+  return page;
+}
+
+/**
+ * @brief Create an ellpack page with evenly distributed values across histogram bins.
+ *
+ * @note The last bin contains all the extra values if @ref n_samples is not divisible by
+ *       @ref n_bins_per_feat. Otherwise, all bins contain the same number of values.
+ */
+[[nodiscard]] std::unique_ptr<EllpackPageImpl> MakeEllpackForTest(Context const* ctx,
+                                                                  bst_idx_t n_samples,
+                                                                  bst_feature_t n_features,
+                                                                  bst_bin_t n_bins_per_feat);
+#endif
+}  // namespace xgboost

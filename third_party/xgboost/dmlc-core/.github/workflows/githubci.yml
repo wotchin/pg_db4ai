@@ -1,0 +1,66 @@
+name: continuous build
+
+on: [push, pull_request]
+
+jobs:
+  unit_tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        task: ["cmake_test", "sanitizer_test"]
+        os: [macos-13, macos-14, ubuntu-24.04, ubuntu-24.04-arm]
+        exclude:
+          # excludes sanitizer_test on macOS
+          - os: macos-13
+            task: "sanitizer_test"
+          - os: macos-14
+            task: "sanitizer_test"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-variant: Miniforge3
+          miniforge-version: latest
+          activate-environment: test
+          environment-file: scripts/conda_env.yml
+          use-mamba: true
+          auto-update-conda: true
+      - name: Display Conda env
+        shell: bash -el {0}
+        run: |
+          conda info
+          conda list
+      - name: Install Dependencies
+        run: |
+          if [[ $(uname) != "Darwin" ]]; then
+            sudo apt update
+            sudo apt install doxygen libcurl4-openssl-dev gcc g++
+          else
+            brew install libomp doxygen
+          fi
+      - name: Test
+        shell: bash -el {0}
+        run: |
+          TASK=${{ matrix.task }} ./scripts/test_script.sh
+
+  s390x_test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Setup multiarch/qemu-user-static
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static:register --reset
+      - name: ubuntu-core:s390x-focal
+        uses: docker://multiarch/ubuntu-core:s390x-focal
+        with:
+          args: >
+            bash -c
+            "uname -a &&
+            lscpu | grep Endian &&
+            apt-get -y update &&
+            apt-get -y install doxygen libcurl4-openssl-dev gcc g++ cmake &&
+            TASK=s390x_test bash scripts/test_script.sh
+            "

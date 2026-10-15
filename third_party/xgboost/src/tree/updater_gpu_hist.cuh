@@ -1,0 +1,715 @@
+/**
+ * Copyright 2025-2026, XGBoost contributors
+ */
+#pragma once
+#include <thrust/reduce.h>   // for reduce_by_key
+#include <thrust/version.h>  // for THRUST_MAJOR_VERSION
+
+#include <algorithm>  // for copy_if, max, transform
+#include <memory>     // for unique_ptr
+#include <vector>     // for vector
+
+#include "../collective/aggregator.h"          // for GlobalSum
+#include "../collective/communicator-inl.h"    // for IsDistributed
+#include "../common/categorical.h"             // for CatBitField
+#include "../common/device_helpers.cuh"        // for MakeTransformIterator
+#include "../common/nvtx_utils.h"              // for xgboost_NVTX_FN_RANGE
+#include "../common/random.h"                  // for ColumnSampler
+#include "constraints.cuh"                     // for FeatureInteractionConstraintDevice
+#include "driver.h"                            // for Driver
+#include "gpu_hist/feature_groups.cuh"         // for FeatureGroups
+#include "gpu_hist/histogram.cuh"              // for DeviceHistogramBuilder
+#include "gpu_hist/leaf_sum.cuh"               // for LeafGradSum
+#include "gpu_hist/multi_evaluate_splits.cuh"  // for MultiHistEvaluator
+#include "gpu_hist/row_partitioner.cuh"        // for RowPartitioner
+#include "gpu_hist/sampler.cuh"                // for GradientBasedSampler
+#include "hist/hist_param.h"                   // for HistMakerTrainParam
+#include "sample_position.h"                   // for SamplePosition
+#include "tree_view.h"                         // for MultiTargetTreeView
+#include "xgboost/base.h"                      // for bst_idx_t
+#include "xgboost/collective/result.h"         // for SafeColl
+#include "xgboost/context.h"                   // for Context
+#include "xgboost/gradient.h"                  // for GradientContainer
+#include "xgboost/host_device_vector.h"        // for HostDeviceVector
+#include "xgboost/tree_model.h"                // for RegTree
+
+namespace xgboost::tree::cuda_impl {
+// Use a large number to handle external memory with deep trees.
+inline constexpr std::size_t kMaxNodeBatchSize = 1024;
+using xgboost::cuda_impl::StaticBatch;
+
+template <typename GoLeftOp>
+struct GoLeftWrapperOp {
+  GoLeftOp go_left;
+  template <typename NodeSplitData>
+  __device__ bool operator()(RowIndexT ridx, const NodeSplitData& data) const {
+    return go_left(ridx, data);
+  }
+};
+
+/** @brief Encode sampling information in the position. */
+struct EncodeOp {
+  linalg::MatrixView<GradientPairInt64 const> d_gpair;
+  [[nodiscard]] __device__ bst_node_t operator()(RowIndexT ridx, bst_node_t nidx) const {
+    // Scalar tree sampling has one target.
+    bool is_sampled = d_gpair(ridx, 0).GetQuantisedHess() != 0;
+    return SamplePosition::Encode(nidx, is_sampled);
+  }
+};
+
+// Some nodes we will manually compute histograms, others we will do by subtraction
+template <typename TreeView, typename ExpandEntry, typename HessComp>
+void AssignNodes(TreeView const& tree, std::vector<ExpandEntry> const& candidates,
+                 common::Span<bst_node_t> nodes_to_build, common::Span<bst_node_t> nodes_to_sub,
+                 HessComp&& compare_hess) {
+  std::size_t nidx_in_set{0};
+  auto p_build_nidx = nodes_to_build.data();
+  auto p_sub_nidx = nodes_to_sub.data();
+  for (auto& e : candidates) {
+    // Decide whether to build the left histogram or right histogram Use sum of Hessian as
+    // a heuristic to select node with fewest training instances This optimization is for
+    // distributed training to avoid an allreduce call for synchronizing the number of
+    // instances for each node.
+    bool fewer_right = compare_hess(e);
+    if (fewer_right) {
+      p_build_nidx[nidx_in_set] = tree.RightChild(e.nidx);
+      p_sub_nidx[nidx_in_set] = tree.LeftChild(e.nidx);
+    } else {
+      p_build_nidx[nidx_in_set] = tree.LeftChild(e.nidx);
+      p_sub_nidx[nidx_in_set] = tree.RightChild(e.nidx);
+    }
+    ++nidx_in_set;
+  }
+}
+
+inline void CalcRootSum(Context const* ctx, linalg::MatrixView<GradientPairInt64> d_gpair,
+                        common::Span<GradientPairInt64> root_sum) {
+  auto n_samples = d_gpair.Shape(0);
+  auto n_targets = d_gpair.Shape(1);
+  // Calculate the root sum
+  CHECK_EQ(n_targets, root_sum.size());
+
+  auto key_it = dh::MakeIndexTransformIter([=] XGBOOST_DEVICE(std::size_t i) {
+    auto cidx = i / n_samples;
+    return cidx;
+  });
+  auto val_it = dh::MakeIndexTransformIter([=] XGBOOST_DEVICE(std::size_t i) -> GradientPairInt64 {
+    auto cidx = i / n_samples;
+    auto ridx = i % n_samples;
+    auto g = d_gpair(ridx, cidx);
+    return g;
+  });
+  thrust::reduce_by_key(ctx->CUDACtx()->CTP(), key_it, key_it + d_gpair.Size(), val_it,
+                        thrust::make_discard_iterator(), dh::tbegin(root_sum));
+}
+
+/**
+ * @brief Implementation for vector leaf.
+ */
+class MultiTargetHistMaker {
+ private:
+  Context const* ctx_;
+
+  TrainParam const param_;
+  std::vector<bst_idx_t> const batch_ptr_;
+  Sampler sampler_;
+
+  RowPartitionerBatches partitioners_;
+
+  HistMakerTrainParam const* hist_param_;
+  std::shared_ptr<common::HistogramCuts const> const cuts_;
+  std::unique_ptr<FeatureGroups> feature_groups_;
+  DeviceHistogramBuilder histogram_;
+  std::unique_ptr<GradientQuantiserGroup> split_quantizer_;
+  std::unique_ptr<GradientQuantiserGroup> value_quantizer_;
+
+  MultiHistEvaluator evaluator_;
+  std::shared_ptr<common::ColumnSampler> column_sampler_;
+  std::unique_ptr<FeatureInteractionConstraintDevice> interaction_constraints_;
+  // Feature types on device for categorical detection, cached in Reset. Empty when there
+  // are no categorical features.
+  common::Span<FeatureType const> feature_types_;
+
+  // Gradient used for building the tree structure
+  linalg::Matrix<GradientPairInt64> split_gpair_;
+  // Gradient used for calculating the leaf values
+  linalg::Matrix<GradientPair> value_gpair_;
+
+  dh::PinnedMemory pinned_;
+
+  void BuildHist(EllpackPage const& page, std::int32_t k, bst_node_t nidx) {
+    this->BuildHist(page, k, std::vector{nidx});
+  }
+
+  void BuildHist(EllpackPage const& page, std::int32_t k, std::vector<bst_node_t> build_nodes) {
+    xgboost_NVTX_FN_RANGE();
+
+    auto d_gpair = this->split_gpair_.View(this->ctx_->Device());
+    CHECK(!this->partitioners_.Empty());
+
+    auto acc = page.Impl()->GetDeviceEllpack(this->ctx_, {});
+
+    std::vector<common::Span<GradientPairInt64>> h_hists;
+    std::vector<common::Span<RowIndexT const>> h_ridxs;
+    std::vector<std::size_t> h_sizes_csum{0};
+    std::size_t nidx_in_set = 0;
+    // TODO(jiamingy): We can assume the histogram buffers contiguous if we don't skip
+    // nodes here.
+    for (auto nidx : build_nodes) {
+      auto d_ridx = this->partitioners_.At(k)->GetRows(nidx);
+      if (d_ridx.empty()) {
+        // A row-split worker can have no local rows for a globally valid node.
+        CHECK(this->batch_ptr_.size() > 2 || collective::IsDistributed());
+        continue;
+      }
+      h_ridxs.push_back(d_ridx);
+      auto d_hist = histogram_.GetNodeHistogram(nidx);
+      h_hists.push_back(d_hist);
+
+      h_sizes_csum.push_back(d_ridx.size() + h_sizes_csum[nidx_in_set]);
+
+      ++nidx_in_set;
+    }
+
+    dh::device_vector<common::Span<GradientPairInt64>> hists{h_hists};
+    dh::device_vector<common::Span<RowIndexT const>> ridxs{h_ridxs};
+
+    this->histogram_.BuildHistogram(this->ctx_, acc,
+                                    this->feature_groups_->DeviceAccessor(this->ctx_->Device()),
+                                    d_gpair, dh::ToSpan(ridxs), dh::ToSpan(hists), h_sizes_csum);
+  }
+
+  auto MakeSharedInputs(bst_feature_t max_active_feature) const {
+    common::Span<GradientQuantiser const> d_roundings = this->split_quantizer_->DeviceSpan();
+    EvalParam d_param{this->param_};
+    std::size_t cat_storage_size = 0;
+    if (this->cuts_->HasCategorical()) {
+      cat_storage_size =
+          common::CatBitField::ComputeStorageSize(common::AsCat(this->cuts_->MaxCategory()) + 1);
+    }
+    return MultiEvaluateSplitSharedInputs{d_roundings,
+                                          this->cuts_->cut_ptrs_.ConstDeviceSpan(),
+                                          this->cuts_->cut_values_.ConstDevicePointer(),
+                                          this->feature_types_,
+                                          cat_storage_size,
+                                          this->cuts_->TotalBins(),
+                                          max_active_feature,
+                                          d_param};
+  }
+
+ public:
+  void Reset(linalg::Matrix<GradientPair>* gpair_all, DMatrix* p_fmat) {
+    /**
+     * Initialize the partitioners
+     */
+    partitioners_.Reset(this->ctx_, batch_ptr_);
+
+    auto const& info = p_fmat->Info();
+    this->column_sampler_->Init(ctx_, info.num_col_, info.feature_weights, param_.colsample_bynode,
+                                param_.colsample_bylevel, param_.colsample_bytree);
+    // Clear the per-node allowed-feature sets before growing a new tree.
+    this->interaction_constraints_->Reset(this->ctx_);
+
+    // Cache feature types on device for categorical split detection.
+    p_fmat->Info().feature_types.SetDevice(ctx_->Device());
+    this->feature_types_ = p_fmat->Info().feature_types.ConstDeviceSpan();
+
+    /**
+     * Evaluator
+     */
+    this->evaluator_.Reset(ctx_, this->cuts_->cut_ptrs_.ConstDeviceSpan(), this->feature_types_,
+                           this->param_, gpair_all->Shape(1));
+
+    /**
+     * Initialize the gradient matrix
+     */
+    auto in_gpair = gpair_all->View(ctx_->Device());
+    CHECK(in_gpair.CContiguous());
+
+    this->split_quantizer_ = std::make_unique<GradientQuantiserGroup>(this->ctx_, in_gpair);
+    CalcQuantizedGpairs(this->ctx_, in_gpair, this->split_quantizer_->DeviceSpan(),
+                        &this->split_gpair_);
+
+    // Sampling
+    this->sampler_.Sample(this->ctx_, this->split_gpair_.View(this->ctx_->Device()),
+                          this->split_quantizer_->DeviceSpan());
+    if (!this->value_gpair_.Empty()) {
+      this->value_quantizer_ =
+          std::make_unique<GradientQuantiserGroup>(this->ctx_, value_gpair_.View(ctx_->Device()));
+      this->sampler_.ApplySampling(this->ctx_, &this->value_gpair_);
+    }
+
+    /**
+     * Initialize the histogram
+     */
+    bool force_global = false;
+    bst_idx_t n_split_targets = gpair_all->Shape(1);
+    auto n_total_bins = cuts_->TotalBins() * static_cast<bst_idx_t>(n_split_targets);
+    CHECK_LT(n_total_bins, std::numeric_limits<bst_bin_t>::max())
+        << "Too many histogram bins: n_total_bins = total_bins * n_targets";
+    histogram_.Reset(this->ctx_, this->hist_param_->MaxCachedHistNodes(ctx_->Device()),
+                     cuts_->TotalBins() * n_split_targets, force_global);
+  }
+
+  [[nodiscard]] MultiExpandEntry InitRoot(DMatrix* p_fmat, RegTree* p_tree) {
+    xgboost_NVTX_FN_RANGE();
+
+    auto d_gpair = split_gpair_.View(ctx_->Device());
+    auto n_targets = d_gpair.Shape(1);
+
+    // Calculate the root sum
+    this->evaluator_.AllocNodeSum(RegTree::kRoot, n_targets);
+    auto d_root_sum = this->evaluator_.GetNodeSum(RegTree::kRoot, n_targets);
+    CalcRootSum(this->ctx_, d_gpair, d_root_sum);
+    using ReduceT = typename GradientPairInt64::ValueT;
+    auto rc =
+        collective::GlobalSum(ctx_, linalg::MakeVec(reinterpret_cast<ReduceT*>(d_root_sum.data()),
+                                                    d_root_sum.size() * 2, ctx_->Device()));
+    collective::SafeColl(rc);
+
+    // Build the root histogram.
+    histogram_.AllocateHistograms(ctx_, {RegTree::kRoot});
+
+    CHECK_EQ(p_fmat->NumBatches(), this->partitioners_.Size());
+    std::int32_t k = 0;
+    for (auto const& page : p_fmat->GetBatches<EllpackPage>(ctx_, StaticBatch(true))) {
+      this->BuildHist(page, k, RegTree::kRoot);
+      ++k;
+    }
+    this->histogram_.AllReduceHist(ctx_, RegTree::kRoot, 1);
+
+    // Evaluate root split
+    auto node_hist = this->histogram_.GetNodeHistogram(RegTree::kRoot);
+    auto sampled_features = column_sampler_->GetFeatureSet(ctx_, 0);
+    common::Span<bst_feature_t const> feature_set =
+        interaction_constraints_->Query(sampled_features->ConstDeviceSpan(), RegTree::kRoot);
+    MultiEvaluateSplitInputs input{RegTree::kRoot, 0, d_root_sum, feature_set, node_hist};
+
+    auto shared_inputs = MakeSharedInputs(static_cast<bst_feature_t>(feature_set.size()));
+    auto entry = this->evaluator_.EvaluateSingleSplit(ctx_, input, shared_inputs);
+    auto weights = this->evaluator_.GetNodeWeights(n_targets);
+    // Root's sum_hess is the sum of left and right child hessians
+    float root_sum_hess = static_cast<float>(entry.left_sum + entry.right_sum);
+    auto root_weight = linalg::Empty<float>(this->ctx_, n_targets);
+    auto d_root_weight = root_weight.View(this->ctx_->Device());
+    auto base_weight = weights.Base(RegTree::kRoot);
+    auto eta = this->param_.learning_rate;
+    dh::LaunchN(
+        n_targets, this->ctx_->CUDACtx()->Stream(),
+        [=] XGBOOST_DEVICE(std::size_t t) mutable { d_root_weight(t) = base_weight[t] * eta; });
+    p_tree->SetRoot(d_root_weight, root_sum_hess);
+
+    return entry;
+  }
+
+  void ApplySplit(std::vector<MultiExpandEntry> const& h_candidates, RegTree* p_tree) {
+    xgboost_NVTX_FN_RANGE();
+
+    CHECK(!h_candidates.empty());
+    auto n_targets = this->split_gpair_.Shape(1);
+    dh::device_vector<MultiExpandEntry> candidates{h_candidates};
+
+    // Candidate spans can become stale while entries wait in the loss-guide queue, so
+    // look up the persistent weight storage by node ID.
+    auto weights = this->evaluator_.GetNodeWeights(n_targets);
+
+    ExpandBatch batch{this->param_.learning_rate};
+
+    for (auto const& candidate : h_candidates) {
+      auto base_weight = weights.Base(candidate.nidx);
+      auto left_weight = weights.Left(candidate.nidx);
+      auto right_weight = weights.Right(candidate.nidx);
+
+      common::Span<CatWordT const> cat_bits;
+      if (candidate.split.is_cat) {
+        auto fidx = candidate.split.findex;
+        auto node_cats = this->evaluator_.GetNodeCats(candidate.nidx);
+        auto n_bins_feature = this->cuts_->FeatureBins(fidx);
+        auto n_words = common::CatBitField::ComputeStorageSize(n_bins_feature);
+        CHECK_LE(n_words, node_cats.size());
+        cat_bits = node_cats.subspan(0, n_words);
+      }
+      batch.Push(candidate.nidx, candidate.split.findex, candidate.split.fvalue,
+                 candidate.split.dir == kLeftDir, base_weight, left_weight, right_weight,
+                 candidate.split.loss_chg, candidate.left_sum, candidate.right_sum, cat_bits);
+    }
+
+    p_tree->Expand(this->ctx_, batch);
+
+    for (auto const& candidate : h_candidates) {
+      interaction_constraints_->Split(this->ctx_, candidate.nidx, candidate.split.findex,
+                                      p_tree->LeftChild(candidate.nidx),
+                                      p_tree->RightChild(candidate.nidx));
+    }
+
+    this->evaluator_.ApplyTreeSplit(this->ctx_, p_tree,
+                                    common::Span<MultiExpandEntry const>{h_candidates},
+                                    dh::ToSpan(candidates), n_targets);
+  }
+  /**
+   * @brief Calculate the leaf weight based on the node sum for each leaf.
+   *
+   * This method helps support reduced gradient. Weights in p_tree are calculated using
+   * split gradient. This function replaces those weights with new weights calculated from
+   * value gradient.
+   */
+  void ExpandTreeLeaf(RegTree* p_tree) const {
+    CHECK(!this->value_gpair_.Empty());
+    CHECK(this->value_quantizer_);
+    CHECK_EQ(this->value_gpair_.Shape(1), p_tree->NumTargets());
+    auto n_leaves = static_cast<bst_target_t>(p_tree->GetNumLeaves());
+    auto out_sum = linalg::Constant(ctx_, GradientPairInt64{}, n_leaves, p_tree->NumTargets());
+    auto d_out_sum = out_sum.View(this->ctx_->Device());
+    CHECK(d_out_sum.CContiguous());
+
+    auto d_full_grad = this->value_gpair_.View(this->ctx_->Device());
+    auto d_roundings = this->value_quantizer_->DeviceSpan();
+    // Node indices for all leaves
+    std::vector<bst_node_t> leaves_idx(n_leaves);
+
+#if THRUST_MAJOR_VERSION >= 3
+    // do nothing
+#else
+    CHECK_EQ(this->partitioners_.Size(), 1)
+        << "External memory not implemented for old CCCL versions. (thrust < 3.0)";
+#endif
+    std::int32_t batch_idx = 0;
+    for (auto const& p_part : this->partitioners_) {
+      auto leaves = p_part->GetLeaves();
+      CHECK_EQ(leaves.size(), n_leaves);
+      LeafGradSum(this->ctx_, leaves, d_roundings, p_part->GetRows(), d_full_grad, d_out_sum);
+      if (batch_idx == 0) {
+        // Populate the node indices
+        std::transform(leaves.begin(), leaves.end(), leaves_idx.begin(),
+                       [](LeafInfo const& leaf) { return leaf.nidx; });
+      }
+      // Sanity check: all partitioners should have the same set of leaves
+      if (this->hist_param_->debug_synchronize) {
+        auto it = common::MakeIndexTransformIter([&](std::size_t i) { return leaves.at(i).nidx; });
+        CHECK(std::equal(it, it + n_leaves, leaves_idx.cbegin()));
+      }
+      ++batch_idx;
+    }
+    using ReduceT = typename GradientPairInt64::ValueT;
+    auto rc = collective::GlobalSum(
+        ctx_, linalg::MakeVec(reinterpret_cast<ReduceT*>(d_out_sum.Values().data()),
+                              d_out_sum.Size() * 2, ctx_->Device()));
+    collective::SafeColl(rc);
+
+    auto param = EvalParam{this->param_};
+    auto out_weight = linalg::Empty<float>(this->ctx_, n_leaves, p_tree->NumTargets());
+    dh::device_vector<bst_node_t> d_leaves{leaves_idx};
+    LeafWeight(this->ctx_, param, this->evaluator_.GetEvaluator(), dh::ToSpan(d_leaves),
+               this->value_quantizer_->DeviceSpan(), out_sum.View(this->ctx_->Device()),
+               out_weight.View(this->ctx_->Device()));
+
+    p_tree->SetLeaves(leaves_idx, out_weight.Data()->ConstHostSpan());
+  }
+
+  struct NodeSplitData {
+    bst_node_t nidx;
+  };
+
+  struct PartitionNodes {
+    std::vector<bst_node_t> nidx;
+    std::vector<bst_node_t> left_nidx;
+    std::vector<bst_node_t> right_nidx;
+    std::vector<NodeSplitData> split_data;
+
+    explicit PartitionNodes(std::size_t n_candidates)
+        : nidx(n_candidates),
+          left_nidx(n_candidates),
+          right_nidx(n_candidates),
+          split_data(n_candidates) {}
+  };
+
+  PartitionNodes CreatePartitionNodes(RegTree const* p_tree,
+                                      std::vector<MultiExpandEntry> const& candidates) {
+    PartitionNodes nodes(candidates.size());
+    auto split_types = p_tree->GetSplitTypes(DeviceOrd::CPU());
+    for (std::size_t i = 0, n = candidates.size(); i < n; i++) {
+      auto const& e = candidates[i];
+      nodes.nidx.at(i) = e.nidx;
+      nodes.left_nidx[i] = p_tree->LeftChild(e.nidx);
+      nodes.right_nidx[i] = p_tree->RightChild(e.nidx);
+      nodes.split_data[i] = NodeSplitData{e.nidx};
+
+      CHECK_EQ(split_types[e.nidx] == FeatureType::kCategorical, e.split.is_cat);
+    }
+    return nodes;
+  }
+
+  // TODO(jiamingy): Merge this with the single target version. Make sure copying tree
+  // data doesn't block external memory execution.
+  //
+  // Pulling in the device view has negative performance impact as we need to resize the
+  // tree internal buffers repeatedly, which invokes many small data copies and memory
+  // allocations.
+  template <typename Accessor>
+  struct GoLeftOp {
+    Accessor d_matrix;
+    MultiTargetTreeView tree;
+    __device__ bool operator()(RowIndexT ridx, NodeSplitData const& data) const {
+      // Given a global row index, returns the node id it belongs to
+      float cut_value = d_matrix.GetFvalue(ridx, tree.SplitIndex(data.nidx));
+      // Missing value
+      bool go_left = true;
+      if (isnan(cut_value)) {
+        go_left = tree.DefaultLeft(data.nidx);
+      } else {
+        if (tree.SplitType(data.nidx) == FeatureType::kCategorical) {
+          go_left = common::Decision(tree.NodeCats(data.nidx), cut_value);
+        } else {
+          go_left = cut_value <= tree.SplitCond(data.nidx);
+        }
+      }
+      return go_left;
+    }
+  };
+
+  void ReduceHist(DMatrix* p_fmat, std::vector<MultiExpandEntry> const& candidates,
+                  std::vector<bst_node_t> const& build_nidx,
+                  std::vector<bst_node_t> const& subtraction_nidx) {
+    if (candidates.empty()) {
+      return;
+    }
+
+    xgboost_NVTX_FN_RANGE();
+
+    if (!build_nidx.empty()) {
+      this->histogram_.AllReduceHist(ctx_, build_nidx.front(), build_nidx.size());
+    }
+
+    // Perform subtraction for sibling nodes
+    auto need_build = this->histogram_.SubtractHist(ctx_, candidates, build_nidx, subtraction_nidx);
+    if (need_build.empty()) {
+      return;
+    }
+
+    // Build the nodes that can not obtain the histogram using subtraction. This is the slow path.
+    std::int32_t k = 0;
+    for (auto const& page : p_fmat->GetBatches<EllpackPage>(ctx_, StaticBatch(true))) {
+      this->BuildHist(page, k, need_build);
+      ++k;
+    }
+    for (auto nidx : need_build) {
+      this->histogram_.AllReduceHist(ctx_, nidx, 1);
+    }
+  }
+
+  void PartitionAndBuildHist(DMatrix* p_fmat, std::vector<MultiExpandEntry> const& expand_set,
+                             std::vector<MultiExpandEntry> const& candidates,
+                             RegTree const* p_tree) {
+    if (expand_set.empty()) {
+      return;
+    }
+
+    xgboost_NVTX_FN_RANGE();
+
+    CHECK_LE(candidates.size(), expand_set.size());
+    // TODO(jiamingy): Implement finalize partition using candidates instead of expand_set when
+    // performing in-core training.
+
+    // Prepare for update partition
+    auto nodes = this->CreatePartitionNodes(p_tree, expand_set);
+
+    std::vector<bst_node_t> build_nidx(candidates.size());
+    std::vector<bst_node_t> subtraction_nidx(candidates.size());
+    AssignNodes(*p_tree, candidates, build_nidx, subtraction_nidx, [](MultiExpandEntry const& e) {
+      bool fewer_right = e.right_sum < e.left_sum;
+      return fewer_right;
+    });
+
+    // TODO(jiamingy): Define threshold for deep trees.
+    bool prefetch_copy = !build_nidx.empty();
+
+    histogram_.AllocateHistograms(this->ctx_, build_nidx, subtraction_nidx);
+
+    // Pull to device (stats not needed for partitioning)
+    auto mt_tree = MultiTargetTreeView{this->ctx_->Device(), false, p_tree};
+
+    std::int32_t k{0};
+    for (auto const& page :
+         p_fmat->GetBatches<EllpackPage>(this->ctx_, StaticBatch(prefetch_copy))) {
+      page.Impl()->Visit(this->ctx_, {}, [&](auto&& d_acc) {
+        using Acc = std::remove_reference_t<decltype(d_acc)>;
+        using GoLeft = GoLeftOp<Acc>;
+        auto go_left = GoLeft{d_acc, mt_tree};
+
+        // Partition rows.
+        partitioners_.UpdatePositionBatch(this->ctx_, k, nodes.nidx, nodes.left_nidx,
+                                          nodes.right_nidx, nodes.split_data,
+                                          GoLeftWrapperOp<GoLeft>{go_left});
+
+        // Build histograms.
+        if (!build_nidx.empty()) {
+          this->BuildHist(page, k, build_nidx);
+        }
+      });
+      ++k;
+    }
+
+    this->ReduceHist(p_fmat, candidates, build_nidx, subtraction_nidx);
+  }
+
+  void EvaluateSplits(std::vector<MultiExpandEntry> const& candidates, RegTree const& tree,
+                      common::Span<MultiExpandEntry> pinned_candidates_out) {
+    if (candidates.empty()) {
+      return;
+    }
+    xgboost_NVTX_FN_RANGE();
+
+    dh::DeviceUVector<MultiEvaluateSplitInputs> inputs(2 * candidates.size());
+    dh::DeviceUVector<MultiExpandEntry> outputs(2 * candidates.size());
+
+    std::vector<MultiEvaluateSplitInputs> h_node_inputs(inputs.size());
+
+    // Store the feature set ptrs so they don't go out of scope before the kernel is called
+    std::vector<std::shared_ptr<HostDeviceVector<bst_feature_t>>> feature_sets;
+
+    auto n_targets = this->split_gpair_.Shape(1);
+    bst_feature_t max_active_feature = 0;
+    // Track max node ID for buffer allocation
+    bst_node_t max_nidx = 0;
+
+    for (std::size_t i = 0; i < candidates.size(); i++) {
+      auto candidate = candidates.at(i);
+      bst_node_t left_nidx = tree.LeftChild(candidate.nidx);
+      bst_node_t right_nidx = tree.RightChild(candidate.nidx);
+
+      auto child_depth = candidate.depth + 1;
+      auto left_sampled_features = column_sampler_->GetFeatureSet(ctx_, child_depth);
+      feature_sets.emplace_back(left_sampled_features);
+      common::Span<bst_feature_t const> left_feature_set =
+          interaction_constraints_->Query(left_sampled_features->ConstDeviceSpan(), left_nidx);
+
+      auto right_sampled_features = column_sampler_->GetFeatureSet(ctx_, child_depth);
+      feature_sets.emplace_back(right_sampled_features);
+      common::Span<bst_feature_t const> right_feature_set =
+          interaction_constraints_->Query(right_sampled_features->ConstDeviceSpan(), right_nidx);
+
+      // Make sure no allocation is happening.
+      // The parent sum is calculated in the last apply tree split.
+      auto left = MultiEvaluateSplitInputs{
+          left_nidx, candidate.depth + 1, this->evaluator_.GetNodeSum(left_nidx, n_targets),
+          left_feature_set, histogram_.GetNodeHistogram(left_nidx)};
+      auto right = MultiEvaluateSplitInputs{
+          right_nidx, candidate.depth + 1, this->evaluator_.GetNodeSum(right_nidx, n_targets),
+          right_feature_set, histogram_.GetNodeHistogram(right_nidx)};
+      h_node_inputs[i * 2] = left;
+      h_node_inputs[i * 2 + 1] = right;
+
+      max_active_feature = std::max({left_feature_set.size(), right_feature_set.size(),
+                                     static_cast<std::size_t>(max_active_feature)});
+      max_nidx = std::max({max_nidx, left_nidx, right_nidx});
+    }
+    dh::safe_cuda(cudaMemcpyAsync(inputs.data(), h_node_inputs.data(),
+                                  common::SizeBytes<MultiEvaluateSplitInputs>(h_node_inputs.size()),
+                                  cudaMemcpyDefault, ctx_->CUDACtx()->Stream()));
+
+    auto shared_inputs = MakeSharedInputs(max_active_feature);
+    this->evaluator_.EvaluateSplits(this->ctx_, dh::ToSpan(inputs), shared_inputs, max_nidx,
+                                    dh::ToSpan(outputs));
+    dh::safe_cuda(cudaMemcpyAsync(pinned_candidates_out.data(), outputs.data(),
+                                  pinned_candidates_out.size_bytes(), cudaMemcpyDefault,
+                                  ctx_->CUDACtx()->Stream()));
+  }
+
+  void FinalizePosition(DMatrix* p_fmat, RegTree const* p_tree,
+                        HostDeviceVector<bst_node_t>* p_out_position) {
+    xgboost_NVTX_FN_RANGE();
+
+    p_out_position->SetDevice(ctx_->Device());
+    p_out_position->Resize(p_fmat->Info().num_row_);
+    auto d_out_position = p_out_position->DeviceSpan();
+    auto sampling = this->sampler_.GetSamplingInfo();
+
+    for (std::size_t k = 0, n = partitioners_.Size(); k < n; ++k) {
+      auto& part = partitioners_.At(k);
+      CHECK_EQ(part->GetNumNodes(), p_tree->NumNodes());
+      auto base_rowid = batch_ptr_[k];
+      auto n_samples = batch_ptr_.at(k + 1) - base_rowid;
+      part->FinalisePosition(ctx_, d_out_position.subspan(base_rowid, n_samples), base_rowid,
+                             [=] XGBOOST_DEVICE(RowIndexT ridx, bst_node_t nidx) -> bst_node_t {
+                               return SamplePosition::Encode(nidx, sampling.IsSampled(ridx));
+                             });
+    }
+  }
+
+  void UpdateTree(GradientContainer* gpair, DMatrix* p_fmat, ObjInfo const* task, RegTree* p_tree,
+                  HostDeviceVector<bst_node_t>* p_out_position) {
+    xgboost_NVTX_FN_RANGE();
+
+    auto* split_grad = gpair->Grad();
+    if (gpair->HasValueGrad()) {
+      this->value_gpair_ = linalg::Matrix<GradientPair>{gpair->value_gpair.Shape(), ctx_->Device()};
+      gpair->value_gpair.SetDevice(this->ctx_->Device());
+      this->value_gpair_.Data()->Copy(*gpair->value_gpair.Data());
+    }
+    CHECK_LE(split_grad->Shape(1), p_tree->NumTargets());
+
+    this->GrowTree(split_grad, p_fmat, task, p_tree, p_out_position);
+
+    if (gpair->HasValueGrad()) {
+      this->ExpandTreeLeaf(p_tree);
+    } else {
+      p_tree->GetMultiTargetTree()->SetLeaves();
+    }
+  }
+
+  void GrowTree(linalg::Matrix<GradientPair>* split_gpair, DMatrix* p_fmat, ObjInfo const*,
+                RegTree* p_tree, HostDeviceVector<bst_node_t>* p_out_position) {
+    xgboost_NVTX_FN_RANGE();
+    Driver<MultiExpandEntry> driver{param_, kMaxNodeBatchSize};
+
+    this->Reset(split_gpair, p_fmat);
+    driver.Push({this->InitRoot(p_fmat, p_tree)});
+
+    // The set of leaves that can be expanded asynchronously
+    auto expand_set = driver.Pop();
+    while (!expand_set.empty()) {
+      this->ApplySplit(expand_set, p_tree);
+      // Get the candidates we are allowed to expand further
+      // e.g. We do not bother further processing nodes whose children are beyond max depth
+      std::vector<MultiExpandEntry> valid_candidates;
+      std::copy_if(expand_set.begin(), expand_set.end(), std::back_inserter(valid_candidates),
+                   [&](auto const& e) { return driver.IsChildValid(e); });
+
+      // Allocate children nodes.
+      auto new_candidates = pinned_.GetSpan(valid_candidates.size() * 2, MultiExpandEntry{});
+
+      this->PartitionAndBuildHist(p_fmat, expand_set, valid_candidates, p_tree);
+
+      this->EvaluateSplits(valid_candidates, *p_tree, new_candidates);
+      this->ctx_->CUDACtx()->Stream().Sync();
+
+      driver.Push(new_candidates.begin(), new_candidates.end());
+
+      expand_set = driver.Pop();
+    }
+
+    if (p_fmat->SingleColBlock()) {
+      CHECK_GE(p_tree->NumNodes(), this->partitioners_.Front()->GetNumNodes());
+    }
+    this->FinalizePosition(p_fmat, p_tree, p_out_position);
+  }
+
+  explicit MultiTargetHistMaker(Context const* ctx, TrainParam param,
+                                HistMakerTrainParam const* hist_param,
+                                std::shared_ptr<common::ColumnSampler> column_sampler,
+                                std::vector<bst_idx_t> batch_ptr,
+                                std::shared_ptr<common::HistogramCuts const> cuts,
+                                bool dense_compressed)
+      : ctx_{ctx},
+        param_{std::move(param)},
+        batch_ptr_{std::move(batch_ptr)},
+        sampler_{batch_ptr_.back(), param_.subsample, param_.sampling_method},
+        hist_param_{hist_param},
+        cuts_{std::move(cuts)},
+        feature_groups_{std::make_unique<FeatureGroups>(*cuts_, dense_compressed,
+                                                        DftMtHistShmemBytes(ctx_->Ordinal()))},
+        column_sampler_{std::move(column_sampler)},
+        interaction_constraints_{
+            std::make_unique<FeatureInteractionConstraintDevice>(param_, cuts_->NumFeatures())} {}
+};
+}  // namespace xgboost::tree::cuda_impl

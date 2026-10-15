@@ -1,0 +1,22 @@
+name: python_lint
+channels:
+- conda-forge
+dependencies:
+- python=3.12
+- pylint
+- wheel
+- setuptools
+- mypy
+- numpy
+- scipy
+- pandas
+- pyarrow
+- scikit-learn
+- dask
+- distributed
+- black
+- isort
+- cloudpickle
+- pytest
+- hypothesis
+- pyspark>=4.0.0

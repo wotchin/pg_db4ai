@@ -1,0 +1,40 @@
+/**
+ * Copyright 2021-2026, XGBoost contributors
+ */
+#include "test_prediction_cache.h"
+
+#include <gtest/gtest.h>
+
+namespace xgboost {
+TEST_F(TestPredictionCache, Approx) {
+  Context ctx;
+  this->RunTest(&ctx, "grow_histmaker", "one_output_per_tree");
+}
+
+TEST_F(TestPredictionCache, Hist) {
+  Context ctx;
+  this->RunTest(&ctx, "grow_quantile_histmaker", "one_output_per_tree");
+}
+
+TEST_F(TestPredictionCache, MultiHist) {
+  Context ctx;
+  this->RunTest(&ctx, "grow_quantile_histmaker", "multi_output_tree");
+}
+
+#if defined(XGBOOST_USE_CUDA)
+TEST_F(TestPredictionCache, GpuHist) {
+  auto ctx = MakeCUDACtx(0);
+  this->RunTest(&ctx, "grow_gpu_hist", "one_output_per_tree");
+}
+
+TEST_F(TestPredictionCache, GpuMultiHist) {
+  auto ctx = MakeCUDACtx(0);
+  this->RunTest(&ctx, "grow_gpu_hist", "multi_output_tree");
+}
+
+TEST_F(TestPredictionCache, GpuApprox) {
+  auto ctx = MakeCUDACtx(0);
+  this->RunTest(&ctx, "grow_gpu_approx", "one_output_per_tree");
+}
+#endif  // defined(XGBOOST_USE_CUDA)
+}  // namespace xgboost

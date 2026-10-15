@@ -1,0 +1,106 @@
+/**
+ * Copyright 2018-2025, XGBoost Contributors
+ */
+#include <gtest/gtest.h>
+#include <xgboost/data.h>
+#include <xgboost/gradient.h>            // for GradientContainer
+#include <xgboost/host_device_vector.h>  // for HostDeviceVector
+#include <xgboost/learner.h>
+#include <xgboost/tree_updater.h>
+
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "../../../src/tree/param.h"  // for TrainParam
+#include "../helpers.h"
+
+namespace xgboost::tree {
+TEST(Updater, Prune) {
+  int constexpr kCols = 16;
+
+  std::vector<std::pair<std::string, std::string>> cfg;
+  cfg.emplace_back("num_feature", std::to_string(kCols));
+  cfg.emplace_back("min_split_loss", "10");
+  Context ctx;
+
+  // These data are just place holders.
+  GradientContainer gpair;
+  gpair.gpair = linalg::Matrix<GradientPair>{{{0.50f, 0.25f},
+                                              {0.50f, 0.25f},
+                                              {0.50f, 0.25f},
+                                              {0.50f, 0.25f},
+                                              {0.25f, 0.24f},
+                                              {0.25f, 0.24f},
+                                              {0.25f, 0.24f},
+                                              {0.25f, 0.24f}},
+                                             {8, 1},
+                                             ctx.Device()};
+  std::shared_ptr<DMatrix> p_dmat{RandomDataGenerator{32, 10, 0}.GenerateDMatrix()};
+
+  // prepare tree
+  RegTree tree = RegTree{1u, kCols};
+  std::vector<RegTree*> trees{&tree};
+  // prepare pruner
+  TrainParam param;
+  param.UpdateAllowUnknown(cfg);
+
+  ObjInfo task{ObjInfo::kRegression};
+  std::unique_ptr<TreeUpdater> pruner(TreeUpdater::Create("prune", &ctx, &task));
+
+  std::vector<HostDeviceVector<bst_node_t>> position(trees.size());
+  auto run_prune = [&] {
+    auto& h_position = position.front().HostVector();
+    h_position.resize(p_dmat->Info().num_row_);
+    auto nidx = RegTree::kRoot;
+    while (!tree[nidx].IsLeaf()) {
+      nidx = tree[nidx].LeftChild();
+    }
+    std::fill(h_position.begin(), h_position.end(), nidx);
+    pruner->Update(&param, &gpair, p_dmat.get(), position, trees);
+  };
+
+  // loss_chg < min_split_loss;
+  tree.ExpandNode(0, 0, 0, true, 0.0f, 0.3f, 0.4f, 0.0f, 0.0f,
+                  /*left_sum=*/0.0f, /*right_sum=*/0.0f);
+  run_prune();
+
+  ASSERT_EQ(tree.NumExtraNodes(), 0);
+
+  // loss_chg > min_split_loss;
+  tree.ExpandNode(0, 0, 0, true, 0.0f, 0.3f, 0.4f, 11.0f, 0.0f,
+                  /*left_sum=*/0.0f, /*right_sum=*/0.0f);
+  run_prune();
+
+  ASSERT_EQ(tree.NumExtraNodes(), 2);
+
+  // loss_chg == min_split_loss;
+  tree.Stat(0).loss_chg = 10;
+  run_prune();
+
+  ASSERT_EQ(tree.NumExtraNodes(), 2);
+
+  // Test depth
+  // loss_chg > min_split_loss
+  tree.ExpandNode(tree[0].LeftChild(), 0, 0.5f, true, 0.3, 0.4, 0.5,
+                  /*loss_chg=*/18.0f, 0.0f,
+                  /*left_sum=*/0.0f, /*right_sum=*/0.0f);
+  tree.ExpandNode(tree[0].RightChild(), 0, 0.5f, true, 0.3, 0.4, 0.5,
+                  /*loss_chg=*/19.0f, 0.0f,
+                  /*left_sum=*/0.0f, /*right_sum=*/0.0f);
+
+  cfg.emplace_back("max_depth", "1");
+  param.UpdateAllowUnknown(cfg);
+  run_prune();
+  ASSERT_EQ(tree.NumExtraNodes(), 2);
+
+  tree.ExpandNode(tree[0].LeftChild(), 0, 0.5f, true, 0.3, 0.4, 0.5,
+                  /*loss_chg=*/18.0f, 0.0f,
+                  /*left_sum=*/0.0f, /*right_sum=*/0.0f);
+  cfg.emplace_back("min_split_loss", "0");
+  param.UpdateAllowUnknown(cfg);
+
+  run_prune();
+  ASSERT_EQ(tree.NumExtraNodes(), 2);
+}
+}  // namespace xgboost::tree

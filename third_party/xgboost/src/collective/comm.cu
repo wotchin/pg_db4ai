@@ -1,0 +1,128 @@
+/**
+ * Copyright 2023-2026, XGBoost Contributors
+ */
+#if defined(XGBOOST_USE_NCCL)
+#include <algorithm>  // for sort
+#include <cstddef>    // for size_t
+#include <cstdint>    // for uint64_t, int8_t
+#include <cstring>    // for memcpy
+#include <memory>     // for shared_ptr
+#include <vector>     // for vector
+
+#include "../common/cuda_rt_utils.h"    // for SetDevice, GetUuid, PrintUuid
+#include "../common/type.h"             // for EraseType
+#include "comm.cuh"                     // for NCCLComm
+#include "comm.h"                       // for Comm
+#include "nccl_stub.h"                  // for NcclStub
+#include "xgboost/collective/result.h"  // for Result
+#include "xgboost/span.h"               // for Span
+
+namespace xgboost::collective {
+namespace {
+Result GetUniqueId(Context const* ctx, Comm const& comm, std::shared_ptr<NcclStub> stub,
+                   std::shared_ptr<Coll> coll, ncclUniqueId* pid) {
+  static const int kRootRank = 0;
+  ncclUniqueId id;
+  if (comm.Rank() == kRootRank) {
+    auto rc = stub->GetUniqueId(&id);
+    SafeColl(rc);
+  }
+  auto rc = coll->Broadcast(ctx, comm,
+                            common::Span{reinterpret_cast<std::int8_t*>(&id), sizeof(ncclUniqueId)},
+                            kRootRank);
+  if (!rc.OK()) {
+    return rc;
+  }
+  *pid = id;
+  return Success();
+}
+}  // namespace
+
+Comm* RabitComm::MakeCUDAVar(Context const* ctx, std::shared_ptr<Coll> pimpl) const {
+  return new NCCLComm{ctx, *this, pimpl, StringView{this->nccl_path_}};
+}
+
+NCCLComm::NCCLComm(Context const* ctx, Comm const& root, std::shared_ptr<Coll> pimpl,
+                   StringView nccl_path)
+    : Comm{root.TrackerInfo().host, root.TrackerInfo().port, root.Timeout(), root.Retry(),
+           root.TaskID()},
+      stream_{ctx->Ordinal()} {
+  this->world_ = root.World();
+  this->rank_ = root.Rank();
+  this->domain_ = root.Domain();
+  if (!root.IsDistributed()) {
+    return;
+  }
+
+  curt::SetDevice(ctx->Ordinal());
+  stub_ = std::make_shared<NcclStub>(nccl_path);
+
+  std::vector<unsigned char> uuids(root.World() * curt::kUuidLength, 0);
+  auto s_uuid = common::Span{uuids.data(), uuids.size()};
+  auto s_this_uuid = s_uuid.subspan(root.Rank() * curt::kUuidLength, curt::kUuidLength);
+  curt::GetUuid(s_this_uuid, ctx->Ordinal());
+
+  auto rc = pimpl->Allgather(ctx, root, common::EraseType(s_uuid));
+  SafeColl(rc);
+
+  std::vector<common::Span<unsigned char>> converted(root.World());
+  std::size_t j = 0;
+  for (size_t i = 0; i < uuids.size(); i += curt::kUuidLength) {
+    converted[j] = s_uuid.subspan(i, curt::kUuidLength);
+    j++;
+  }
+
+  std::sort(converted.begin(), converted.end());
+  auto iter = std::unique(converted.begin(), converted.end());
+  auto n_uniques = std::distance(converted.begin(), iter);
+
+  CHECK_EQ(n_uniques, root.World())
+      << "Multiple processes within communication group running on same CUDA "
+      << "device is not supported. " << curt::PrintUuid(s_this_uuid) << "\n";
+
+  rc = std::move(rc) << [&] {
+    return GetUniqueId(ctx, root, this->stub_, pimpl, &nccl_unique_id_);
+  } << [&] {
+    ncclConfig_t config = NCCL_CONFIG_INITIALIZER;
+    config.blocking = 0;
+    return this->stub_->CommInitRankConfig(&nccl_comm_, root.World(), nccl_unique_id_, root.Rank(),
+                                           &config);
+  } << [&] {
+    return BusyWait(this->stub_, this->nccl_comm_, this->Timeout());
+  };
+  SafeColl(rc);
+
+  for (std::int32_t r = 0; r < root.World(); ++r) {
+    // Keep point-to-point channel launches on the communicator stream so helper-local staging
+    // work and the NCCL send/recv edges share one ordering domain.
+    this->channels_.emplace_back(
+        std::make_shared<NCCLChannel>(root, r, nccl_comm_, stub_, stream_.View()));
+  }
+}
+
+NCCLComm::~NCCLComm() {
+  // Drain pending NCCL kernels before `stream_` is destroyed.
+  (void)stream_.Sync();
+  // Release channels while `stream_` is still alive.
+  this->channels_.clear();
+
+  if (nccl_comm_) {
+    auto rc = Success() << [this] {
+      return this->stub_->CommFinalize(this->nccl_comm_);
+    } << [this] {
+      auto rc = BusyWait(this->stub_, this->nccl_comm_, this->Timeout());
+      if (!rc.OK()) {
+        return std::move(rc) + this->stub_->CommAbort(this->nccl_comm_);
+      }
+      return rc;
+    } << [this] {
+      return this->stub_->CommDestroy(this->nccl_comm_);
+    };
+    if (!rc.OK()) {
+      LOG(WARNING) << rc.Report();
+    }
+  }
+  nccl_comm_ = nullptr;
+}
+}  // namespace xgboost::collective
+#endif  // defined(XGBOOST_USE_NCCL)

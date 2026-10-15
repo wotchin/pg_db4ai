@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling>=1.12.1"]
+build-backend = "hatchling.build"
+
+[project]
+name = "{{ name }}"
+description = "XGBoost Python Package"
+readme = { file = "README.rst", content-type = "text/x-rst" }
+authors = [
+    { name = "Hyunsu Cho", email = "chohyu01@cs.washington.edu" },
+    { name = "Jiaming Yuan", email = "jm.yuan@outlook.com" }
+]
+version = "3.4.2"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "xgboost=={{ version }}",
+]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["pyproject.toml", "LICENSE"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["pyproject.toml", "LICENSE"]

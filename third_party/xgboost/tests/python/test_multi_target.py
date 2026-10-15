@@ -1,0 +1,245 @@
+"""Tests for the CPU implementation of multi-target."""
+
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+# pylint: disable=missing-function-docstring
+from typing import Any, Callable, Dict
+
+import numpy as np
+import pytest
+import xgboost as xgb
+from hypothesis import given, note, settings, strategies
+from xgboost import testing as tm
+from xgboost.testing.multi_target import (
+    all_reg_objectives,
+    check_categorical_mixed,
+    run_absolute_error,
+    run_column_sampling,
+    run_eta,
+    run_expectile_loss,
+    run_feature_importance_strategy_compare,
+    run_gradient_based_sampling_accuracy,
+    run_grow_policy,
+    run_mixed_strategy,
+    run_multiclass,
+    run_multilabel,
+    run_quantile_loss,
+    run_reduced_grad,
+    run_subsample,
+    run_with_iter,
+)
+from xgboost.testing.params import (
+    exact_parameter_strategy,
+    hist_cache_strategy,
+    hist_multi_parameter_strategy,
+    hist_parameter_strategy,
+)
+from xgboost.testing.updater import check_quantile_loss_rf, train_result
+from xgboost.testing.utils import Device
+
+
+@pytest.mark.skipif(**tm.no_pandas())
+def test_categorical_mixed() -> None:
+    check_categorical_mixed("cpu")
+
+
+@pytest.mark.parametrize("multi_strategy", ["multi_output_tree", "one_output_per_tree"])
+def test_quantile_loss_rf(multi_strategy: str) -> None:
+    check_quantile_loss_rf("cpu", "hist", multi_strategy)
+    if multi_strategy == "one_output_per_tree":
+        check_quantile_loss_rf("cpu", "approx", multi_strategy)
+
+
+def test_shap_multi_output_tree() -> None:
+    X = np.array(
+        [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [2.0, 1.0], [1.0, 2.0]],
+        dtype=np.float32,
+    )
+    y = np.stack([X[:, 0] + 2 * X[:, 1], -X[:, 0] + 0.5 * X[:, 1]], axis=1)
+    Xy = xgb.DMatrix(X, y)
+
+    booster = xgb.train(
+        {
+            "tree_method": "hist",
+            "max_depth": 2,
+            "num_target": 2,
+            "multi_strategy": "multi_output_tree",
+            "objective": "reg:squarederror",
+        },
+        Xy,
+        num_boost_round=3,
+    )
+
+    margin = booster.predict(Xy, output_margin=True, strict_shape=True)
+    contribs = booster.predict(Xy, pred_contribs=True, strict_shape=True)
+    interactions = booster.predict(Xy, pred_interactions=True, strict_shape=True)
+
+    assert margin.shape == (X.shape[0], y.shape[1])
+    assert contribs.shape == (X.shape[0], y.shape[1], X.shape[1] + 1)
+    assert interactions.shape == (
+        X.shape[0],
+        y.shape[1],
+        X.shape[1] + 1,
+        X.shape[1] + 1,
+    )
+    np.testing.assert_allclose(contribs.sum(axis=2), margin, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(
+        interactions.sum(axis=(2, 3)), margin, rtol=1e-4, atol=1e-4
+    )
+
+
+class TestTreeMethodMulti:
+    """Integration tests for tree methods."""
+
+    @given(
+        exact_parameter_strategy, strategies.integers(1, 20), tm.multi_dataset_strategy
+    )
+    @settings(deadline=None, print_blob=True)
+    def test_exact(self, param: dict, num_rounds: int, dataset: tm.TestDataset) -> None:
+        if dataset.name.endswith("-l1"):
+            return
+        param["tree_method"] = "exact"
+        param = dataset.set_params(param)
+        result = train_result(param, dataset.get_dmat(), num_rounds)
+        assert tm.non_increasing(result["train"][dataset.metric])
+
+    @given(
+        exact_parameter_strategy,
+        hist_parameter_strategy,
+        hist_cache_strategy,
+        strategies.integers(1, 20),
+        tm.multi_dataset_strategy,
+    )
+    @settings(deadline=None, print_blob=True)
+    def test_approx(
+        self,
+        param: Dict[str, Any],
+        hist_param: Dict[str, Any],
+        cache_param: Dict[str, Any],
+        num_rounds: int,
+        dataset: tm.TestDataset,
+    ) -> None:
+        param["tree_method"] = "approx"
+        param = dataset.set_params(param)
+        param.update(hist_param)
+        param.update(cache_param)
+        result = train_result(param, dataset.get_dmat(), num_rounds)
+        note(str(result))
+        assert tm.non_increasing(result["train"][dataset.metric])
+
+    @given(
+        exact_parameter_strategy,
+        hist_multi_parameter_strategy,
+        hist_cache_strategy,
+        strategies.integers(1, 20),
+        tm.multi_dataset_strategy,
+    )
+    @settings(deadline=None, print_blob=True)
+    def test_hist(
+        self,
+        param: Dict[str, Any],
+        hist_param: Dict[str, Any],
+        cache_param: Dict[str, Any],
+        num_rounds: int,
+        dataset: tm.TestDataset,
+    ) -> None:
+        if dataset.name.endswith("-l1"):
+            return
+        param["tree_method"] = "hist"
+        param = dataset.set_params(param)
+        param.update(hist_param)
+        param.update(cache_param)
+        result = train_result(param, dataset.get_dmat(), num_rounds)
+        note(str(result))
+        assert tm.non_increasing(result["train"][dataset.metric])
+
+
+def test_multiclass() -> None:
+    run_multiclass("cpu", None)
+
+
+def test_multilabel() -> None:
+    run_multilabel("cpu", None)
+
+
+@pytest.mark.parametrize("weighted", [True, False])
+def test_quantile_loss(weighted: bool) -> None:
+    run_quantile_loss("cpu", weighted)
+
+
+def test_expectile_loss() -> None:
+    run_expectile_loss("cpu")
+
+
+def test_absolute_error() -> None:
+    run_absolute_error("cpu")
+
+
+def test_reduced_grad() -> None:
+    run_reduced_grad("cpu")
+
+
+def test_with_iter() -> None:
+    run_with_iter("cpu")
+
+
+def test_eta() -> None:
+    run_eta("cpu")
+
+
+def test_column_sampling() -> None:
+    run_column_sampling("cpu")
+
+
+@pytest.mark.parametrize("grow_policy", ["depthwise", "lossguide"])
+def test_grow_policy(grow_policy: str) -> None:
+    run_grow_policy("cpu", grow_policy)
+
+
+@pytest.mark.parametrize("use_dart", [False, True], ids=["gbtree", "dart"])
+def test_mixed_strategy(use_dart: bool) -> None:
+    run_mixed_strategy("cpu", use_dart)
+
+
+def test_feature_importance_strategy_compare() -> None:
+    run_feature_importance_strategy_compare("cpu")
+
+
+@pytest.mark.parametrize("obj_fn", all_reg_objectives())
+def test_reg_objective(obj_fn: Callable[[Device], None]) -> None:
+    obj_fn("cpu")
+
+
+@pytest.mark.parametrize("sampling_method", ["uniform", "gradient_based"])
+def test_subsample(sampling_method: str) -> None:
+    run_subsample("cpu", sampling_method)
+
+
+def test_gradient_based_sampling_accuracy() -> None:
+    run_gradient_based_sampling_accuracy("cpu")
+
+
+def test_dart_normalization_multi_output_eta() -> None:
+    X = np.array([[0.0]], dtype=np.float32)
+    y = np.array([[1.0, 1.0]], dtype=np.float32)
+    Xy = xgb.DMatrix(X, label=y)
+
+    booster = xgb.train(
+        {
+            "objective": "reg:squarederror",
+            "multi_strategy": "one_output_per_tree",
+            "tree_method": "hist",
+            "learning_rate": 1.0,
+            "base_score": 0.0,
+            "reg_lambda": 0.0,
+            "min_child_weight": 0.0,
+            "rate_drop": 0.0,
+            "one_drop": True,
+            "normalize_type": "tree",
+            "seed": 3,
+        },
+        Xy,
+        num_boost_round=2,
+    )
+
+    pred = booster.predict(Xy, output_margin=True)
+    np.testing.assert_allclose(pred, y, atol=1e-6)

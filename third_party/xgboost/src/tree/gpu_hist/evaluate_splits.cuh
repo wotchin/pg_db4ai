@@ -1,0 +1,261 @@
+/**
+ * Copyright 2020-2026, XGBoost Contributors
+ */
+#ifndef EVALUATE_SPLITS_CUH_
+#define EVALUATE_SPLITS_CUH_
+#include <xgboost/span.h>
+
+#include <cuda/std/tuple>  // for tuple
+
+#include "../../common/categorical.h"
+#include "../../common/cuda_pinned_allocator.h"
+#include "../../common/cuda_stream.h"       // for Stream
+#include "../../common/device_helpers.cuh"  // for WarpThreads
+#include "../split_evaluator.h"
+#include "../updater_gpu_common.cuh"  // for DeviceSplitCandidate
+#include "expand_entry.cuh"
+#include "quantiser.cuh"  // for GradientQuantiser
+
+namespace xgboost {
+namespace common {
+class HistogramCuts;
+}
+
+namespace tree {
+// Butterfly all-reduce within a warp. Every lane receives the full sum.
+XGBOOST_DEV_INLINE
+GradientPairInt64 WarpSum(GradientPairInt64 v) {
+  for (std::int32_t offset = dh::WarpThreads() / 2; offset > 0; offset >>= 1) {
+    auto g = __shfl_xor_sync(dh::WarpFullMask(), v.GetQuantisedGrad(), offset);
+    auto h = __shfl_xor_sync(dh::WarpFullMask(), v.GetQuantisedHess(), offset);
+    v += GradientPairInt64{g, h};
+  }
+  return v;
+}
+
+// Inputs specific to each node
+struct EvaluateSplitInputs {
+  bst_node_t nidx;
+  bst_node_t depth;
+  GradientPairInt64 parent_sum;
+  common::Span<const bst_feature_t> feature_set;
+  common::Span<const GradientPairInt64> gradient_histogram;
+};
+
+// Inputs necessary for all nodes
+struct EvaluateSplitSharedInputs {
+  EvalParam param;
+  GradientQuantiser rounding;
+  common::Span<FeatureType const> feature_types;
+  common::Span<const uint32_t> feature_segments;
+  common::Span<const float> feature_values;
+  bool is_dense;
+  [[nodiscard]] XGBOOST_DEVICE auto Features() const { return feature_segments.size() - 1; }
+  [[nodiscard]] __device__ std::uint32_t FeatureBins(bst_feature_t fidx) const {
+    return feature_segments[fidx + 1] - feature_segments[fidx];
+  }
+};
+
+// Used to return internal storage regions for categoricals
+// Usable on device
+struct CatAccessor {
+  common::Span<common::CatBitField::value_type> cat_storage;
+  std::size_t node_categorical_storage_size;
+  XGBOOST_DEVICE common::Span<common::CatBitField::value_type> GetNodeCatStorage(bst_node_t nidx) {
+    return this->cat_storage.subspan(nidx * this->node_categorical_storage_size,
+                                     this->node_categorical_storage_size);
+  }
+};
+
+class GPUHistEvaluator {
+  using CatST = common::CatBitField::value_type;  // categorical storage type
+  // use pinned memory to stage the categories, used for sort based splits.
+  using Alloc = xgboost::common::cuda_impl::PinnedAllocator<CatST>;
+
+ private:
+  TreeEvaluator tree_evaluator_;
+  // storage for categories for each node, used for sort based splits.
+  dh::device_vector<CatST> split_cats_;
+  // host storage for categories for each node, used for sort based splits.
+  std::vector<CatST, Alloc> h_split_cats_;
+  // stream for copying categories from device back to host for expanding the decision tree.
+  curt::Stream copy_stream_;
+  // storage for sorted index of feature histogram, used for sort based splits.
+  dh::device_vector<bst_feature_t> cat_sorted_idx_;
+  // cached input for sorting the histogram, used for sort based splits.
+  using SortPair = cuda::std::tuple<std::uint32_t, float>;
+  dh::device_vector<SortPair> sort_input_;
+  // cache for feature index
+  dh::device_vector<bst_feature_t> feature_idx_;
+  // Training param used for evaluation
+  TrainParam param_;
+  // Do we have any categorical features that require sorting histograms?
+  // use this to skip the expensive sort step
+  bool need_sort_histogram_ = false;
+  bool has_categoricals_ = false;
+  // Number of elements of categorical storage type
+  // needed to hold categoricals for a single mode
+  std::size_t node_categorical_storage_size_ = 0;
+  DeviceOrd device_;
+
+  // Copy the categories from device to host asynchronously.
+  void CopyToHost(const std::vector<bst_node_t> &nidx);
+
+  /**
+   * \brief Get host category storage of nidx for internal calculation.
+   */
+  auto HostCatStorage(const std::vector<bst_node_t> &nidx) {
+    if (!has_categoricals_) return CatAccessor{};
+    auto max_nidx = *std::max_element(nidx.begin(), nidx.end());
+    std::size_t min_size = (max_nidx + 2) * node_categorical_storage_size_;
+    if (h_split_cats_.size() < min_size) {
+      h_split_cats_.resize(min_size);
+    }
+    return CatAccessor{{h_split_cats_.data(), h_split_cats_.size()},
+                       node_categorical_storage_size_};
+  }
+
+  /**
+   * @brief Get device category storage of nidx for internal calculation.
+   */
+  auto DeviceCatStorage(const std::vector<bst_node_t> &nidx) {
+    if (!has_categoricals_) return CatAccessor{};
+    auto max_nidx = *std::max_element(nidx.begin(), nidx.end());
+    std::size_t min_size = (max_nidx + 2) * node_categorical_storage_size_;
+    if (split_cats_.size() < min_size) {
+      split_cats_.resize(min_size);
+    }
+    return CatAccessor{dh::ToSpan(split_cats_), node_categorical_storage_size_};
+  }
+
+  /**
+   * \brief Get sorted index storage based on the left node of inputs.
+   */
+  auto SortedIdx(int num_nodes, bst_bin_t total_bins) {
+    if (!need_sort_histogram_) return common::Span<bst_feature_t>{};
+    cat_sorted_idx_.resize(num_nodes * total_bins);
+    return dh::ToSpan(cat_sorted_idx_);
+  }
+
+  auto SortInput(int num_nodes, bst_feature_t total_bins) {
+    if (!need_sort_histogram_) return common::Span<SortPair>();
+    sort_input_.resize(num_nodes * total_bins);
+    return dh::ToSpan(sort_input_);
+  }
+
+ public:
+  GPUHistEvaluator(TrainParam const &param, bst_feature_t n_features, DeviceOrd device)
+      : tree_evaluator_{param, n_features, device, 1u}, param_{param} {}
+  /**
+   * \brief Reset the evaluator, should be called before any use.
+   */
+  void Reset(Context const *ctx, common::HistogramCuts const &cuts,
+             common::Span<FeatureType const> ft, bst_feature_t n_features, TrainParam const &param);
+
+  /**
+   * \brief Get host category storage for nidx.  Different from the internal version, this
+   *        returns strictly 1 node.
+   */
+  [[nodiscard]] common::Span<CatST const> GetHostNodeCats(bst_node_t nidx) const {
+    copy_stream_.View().Sync();
+    auto cats_out = common::Span<CatST const>{h_split_cats_}.subspan(
+        nidx * node_categorical_storage_size_, node_categorical_storage_size_);
+    return cats_out;
+  }
+
+  [[nodiscard]] auto GetDeviceNodeCats(bst_node_t nidx) {
+    if (has_categoricals_) {
+      copy_stream_.View().Sync();
+      CatAccessor accessor = {dh::ToSpan(split_cats_), node_categorical_storage_size_};
+      return common::KCatBitField{accessor.GetNodeCatStorage(nidx)};
+    } else {
+      return common::KCatBitField{};
+    }
+  }
+  /**
+   * \brief Add a split to the internal tree evaluator.
+   */
+  void ApplyTreeSplit(GPUExpandEntry const &candidate, RegTree *p_tree) {
+    auto &tree = *p_tree;
+    // Set up child constraints
+    auto left_child = tree[candidate.nidx].LeftChild();
+    auto right_child = tree[candidate.nidx].RightChild();
+    tree_evaluator_.AddSplit(candidate.nidx, left_child, right_child,
+                             tree[candidate.nidx].SplitIndex(), candidate.left_weight,
+                             candidate.right_weight);
+  }
+
+  auto GetEvaluator() { return tree_evaluator_.GetEvaluator<EvalParam>(); }
+  /**
+   * \brief Sort the histogram based on output to obtain contiguous partitions.
+   */
+  common::Span<bst_feature_t const> SortHistogram(
+      Context const *ctx, common::Span<const EvaluateSplitInputs> d_inputs,
+      EvaluateSplitSharedInputs shared_inputs,
+      TreeEvaluator::SplitEvaluator<EvalParam> evaluator);
+
+  // impl of evaluate splits, contains CUDA kernels so it's public
+  void LaunchEvaluateSplits(Context const *ctx, bst_feature_t max_active_features,
+                            common::Span<const EvaluateSplitInputs> d_inputs,
+                            EvaluateSplitSharedInputs shared_inputs,
+                            TreeEvaluator::SplitEvaluator<EvalParam> evaluator,
+                            common::Span<DeviceSplitCandidate> out_splits);
+  /**
+   * \brief Evaluate splits for left and right nodes.
+   */
+  void EvaluateSplits(Context const *ctx, const std::vector<bst_node_t> &nidx,
+                      bst_feature_t max_active_features,
+                      common::Span<const EvaluateSplitInputs> d_inputs,
+                      EvaluateSplitSharedInputs shared_inputs,
+                      common::Span<GPUExpandEntry> out_splits);
+  /**
+   * \brief Evaluate splits for root node.
+   */
+  GPUExpandEntry EvaluateSingleSplit(Context const *ctx, EvaluateSplitInputs input,
+                                     EvaluateSplitSharedInputs shared_inputs);
+};
+
+// Input for evaluation kernel for each tree node.
+struct MultiEvaluateSplitInputs {
+  bst_node_t nidx;
+  bst_node_t depth;
+  common::Span<GradientPairInt64 const> parent_sum;
+  common::Span<bst_feature_t const> feature_set;
+  common::Span<GradientPairInt64 const> histogram;
+};
+
+// Input for evaluation kernel that can be shared by multiple tree nodes.
+struct MultiEvaluateSplitSharedInputs {
+  // len == n_targets
+  common::Span<GradientQuantiser const> roundings;
+  // cut pointers
+  common::Span<std::uint32_t const> feature_segments;
+  // cut values
+  float const *feature_values;
+  common::Span<FeatureType const> feature_types;
+  // Number of bit-field storage elements required for one categorical split.
+  std::size_t cat_storage_size{0};
+  // Number of histogram bins for one target, across all features.
+  bst_bin_t n_total_bins_per_tar;
+  bst_feature_t max_active_feature;
+  EvalParam param;
+
+  // Used for testing
+  enum OnePass {
+    kNone,      // normal
+    kForward,   // only perform the forward pass
+    kBackward,  // only perform the backward pass
+  } one_pass{kNone};
+
+  [[nodiscard]] XGBOOST_DEVICE bst_target_t Targets() const { return roundings.size(); }
+  [[nodiscard]] XGBOOST_DEVICE bst_feature_t Features() const {
+    return this->feature_segments.size() - 1;
+  }
+  [[nodiscard]] XGBOOST_DEVICE bool IsCategorical(bst_feature_t fidx) const {
+    return common::IsCat(this->feature_types, fidx);
+  }
+};
+}  // namespace tree
+}  // namespace xgboost
+
+#endif  // EVALUATE_SPLITS_CUH_

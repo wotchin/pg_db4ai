@@ -1,0 +1,215 @@
+/**
+ * Copyright 2020-2025, XGBoost contributors
+ */
+#include <gtest/gtest.h>
+
+#include <memory>  // for dynamic_pointer_cast
+
+#include "../../../src/common/io.h"  // for AlignedFileWriteStream
+#include "../../../src/data/device_adapter.cuh"
+#include "../../../src/data/ellpack_page.cuh"
+#include "../../../src/data/ellpack_page.h"
+#include "../../../src/data/iterative_dmatrix.h"
+#include "../../../src/tree/param.h"   // TrainParam
+#include "../common/test_hist_util.h"  // for ValidateCuts
+#include "../filesystem.h"             // for TemporaryDirectory
+#include "../helpers.h"
+#include "test_iterative_dmatrix.h"
+
+namespace xgboost::data {
+void TestEquivalent(float sparsity) {
+  auto ctx = MakeCUDACtx(0);
+
+  CudaArrayIterForTest iter{sparsity};
+  IterativeDMatrix m{
+      &iter, iter.Proxy(), nullptr, Reset, Next, std::numeric_limits<float>::quiet_NaN(), 0, 256};
+  std::size_t offset = 0;
+  auto first = (*m.GetEllpackBatches(&ctx, {}).begin()).Impl();
+  std::unique_ptr<EllpackPageImpl> page_concatenated{new EllpackPageImpl{
+      &ctx, first->CutsShared(), first->is_dense, first->info.row_stride, 1000 * 100}};
+  for (auto& batch : m.GetBatches<EllpackPage>(&ctx, {})) {
+    auto page = batch.Impl();
+    size_t num_elements = page_concatenated->Copy(&ctx, page, offset);
+    offset += num_elements;
+  }
+  std::vector<common::CompressedByteT> h_iter_buffer;
+  auto from_iter = page_concatenated->GetHostEllpack(&ctx, &h_iter_buffer);
+  ASSERT_EQ(m.Info().num_col_, CudaArrayIterForTest::Cols());
+  ASSERT_EQ(m.Info().num_row_, CudaArrayIterForTest::Rows());
+
+  std::string interface_str = iter.AsArray();
+  auto adapter = CupyAdapter(interface_str);
+  std::unique_ptr<DMatrix> dm{
+      DMatrix::Create(&adapter, std::numeric_limits<float>::quiet_NaN(), 0)};
+  auto bp = BatchParam{256, tree::TrainParam::DftSparseThreshold()};
+  for (auto& ellpack : dm->GetBatches<EllpackPage>(&ctx, bp)) {
+    std::vector<common::CompressedByteT> h_data_buffer;
+    auto from_data = ellpack.Impl()->GetHostEllpack(&ctx, &h_data_buffer);
+
+    std::visit(
+        [](auto&& from_iter, auto&& from_data) {
+          ASSERT_EQ(from_iter.NumFeatures(), from_data.NumFeatures());
+        },
+        from_iter, from_data);
+
+    common::ValidateCuts(page_concatenated->Cuts(), dm.get(), 256);
+    common::ValidateCuts(ellpack.Impl()->Cuts(), dm.get(), 256);
+
+    std::vector<common::CompressedByteT> buffer_from_iter, buffer_from_data;
+    auto data_iter = page_concatenated->GetHostEllpack(&ctx, &buffer_from_iter);
+    auto data_buf = ellpack.Impl()->GetHostEllpack(&ctx, &buffer_from_data);
+    ASSERT_NE(buffer_from_data.size(), 0);
+    ASSERT_NE(buffer_from_iter.size(), 0);
+    CHECK_EQ(ellpack.Impl()->NumSymbols(), page_concatenated->NumSymbols());
+
+    std::visit([](auto&& from_iter,
+                  auto&& from_data) { CHECK_EQ(from_data.row_stride, from_iter.row_stride); },
+               from_iter, from_data);
+    std::visit(
+        [](auto&& from_data, auto&& data_buf, auto&& data_iter) {
+          ASSERT_EQ(data_buf.row_stride, data_iter.row_stride);
+          ASSERT_EQ(data_buf.NullValue(), data_iter.NullValue());
+          ASSERT_EQ(from_data.n_rows * from_data.row_stride, data_buf.n_rows * data_buf.row_stride);
+        },
+        from_data, data_buf, data_iter);
+  }
+}
+
+TEST(IterativeDeviceDMatrix, Basic) {
+  TestEquivalent(0.0);
+  TestEquivalent(0.5);
+}
+
+TEST(IterativeDeviceDMatrix, RowMajor) {
+  CudaArrayIterForTest iter(0.0f);
+  IterativeDMatrix m{
+      &iter, iter.Proxy(), nullptr, Reset, Next, std::numeric_limits<float>::quiet_NaN(), 0, 256};
+  size_t n_batches = 0;
+  std::string interface_str = iter.AsArray();
+  Context ctx{MakeCUDACtx(0)};
+  for (auto& ellpack : m.GetBatches<EllpackPage>(&ctx, {})) {
+    n_batches++;
+    auto impl = ellpack.Impl();
+
+    auto cols = CudaArrayIterForTest::Cols();
+    auto rows = CudaArrayIterForTest::Rows();
+
+    auto j_interface = Json::Load({interface_str.c_str(), interface_str.size()});
+    ArrayInterface<2> loaded{get<Object const>(j_interface)};
+    std::vector<float> h_data(cols * rows);
+    common::Span<float const> s_data{static_cast<float const*>(loaded.data), cols * rows};
+    dh::CopyDeviceSpanToVector(&h_data, s_data);
+
+    impl->VisitOnHost(&ctx, [&](auto&& h_accessor) {
+      auto cut_ptr = h_accessor.feature_segments;
+      for (auto i = 0ull; i < rows * cols; i++) {
+        int column_idx = i % cols;
+        EXPECT_EQ(impl->Cuts().SearchBin(h_data[i], column_idx),
+                  h_accessor.gidx_iter[i] + cut_ptr[column_idx]);
+      }
+    });
+
+    EXPECT_EQ(m.Info().num_col_, cols);
+    EXPECT_EQ(m.Info().num_row_, rows);
+    EXPECT_EQ(m.Info().num_nonzero_, rows * cols);
+  }
+  // All batches are concatenated.
+  ASSERT_EQ(n_batches, 1);
+}
+
+TEST(IterativeDeviceDMatrix, RowMajorMissing) {
+  const float kMissing = std::numeric_limits<float>::quiet_NaN();
+  bst_idx_t rows = 4;
+  size_t cols = 3;
+  CudaArrayIterForTest iter{0.0f, rows, cols, 2};
+  std::string interface_str = iter.AsArray();
+  auto j_interface = Json::Load({interface_str.c_str(), interface_str.size()});
+  ArrayInterface<2> loaded{get<Object const>(j_interface)};
+  std::vector<float> h_data(cols * rows);
+  common::Span<float const> s_data{static_cast<float const*>(loaded.data), cols * rows};
+  dh::CopyDeviceSpanToVector(&h_data, s_data);
+  h_data[1] = kMissing;
+  h_data[5] = kMissing;
+  h_data[6] = kMissing;
+  h_data[9] = kMissing;   // idx = (2, 0)
+  h_data[10] = kMissing;  // idx = (2, 1)
+  auto ptr =
+      thrust::device_ptr<float>(reinterpret_cast<float*>(get<Integer>(j_interface["data"][0])));
+  thrust::copy(h_data.cbegin(), h_data.cend(), ptr);
+  IterativeDMatrix m{
+      &iter, iter.Proxy(), nullptr, Reset, Next, std::numeric_limits<float>::quiet_NaN(), 0, 256};
+  auto ctx = MakeCUDACtx(0);
+  auto& ellpack =
+      *m.GetBatches<EllpackPage>(&ctx, BatchParam{256, tree::TrainParam::DftSparseThreshold()})
+           .begin();
+  auto impl = ellpack.Impl();
+  impl->VisitOnHost(&ctx, [&](auto&& h_acc) {
+    // null values get placed after valid values in a row
+    ASSERT_FALSE(h_acc.IsDenseCompressed());
+    ASSERT_EQ(h_acc.row_stride, cols - 1);
+    ASSERT_EQ(h_acc.gidx_iter[7], impl->NullValue());
+    for (std::size_t i = 0; i < 7; ++i) {
+      ASSERT_NE(h_acc.gidx_iter[i], impl->NullValue());
+    }
+  });
+
+  EXPECT_EQ(m.Info().num_col_, cols);
+  EXPECT_EQ(m.Info().num_row_, rows);
+  EXPECT_EQ(m.Info().num_nonzero_, rows * cols - 5);
+}
+
+TEST(IterativeDeviceDMatrix, IsDense) {
+  int num_bins = 16;
+  auto test = [num_bins](float sparsity) {
+    CudaArrayIterForTest iter(sparsity);
+    IterativeDMatrix m(&iter, iter.Proxy(), nullptr, Reset, Next,
+                       std::numeric_limits<float>::quiet_NaN(), 0, num_bins);
+    if (sparsity == 0.0) {
+      ASSERT_TRUE(m.IsDense());
+    } else {
+      ASSERT_FALSE(m.IsDense());
+    }
+  };
+  test(0.0);
+  test(0.1);
+  test(1.0);
+}
+
+TEST(IterativeDeviceDMatrix, Ref) {
+  Context ctx{MakeCUDACtx(0)};
+  TestRefDMatrix<EllpackPage, CudaArrayIterForTest>(
+      &ctx, [](EllpackPage const& page) { return page.Impl()->Cuts(); });
+}
+
+TEST(IterativeDeviceDMatrix, IO) {
+  auto ctx = MakeCUDACtx(0);
+  std::size_t n_samples = 2048, n_features = 128;
+  auto p_fmat = RandomDataGenerator{n_samples, n_features, 0.0}
+                    .Bins(32)
+                    .Device(ctx.Device())
+                    .GenerateQuantileDMatrix(true);
+  auto qdm = std::dynamic_pointer_cast<IterativeDMatrix>(p_fmat);
+  ASSERT_TRUE(qdm);
+  common::TemporaryDirectory tmpdir;
+  auto path = tmpdir.Path() / "data.qdm";
+  {
+    auto fo = std::make_unique<common::AlignedFileWriteStream>(path.string(), "wb");
+    qdm->Save(fo.get());
+  }
+  auto fsize = std::filesystem::file_size(path);
+  auto fi = std::make_unique<common::MemBufFileReadStream>(path.string(), 0ul, fsize);
+  auto loaded = std::shared_ptr<IterativeDMatrix>(IterativeDMatrix::Load(&ctx, fi.get()));
+  for (auto const& orig_page : qdm->GetBatches<EllpackPage>(&ctx, {})) {
+    for (auto const& new_page : loaded->GetBatches<EllpackPage>(&ctx, {})) {
+      std::vector<common::CompressedByteT> h_orig, h_new;
+      orig_page.Impl()->GetHostEllpack(&ctx, &h_orig);
+      new_page.Impl()->GetHostEllpack(&ctx, &h_new);
+      ASSERT_EQ(h_orig, h_new);
+      auto orig_cuts = orig_page.Impl()->Cuts();
+      auto new_cuts = new_page.Impl()->Cuts();
+      ASSERT_EQ(orig_cuts.Ptrs(), new_cuts.Ptrs());
+      ASSERT_EQ(orig_cuts.Values(), new_cuts.Values());
+    }
+  }
+}
+}  // namespace xgboost::data

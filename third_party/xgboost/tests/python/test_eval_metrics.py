@@ -1,0 +1,296 @@
+import numpy as np
+import pytest
+import xgboost as xgb
+from xgboost import testing as tm
+from xgboost.testing.metrics import (
+    check_expectile_error,
+    check_precision_score,
+    check_quantile_error,
+    run_pr_auc_binary,
+    run_pr_auc_ltr,
+    run_pr_auc_multi,
+    run_roc_auc_binary,
+    run_roc_auc_multi,
+)
+
+rng = np.random.RandomState(1337)
+
+
+class TestEvalMetrics:
+    xgb_params_01 = {"nthread": 1, "eval_metric": "error"}
+
+    xgb_params_02 = {"nthread": 1, "eval_metric": ["error"]}
+
+    xgb_params_03 = {"nthread": 1, "eval_metric": ["rmse", "error"]}
+
+    xgb_params_04 = {"nthread": 1, "eval_metric": ["error", "rmse"]}
+
+    def evalerror_01(self, preds, dtrain):
+        labels = dtrain.get_label()
+        return "error", float(sum(labels != (preds > 0.0))) / len(labels)
+
+    def evalerror_02(self, preds, dtrain):
+        labels = dtrain.get_label()
+        return [("error", float(sum(labels != (preds > 0.0))) / len(labels))]
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def evalerror_03(self, preds, dtrain):
+        from sklearn.metrics import mean_squared_error
+
+        labels = dtrain.get_label()
+        return [
+            ("rmse", mean_squared_error(labels, preds)),
+            ("error", float(sum(labels != (preds > 0.0))) / len(labels)),
+        ]
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def evalerror_04(self, preds, dtrain):
+        from sklearn.metrics import mean_squared_error
+
+        labels = dtrain.get_label()
+        return [
+            ("error", float(sum(labels != (preds > 0.0))) / len(labels)),
+            ("rmse", mean_squared_error(labels, preds)),
+        ]
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def test_eval_metrics(self):
+        try:
+            from sklearn.model_selection import train_test_split
+        except ImportError:
+            from sklearn.cross_validation import train_test_split
+        from sklearn.datasets import load_digits
+
+        digits = load_digits(n_class=2)
+        X = digits["data"]
+        y = digits["target"]
+
+        Xt, Xv, yt, yv = train_test_split(X, y, test_size=0.2, random_state=0)
+
+        dtrain = xgb.DMatrix(Xt, label=yt)
+        dvalid = xgb.DMatrix(Xv, label=yv)
+
+        watchlist = [(dtrain, "train"), (dvalid, "val")]
+
+        gbdt_01 = xgb.train(self.xgb_params_01, dtrain, num_boost_round=10)
+        gbdt_02 = xgb.train(self.xgb_params_02, dtrain, num_boost_round=10)
+        gbdt_03 = xgb.train(self.xgb_params_03, dtrain, num_boost_round=10)
+        assert gbdt_01.predict(dvalid)[0] == gbdt_02.predict(dvalid)[0]
+        assert gbdt_01.predict(dvalid)[0] == gbdt_03.predict(dvalid)[0]
+
+        gbdt_01 = xgb.train(
+            self.xgb_params_01, dtrain, 10, watchlist, early_stopping_rounds=2
+        )
+        gbdt_02 = xgb.train(
+            self.xgb_params_02, dtrain, 10, watchlist, early_stopping_rounds=2
+        )
+        gbdt_03 = xgb.train(
+            self.xgb_params_03, dtrain, 10, watchlist, early_stopping_rounds=2
+        )
+        gbdt_04 = xgb.train(
+            self.xgb_params_04, dtrain, 10, watchlist, early_stopping_rounds=2
+        )
+        assert gbdt_01.predict(dvalid)[0] == gbdt_02.predict(dvalid)[0]
+        assert gbdt_01.predict(dvalid)[0] == gbdt_03.predict(dvalid)[0]
+        assert gbdt_03.predict(dvalid)[0] != gbdt_04.predict(dvalid)[0]
+
+        gbdt_01 = xgb.train(
+            self.xgb_params_01,
+            dtrain,
+            10,
+            watchlist,
+            early_stopping_rounds=2,
+            custom_metric=self.evalerror_01,
+        )
+        gbdt_02 = xgb.train(
+            self.xgb_params_02,
+            dtrain,
+            10,
+            watchlist,
+            early_stopping_rounds=2,
+            custom_metric=self.evalerror_02,
+        )
+        gbdt_03 = xgb.train(
+            self.xgb_params_03,
+            dtrain,
+            10,
+            watchlist,
+            early_stopping_rounds=2,
+            custom_metric=self.evalerror_03,
+        )
+        gbdt_04 = xgb.train(
+            self.xgb_params_04,
+            dtrain,
+            10,
+            watchlist,
+            early_stopping_rounds=2,
+            custom_metric=self.evalerror_04,
+        )
+        assert gbdt_01.predict(dvalid)[0] == gbdt_02.predict(dvalid)[0]
+        assert gbdt_01.predict(dvalid)[0] == gbdt_03.predict(dvalid)[0]
+        assert gbdt_03.predict(dvalid)[0] != gbdt_04.predict(dvalid)[0]
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def test_gamma_deviance(self):
+        from sklearn.metrics import mean_gamma_deviance
+
+        rng = np.random.RandomState(1994)
+        n_samples = 100
+        n_features = 30
+
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+        y = y - y.min() * 100
+
+        reg = xgb.XGBRegressor(
+            tree_method="hist",
+            objective="reg:gamma",
+            n_estimators=10,
+            eval_metric="gamma-deviance",
+        )
+        reg.fit(X, y)
+
+        booster = reg.get_booster()
+        score = reg.predict(X)
+        gamma_dev = float(booster.eval(xgb.DMatrix(X, y)).split(":")[1].split(":")[0])
+        skl_gamma_dev = mean_gamma_deviance(y, score)
+        np.testing.assert_allclose(gamma_dev, skl_gamma_dev, atol=1e-6)
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def test_gamma_lik(self) -> None:
+        import scipy.stats as stats
+
+        rng = np.random.default_rng(1994)
+        n_samples = 32
+        n_features = 10
+
+        X = rng.normal(0, 1, size=n_samples * n_features).reshape(
+            (n_samples, n_features)
+        )
+
+        alpha, loc, beta = 5.0, 11.1, 22
+        y = stats.gamma.rvs(
+            alpha, loc=loc, scale=beta, size=n_samples, random_state=rng
+        )
+        reg = xgb.XGBRegressor(
+            tree_method="hist",
+            objective="reg:gamma",
+            n_estimators=64,
+            eval_metric="gamma-nloglik",
+        )
+        reg.fit(X, y, eval_set=[(X, y)])
+
+        score = reg.predict(X)
+
+        booster = reg.get_booster()
+        nloglik = float(booster.eval(xgb.DMatrix(X, y)).split(":")[1].split(":")[0])
+
+        # \beta_i = - (1 / \theta_i a)
+        # where \theta_i is the canonical parameter
+        # XGBoost uses the canonical link function of gamma in evaluation function.
+        # so \theta = - (1.0 / y)
+        # dispersion is hardcoded as 1.0, so shape (a in scipy parameter) is also 1.0
+        beta = -(1.0 / (-(1.0 / y)))  # == y
+        nloglik_stats = -stats.gamma.logpdf(score, a=1.0, scale=beta)
+
+        np.testing.assert_allclose(nloglik, np.mean(nloglik_stats), rtol=1e-3)
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    @pytest.mark.parametrize("n_samples", [100, 1000, 10000])
+    def test_roc_auc(self, n_samples: int) -> None:
+        run_roc_auc_binary("hist", n_samples, "cpu")
+
+    @pytest.mark.parametrize(
+        "n_samples,weighted,multi_label,multi_strategy",
+        [
+            (4, False, False, "one_output_per_tree"),
+            (100, False, False, "one_output_per_tree"),
+            (1000, False, False, "one_output_per_tree"),
+            (10000, True, False, "one_output_per_tree"),
+            (100, False, False, "multi_output_tree"),
+            (100, False, True, "multi_output_tree"),
+            (1000, True, True, "multi_output_tree"),
+        ],
+    )
+    def test_roc_auc_multi(
+        self,
+        n_samples: int,
+        weighted: bool,
+        multi_label: bool,
+        multi_strategy: str,
+    ) -> None:
+        run_roc_auc_multi(
+            "hist",
+            n_samples,
+            weighted,
+            "cpu",
+            multi_label=multi_label,
+            multi_strategy=multi_strategy,
+        )
+
+    def test_pr_auc_binary(self) -> None:
+        run_pr_auc_binary("hist", "cpu")
+
+    @pytest.mark.parametrize(
+        "multi_label,multi_strategy",
+        [
+            (False, "one_output_per_tree"),
+            (False, "multi_output_tree"),
+            (True, "multi_output_tree"),
+        ],
+    )
+    def test_pr_auc_multi(self, multi_label: bool, multi_strategy: str) -> None:
+        run_pr_auc_multi(
+            "hist",
+            "cpu",
+            multi_label=multi_label,
+            multi_strategy=multi_strategy,
+        )
+
+    def test_pr_auc_ltr(self) -> None:
+        run_pr_auc_ltr("hist", "cpu")
+
+    def test_precision_score(self) -> None:
+        check_precision_score("hist", "cpu")
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def test_quantile_error(self) -> None:
+        check_quantile_error("hist", "cpu")
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def test_expectile_error(self) -> None:
+        check_expectile_error("hist", "cpu")
+
+    def test_expectile_uniform_convergence(self) -> None:
+        rng = np.random.default_rng(42)
+        n_samples = 1_000
+        y = rng.random(n_samples)
+        X = np.zeros((n_samples, 1))
+        dtrain = xgb.DMatrix(X, label=y)
+
+        def uniform_expectile(alpha: float) -> float:
+            sqrt_alpha = np.sqrt(alpha)
+            sqrt_one_minus = np.sqrt(1.0 - alpha)
+            return sqrt_alpha / (sqrt_alpha + sqrt_one_minus)
+
+        params = {
+            "tree_method": "hist",
+            "objective": "reg:expectileerror",
+            "max_depth": 1,
+            "min_child_weight": 0.0,
+            "gamma": 0.0,
+            "lambda": 0.0,
+            "alpha": 0.0,
+            "subsample": 1.0,
+            "colsample_bytree": 1.0,
+            "eta": 0.2,
+        }
+        num_boost_round = 200
+        atol = 1e-2
+
+        for alpha in [0.1, 0.5, 0.9]:
+            params["expectile_alpha"] = alpha
+            booster = xgb.train(params, dtrain, num_boost_round=num_boost_round)
+            pred = float(booster.predict(dtrain).mean())
+            expected = uniform_expectile(alpha)
+            np.testing.assert_allclose(pred, expected, rtol=atol, atol=atol)
