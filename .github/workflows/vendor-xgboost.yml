@@ -21,21 +21,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Import or verify locked source distribution
+      - name: Import or repair only missing locked source files
         run: |
           if test -d third_party/xgboost; then
-            python3 tools/vendor_xgboost.py --verify
+            python3 tools/vendor_xgboost.py --repair-missing
           else
             python3 tools/vendor_xgboost.py
-            python3 tools/vendor_xgboost.py --verify
           fi
-      - name: Commit vendored source and all upstream licenses
+          python3 tools/vendor_xgboost.py --verify
+      - name: Commit all vendored source, including upstream-ignored files
         run: |
-          git add third_party/xgboost third_party/xgboost.manifest.json
+          git add -f third_party/xgboost third_party/xgboost.manifest.json
           if ! git diff --cached --quiet; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'Vendor SHA256-verified XGBoost 3.4.2 source and bundled dependencies'
+            git commit -m 'Complete SHA256-verified vendored source, including upstream-ignored files'
             git push origin HEAD:main
           fi
       - name: Source artifact
@@ -46,4 +46,5 @@ jobs:
             third_party/xgboost
             third_party/xgboost.lock.json
             third_party/xgboost.manifest.json
+          include-hidden-files: true
           retention-days: 7
