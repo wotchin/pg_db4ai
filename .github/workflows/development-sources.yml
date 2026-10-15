@@ -18,3 +18,14 @@ jobs:
           name: postgresql-offline-source
           path: postgresql-18.0.tar.bz2
           retention-days: 7
+      - name: Fetch parser-generator packages for offline development containers
+        run: |
+          sudo apt-get update -qq
+          mkdir packages
+          cd packages
+          apt-get download bison flex
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-parser-tools
+          path: packages/*.deb
+          retention-days: 7
