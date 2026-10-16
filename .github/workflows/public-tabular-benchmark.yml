@@ -9,9 +9,11 @@ permissions:
 jobs:
   benchmark:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Lock actual base images
         id: base
         run: |
@@ -30,6 +32,20 @@ jobs:
           build-args: PG_IMAGE=${{ steps.base.outputs.image }}
           cache-from: type=gha,scope=db4ai-tabular
           cache-to: type=gha,mode=max,scope=db4ai-tabular
+      - name: Stage original extension with identical benchmark tooling
+        run: |
+          mkdir -p /tmp/db4ai-before
+          git archive bde6ee99fc14ad0b2e7cc8e27868470702fe78f8 | tar -x -C /tmp/db4ai-before
+          mkdir -p /tmp/db4ai-before/benchmarks
+          cp -R benchmarks/tabular /tmp/db4ai-before/benchmarks/
+      - uses: docker/build-push-action@v6
+        with:
+          context: /tmp/db4ai-before
+          file: /tmp/db4ai-before/benchmarks/tabular/Dockerfile
+          load: true
+          tags: pg-db4ai-before:local
+          build-args: PG_IMAGE=${{ steps.base.outputs.image }}
+          cache-from: type=gha,scope=db4ai-tabular
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -57,15 +73,29 @@ jobs:
         run: |
           set -o pipefail
           /tmp/bench-host/bin/python benchmarks/tabular/run.py --out /tmp/db4ai-benchmark/results --seeds 42,2024,7 --repeats 3 2>&1 | tee /tmp/db4ai-benchmark/run.log
+      - name: Paired same-host prediction A/B
+        if: always()
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+          OMP_NUM_THREADS: '1'
+        run: |
+          set -o pipefail
+          if test -f /tmp/db4ai-benchmark/results/results.json; then
+            /tmp/bench-host/bin/python benchmarks/tabular/prediction_ab.py \
+              --data /tmp/db4ai-benchmark/results --out /tmp/db4ai-benchmark/prediction-ab --repeats 11 \
+              2>&1 | tee /tmp/db4ai-benchmark/prediction-ab.log
+          fi
       - name: Capture inspectable code and environment
         if: always()
         run: |
           git archive --format=tar.gz HEAD > /tmp/db4ai-benchmark/benchmark-source.tar.gz
           docker image inspect pg-db4ai-benchmark:local > /tmp/db4ai-benchmark/pg-image.json || true
+          docker image inspect pg-db4ai-before:local > /tmp/db4ai-benchmark/pg-before-image.json || true
+          docker image inspect opengauss-db4ai-benchmark:local > /tmp/db4ai-benchmark/og-image.json || true
           docker stats --no-stream > /tmp/db4ai-benchmark/final-container-stats.txt || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: public-tabular-benchmark-full
+          name: public-tabular-benchmark-optimized
           path: /tmp/db4ai-benchmark
           retention-days: 30
