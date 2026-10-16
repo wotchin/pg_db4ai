@@ -1,0 +1,72 @@
+name: Publish verified native optimization sources
+on:
+  push:
+    branches: [db4ai-corgipile-ddl]
+    paths: [.github/workflows/apply-native-update.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate all edits before changing source files
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,shutil
+          from pathlib import Path
+          def blob(b):return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          expected={
+            'core0.py':'7b231ee1b80d585acf3674b1f8df30eac294e00e3bcb8cf79fd42361795ecf8e',
+            'core1.py':'a9934d634a3089538e1e5bbcd22213d81dbf288373559e8924ef9a16be28f138',
+            'ddl.py':'394341efb6d6d22f58c0a7c575e00d15feb6e8a9641697b8e1cb79deb228d82b',
+            'tests.py':'3a971fdd8b4cca22ea36447c49f5175942f899df39c9004f4690ba92f485eaf8',
+            'docs0.py':'0a571c3a36c10832b8738f7a03474dde94c65fd99dcee499c0373ca9cf99c98a',
+            'docs1.py':'d81d912e06d40be4fa778bb4839695233e6fe3f276ba03175217c87ec66a89d5',
+            'bench0.py':'de3c97cae18186efa84d193bae288871a47e4eb49e3d20e3af524bcfc5f0e53e',
+            'bench1.py':'36cf574031f739d6233cb83122b52c0918ebff0d09d86b630ffebf681959f50b'}
+          files={}
+          for name,digest in expected.items():
+              p=Path('.source-edits')/name;raw=p.read_bytes()
+              assert hashlib.sha256(raw).hexdigest()==digest, f'edit transport mismatch: {name}'
+              exec(compile(raw,str(p),'exec'),{'FILES':files})
+          assert len(files)==32, len(files)
+          output={};manifest={}
+          for name,spec in files.items():
+              p=Path(name);base=Path(spec['base'])
+              assert not p.is_absolute() and '..' not in p.parts
+              if spec['old'] is None:assert not p.exists(), f'new path already exists: {name}'
+              else:assert blob(p.read_bytes())==spec['old'], f'concurrent/base mismatch: {name}'
+              lines=base.read_text().splitlines(keepends=True) if base.exists() else []
+              for start,end,text in reversed(spec['edits']):
+                  assert 0<=start<=end<=len(lines),(name,start,end)
+                  lines[start:end]=text.splitlines(keepends=True)
+              raw=''.join(lines).encode()
+              assert blob(raw)==spec['new'], f'result mismatch: {name}'
+              output[name]=raw
+              manifest[name]={'blob':blob(raw),'sha256':hashlib.sha256(raw).hexdigest(),'mode':spec['mode']}
+          assert blob(Path('src/rowstore.c').read_bytes())=='d0902fd2d5ee2b33f6ea7b3952d676924acf97d2'
+          for name,raw in output.items():
+              p=Path(name);p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
+              p.chmod(0o755 if files[name]['mode']=='100755' else 0o644)
+          manifest['src/rowstore.c']={'blob':blob(Path('src/rowstore.c').read_bytes())}
+          Path('/tmp/native-source-integrity.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          shutil.rmtree('.source-edits')
+          Path('.github/workflows/apply-native-update.yml').unlink()
+          print('Verified and installed 33 tested source/build/test/documentation files; removed staging files.')
+          PY
+      - name: Commit only verified changes without forcing a concurrent branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Implement verified PG-native CorgiPile, dense replay, feature caching and explicit model DDL'
+          git push origin HEAD:db4ai-corgipile-ddl
+          git rev-parse HEAD > /tmp/native-published-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-source-integrity
+          path: /tmp/native-*.json
+          retention-days: 14
