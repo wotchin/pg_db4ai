@@ -1,0 +1,55 @@
+name: Public tabular Docker benchmark
+on:
+  workflow_dispatch:
+  push:
+    branches: [benchmark-public-tabular]
+    paths: [.github/workflows/public-tabular-benchmark.yml]
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lock actual base images
+        id: base
+        run: |
+          mkdir -p /tmp/db4ai-benchmark
+          docker pull postgres:18-bookworm
+          docker image inspect postgres:18-bookworm > /tmp/db4ai-benchmark/postgres-base.json
+          echo "image=$(docker image inspect postgres:18-bookworm --format '{{index .RepoDigests 0}}')" >> "$GITHUB_OUTPUT"
+          docker pull enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: benchmarks/tabular/Dockerfile
+          load: true
+          tags: pg-db4ai-benchmark:local
+          build-args: PG_IMAGE=${{ steps.base.outputs.image }}
+          cache-from: type=gha,scope=db4ai-tabular
+          cache-to: type=gha,mode=max,scope=db4ai-tabular
+      - name: Host data preparation environment
+        run: |
+          python3 -m venv /tmp/bench-host
+          /tmp/bench-host/bin/pip install numpy==2.3.3 scipy==1.16.2 pandas==2.3.3 scikit-learn==1.7.2 xlrd==2.0.2
+      - name: Pilot measured run
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+          OMP_NUM_THREADS: '1'
+        run: |
+          set -o pipefail
+          /tmp/bench-host/bin/python benchmarks/tabular/run.py --out /tmp/db4ai-benchmark/pilot --seeds 42 --repeats 1 2>&1 | tee /tmp/db4ai-benchmark/run.log
+      - name: Capture inspectable code and environment
+        if: always()
+        run: |
+          git archive --format=tar.gz HEAD > /tmp/db4ai-benchmark/benchmark-source.tar.gz
+          docker image inspect pg-db4ai-benchmark:local > /tmp/db4ai-benchmark/pg-image.json || true
+          docker stats --no-stream > /tmp/db4ai-benchmark/final-container-stats.txt || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-tabular-benchmark-pilot
+          path: /tmp/db4ai-benchmark
+          retention-days: 30
