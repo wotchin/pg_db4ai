@@ -1,0 +1,59 @@
+name: Recover benchmark diagnostics
+on:
+  push:
+    branches: [benchmark-runtime-metadata]
+    paths: [.github/workflows/benchmark-diagnostics.yml]
+permissions:
+  contents: write
+  actions: read
+  checks: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve run failure evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p diagnostics
+          python3 - <<'PY'
+          import io,json,os,re,urllib.request,zipfile
+          from pathlib import Path
+          base='https://api.github.com/repos/wotchin/pg_db4ai'
+          def get(path):
+              req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              with urllib.request.urlopen(req,timeout=40) as r:return r.read()
+          records=[]
+          for run,job in [(38935367352,117089401998),(38936732724,117094001059)]:
+              result={'run':run,'job':job}
+              for what,path in [('job','/actions/jobs/'+str(job)),('annotations','/check-runs/'+str(job)+'/annotations')]:
+                  try: result[what]=json.loads(get(path))
+                  except Exception as exc: result[what+'_error']=str(exc)
+              try:
+                  raw=get('/actions/runs/'+str(run)+'/logs')
+                  with zipfile.ZipFile(io.BytesIO(raw)) as z:
+                      result['log_files']=z.namelist()
+                      for f in z.namelist():
+                          text=z.read(f).decode('utf-8',errors='replace')
+                          if any(x in f.lower() for x in ['measured','paired','artifact','benchmark']):
+                              Path('diagnostics',str(run)+'-'+f.replace('/','_')).write_text(text[-100000:])
+              except Exception as exc:result['logs_error']=str(exc)
+              records.append(result)
+          Path('diagnostics/summary.json').write_text(json.dumps(records,indent=2)+'\n')
+          print(json.dumps(records,indent=2))
+          PY
+      - name: Persist compact diagnosis on the diagnostic branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add diagnostics
+          git diff --cached --quiet || git commit -m 'Record actual benchmark workflow failure diagnostics'
+          git push origin HEAD:benchmark-runtime-metadata
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-failure-diagnostics
+          path: diagnostics
+          retention-days: 7
