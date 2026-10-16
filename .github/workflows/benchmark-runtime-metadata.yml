@@ -1,0 +1,42 @@
+name: Identify benchmark runtime versions
+on:
+  push:
+    branches: [benchmark-runtime-metadata]
+    paths: [.github/workflows/benchmark-runtime-metadata.yml]
+permissions:
+  contents: read
+jobs:
+  identify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Inspect immutable openGauss image library
+        run: |
+          mkdir -p /tmp/runtime-metadata
+          docker pull enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+          cat > /tmp/runtime-metadata/inspect.py <<'PY'
+          import ctypes, hashlib, json
+          from pathlib import Path
+          p=Path('/usr/local/opengauss/lib/libxgboost.so')
+          out={'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size}
+          lib=ctypes.CDLL(str(p))
+          try:
+              a,b,c=ctypes.c_int(),ctypes.c_int(),ctypes.c_int()
+              fn=lib.XGBoostVersion
+              fn.argtypes=[ctypes.POINTER(ctypes.c_int)]*3
+              fn.restype=None
+              fn(ctypes.byref(a),ctypes.byref(b),ctypes.byref(c))
+              out['xgboost_version']=f'{a.value}.{b.value}.{c.value}'
+          except Exception as e: out['version_error']=str(e)
+          Path('/out/runtime.json').write_text(json.dumps(out,indent=2)+'\n')
+          print(out)
+          PY
+          docker run --rm --entrypoint /bin/bash -v /tmp/runtime-metadata:/out \
+            enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5 \
+            -lc 'apt-get update -qq && apt-get install -y --no-install-recommends libgomp1 python3-minimal && ldd /usr/local/opengauss/lib/libxgboost.so > /out/ldd.txt && python3 /out/inspect.py'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: opengauss-runtime-metadata
+          path: /tmp/runtime-metadata
+          retention-days: 30
