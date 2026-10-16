@@ -3,18 +3,17 @@ on:
   push:
     branches: [db4ai-corgipile-ddl]
     paths: [.github/workflows/apply-native-update.yml]
-permissions:
-  contents: write
+permissions: {contents: write}
 jobs:
   publish:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Validate all edits before changing source files
+      - name: Validate all edits and publish only non-workflow source paths
         run: |
           python3 - <<'PY'
-          import hashlib,json,os,shutil
+          import hashlib,json,shutil
           from pathlib import Path
           def blob(b):return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
           expected={
@@ -31,7 +30,7 @@ jobs:
               p=Path('.source-edits')/name;raw=p.read_bytes()
               assert hashlib.sha256(raw).hexdigest()==digest, f'edit transport mismatch: {name}'
               exec(compile(raw,str(p),'exec'),{'FILES':files})
-          assert len(files)==32, len(files)
+          assert len(files)==32
           output={};manifest={}
           for name,spec in files.items():
               p=Path(name);base=Path(spec['base'])
@@ -40,12 +39,12 @@ jobs:
               else:assert blob(p.read_bytes())==spec['old'], f'concurrent/base mismatch: {name}'
               lines=base.read_text().splitlines(keepends=True) if base.exists() else []
               for start,end,text in reversed(spec['edits']):
-                  assert 0<=start<=end<=len(lines),(name,start,end)
+                  assert 0<=start<=end<=len(lines)
                   lines[start:end]=text.splitlines(keepends=True)
               raw=''.join(lines).encode()
               assert blob(raw)==spec['new'], f'result mismatch: {name}'
-              output[name]=raw
               manifest[name]={'blob':blob(raw),'sha256':hashlib.sha256(raw).hexdigest(),'mode':spec['mode']}
+              if not name.startswith('.github/'):output[name]=raw
           assert blob(Path('src/rowstore.c').read_bytes())=='d0902fd2d5ee2b33f6ea7b3952d676924acf97d2'
           for name,raw in output.items():
               p=Path(name);p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(raw)
@@ -53,17 +52,16 @@ jobs:
           manifest['src/rowstore.c']={'blob':blob(Path('src/rowstore.c').read_bytes())}
           Path('/tmp/native-source-integrity.json').write_text(json.dumps(manifest,indent=2)+'\n')
           shutil.rmtree('.source-edits')
-          Path('.github/workflows/apply-native-update.yml').unlink()
-          print('Verified and installed 33 tested source/build/test/documentation files; removed staging files.')
+          print('Verified all 33 files; workflow files intentionally unchanged by this token.')
           PY
-      - name: Commit only verified changes without forcing a concurrent branch
+      - name: Commit verified source changes without force
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
+          git diff --cached --name-only | grep '^.github/' && exit 1 || true
           git commit -m 'Implement verified PG-native CorgiPile, dense replay, feature caching and explicit model DDL'
           git push origin HEAD:db4ai-corgipile-ddl
-          git rev-parse HEAD > /tmp/native-published-commit.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
