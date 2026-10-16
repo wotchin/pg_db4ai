@@ -1,0 +1,95 @@
+name: Validated public tabular benchmark
+on:
+  push:
+    branches: [benchmark-public-tabular]
+    paths: [.github/workflows/benchmark-readiness-rerun.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [42, 2024, 7]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Record immutable images
+        id: base
+        run: |
+          mkdir -p /tmp/db4ai-benchmark
+          docker pull postgres:18-bookworm
+          docker image inspect postgres:18-bookworm > /tmp/db4ai-benchmark/postgres-base.json
+          echo "image=$(docker image inspect postgres:18-bookworm --format '{{index .RepoDigests 0}}')" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: benchmarks/tabular/Dockerfile
+          load: true
+          tags: pg-db4ai-benchmark:local
+          build-args: PG_IMAGE=${{ steps.base.outputs.image }}
+          cache-from: type=gha,scope=db4ai-tabular
+      - name: Stage original extension for A/B
+        if: matrix.seed == 42
+        run: |
+          mkdir -p /tmp/db4ai-before
+          git archive bde6ee99fc14ad0b2e7cc8e27868470702fe78f8 | tar -x -C /tmp/db4ai-before
+          mkdir -p /tmp/db4ai-before/benchmarks
+          cp -R benchmarks/tabular /tmp/db4ai-before/benchmarks/
+      - uses: docker/build-push-action@v6
+        if: matrix.seed == 42
+        with:
+          context: /tmp/db4ai-before
+          file: /tmp/db4ai-before/benchmarks/tabular/Dockerfile
+          load: true
+          tags: pg-db4ai-before:local
+          build-args: PG_IMAGE=${{ steps.base.outputs.image }}
+          cache-from: type=gha,scope=db4ai-tabular
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: benchmarks/tabular/Dockerfile.opengauss
+          load: true
+          tags: opengauss-db4ai-benchmark:local
+          cache-from: type=gha,scope=db4ai-tabular-og
+      - name: Host environment
+        run: |
+          python3 -m venv /tmp/bench-host
+          /tmp/bench-host/bin/pip install numpy==2.3.3 scipy==1.16.2 pandas==2.3.3 scikit-learn==1.7.2 xlrd==2.0.2
+      - name: Measure identical splits across engines
+        env: {OPENBLAS_NUM_THREADS: '1', OMP_NUM_THREADS: '1'}
+        run: |
+          set -o pipefail
+          /tmp/bench-host/bin/python benchmarks/tabular/export_transport.py \
+            --out /tmp/db4ai-benchmark/results --seeds ${{ matrix.seed }} --repeats 3 \
+            2>&1 | tee /tmp/db4ai-benchmark/run.log
+      - name: Paired prediction A/B
+        if: always() && matrix.seed == 42
+        env: {OPENBLAS_NUM_THREADS: '1', OMP_NUM_THREADS: '1'}
+        run: |
+          set -o pipefail
+          if test -f /tmp/db4ai-benchmark/results/results.json; then
+            /tmp/bench-host/bin/python benchmarks/tabular/prediction_ab.py \
+              --data /tmp/db4ai-benchmark/results --out /tmp/db4ai-benchmark/prediction-ab --repeats 11 \
+              2>&1 | tee /tmp/db4ai-benchmark/prediction-ab.log
+          fi
+      - name: Preserve all evidence
+        if: always()
+        run: |
+          git archive --format=tar.gz HEAD > /tmp/db4ai-benchmark/benchmark-source.tar.gz
+          for image in pg-db4ai-benchmark:local pg-db4ai-before:local opengauss-db4ai-benchmark:local; do
+            docker image inspect "$image" > "/tmp/db4ai-benchmark/${image%:*}-image.json" || true
+          done
+          sudo chown -R "$(id -u):$(id -g)" /tmp/db4ai-benchmark
+          find /tmp/db4ai-benchmark -type d -exec chmod u+rwx {} +
+          find /tmp/db4ai-benchmark -type f -exec chmod u+r {} +
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validated-tabular-seed-${{ matrix.seed }}
+          path: /tmp/db4ai-benchmark
+          retention-days: 30
