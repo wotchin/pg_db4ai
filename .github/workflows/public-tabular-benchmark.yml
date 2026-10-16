@@ -8,8 +8,12 @@ permissions:
   contents: read
 jobs:
   benchmark:
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [42, 2024, 7]
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,14 +35,15 @@ jobs:
           tags: pg-db4ai-benchmark:local
           build-args: PG_IMAGE=${{ steps.base.outputs.image }}
           cache-from: type=gha,scope=db4ai-tabular
-          cache-to: type=gha,mode=max,scope=db4ai-tabular
       - name: Stage original extension with identical benchmark tooling
+        if: matrix.seed == 42
         run: |
           mkdir -p /tmp/db4ai-before
           git archive bde6ee99fc14ad0b2e7cc8e27868470702fe78f8 | tar -x -C /tmp/db4ai-before
           mkdir -p /tmp/db4ai-before/benchmarks
           cp -R benchmarks/tabular /tmp/db4ai-before/benchmarks/
       - uses: docker/build-push-action@v6
+        if: matrix.seed == 42
         with:
           context: /tmp/db4ai-before
           file: /tmp/db4ai-before/benchmarks/tabular/Dockerfile
@@ -53,7 +58,6 @@ jobs:
           load: true
           tags: opengauss-db4ai-benchmark:local
           cache-from: type=gha,scope=db4ai-tabular-og
-          cache-to: type=gha,mode=max,scope=db4ai-tabular-og
       - name: Verify complete extension regression suite
         run: |
           mkdir -p /tmp/db4ai-benchmark/regression
@@ -66,15 +70,17 @@ jobs:
         run: |
           python3 -m venv /tmp/bench-host
           /tmp/bench-host/bin/pip install numpy==2.3.3 scipy==1.16.2 pandas==2.3.3 scikit-learn==1.7.2 xlrd==2.0.2
-      - name: Three-seed measured run
+      - name: Same-host engine comparison for one fixed split seed
         env:
           OPENBLAS_NUM_THREADS: '1'
           OMP_NUM_THREADS: '1'
         run: |
           set -o pipefail
-          /tmp/bench-host/bin/python benchmarks/tabular/run.py --out /tmp/db4ai-benchmark/results --seeds 42,2024,7 --repeats 3 2>&1 | tee /tmp/db4ai-benchmark/run.log
+          /tmp/bench-host/bin/python benchmarks/tabular/export_transport.py \
+            --out /tmp/db4ai-benchmark/results --seeds ${{ matrix.seed }} --repeats 3 \
+            2>&1 | tee /tmp/db4ai-benchmark/run.log
       - name: Paired same-host prediction A/B
-        if: always()
+        if: always() && matrix.seed == 42
         env:
           OPENBLAS_NUM_THREADS: '1'
           OMP_NUM_THREADS: '1'
@@ -85,7 +91,7 @@ jobs:
               --data /tmp/db4ai-benchmark/results --out /tmp/db4ai-benchmark/prediction-ab --repeats 11 \
               2>&1 | tee /tmp/db4ai-benchmark/prediction-ab.log
           fi
-      - name: Capture inspectable code and environment
+      - name: Capture evidence and ensure public benchmark exports are readable
         if: always()
         run: |
           git archive --format=tar.gz HEAD > /tmp/db4ai-benchmark/benchmark-source.tar.gz
@@ -93,9 +99,13 @@ jobs:
           docker image inspect pg-db4ai-before:local > /tmp/db4ai-benchmark/pg-before-image.json || true
           docker image inspect opengauss-db4ai-benchmark:local > /tmp/db4ai-benchmark/og-image.json || true
           docker stats --no-stream > /tmp/db4ai-benchmark/final-container-stats.txt || true
+          # Scope ownership adjustment strictly to generated public-data outputs.
+          sudo chown -R "$(id -u):$(id -g)" /tmp/db4ai-benchmark
+          find /tmp/db4ai-benchmark -type d -exec chmod u+rwx {} +
+          find /tmp/db4ai-benchmark -type f -exec chmod u+r {} +
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: public-tabular-benchmark-optimized
+          name: public-tabular-benchmark-seed-${{ matrix.seed }}
           path: /tmp/db4ai-benchmark
           retention-days: 30
