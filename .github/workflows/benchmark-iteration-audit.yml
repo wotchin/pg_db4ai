@@ -1,0 +1,42 @@
+name: Audit openGauss executed training iterations
+on:
+  workflow_dispatch:
+  push:
+    branches: [benchmark-public-tabular]
+    paths: [.github/workflows/benchmark-iteration-audit.yml]
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: benchmarks/tabular/Dockerfile.opengauss
+          tags: opengauss-db4ai-benchmark:local
+          load: true
+          cache-from: type=gha,scope=db4ai-tabular-og
+      - name: Independently inspect actual iterations with fixed inputs
+        env: {OPENBLAS_NUM_THREADS: '1', OMP_NUM_THREADS: '1'}
+        run: |
+          python3 -m venv /tmp/bench-host
+          /tmp/bench-host/bin/pip install numpy==2.3.3 scipy==1.16.2 pandas==2.3.3 scikit-learn==1.7.2 xlrd==2.0.2
+          mkdir -p /tmp/iteration-audit
+          set -o pipefail
+          /tmp/bench-host/bin/python benchmarks/tabular/inspect_opengauss.py --out /tmp/iteration-audit \
+            2>&1 | tee /tmp/iteration-audit.log
+      - name: Collect public-data audit evidence
+        if: always()
+        run: |
+          cp /tmp/iteration-audit.log /tmp/iteration-audit/audit.log || true
+          git archive --format=tar.gz HEAD > /tmp/iteration-audit/source.tar.gz
+          sudo chown -R "$(id -u):$(id -g)" /tmp/iteration-audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: opengauss-executed-iterations
+          path: /tmp/iteration-audit
+          retention-days: 30
