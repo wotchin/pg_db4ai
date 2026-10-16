@@ -16,10 +16,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {pg: '16', xgboost: '1'}
-          - {pg: '17', xgboost: '1'}
-          - {pg: '18', xgboost: '1'}
-          - {pg: '18', xgboost: '0'}
+          - {pg: '16', xgboost: '1', openmp: '0'}
+          - {pg: '17', xgboost: '1', openmp: '0'}
+          - {pg: '18', xgboost: '1', openmp: '0'}
+          - {pg: '18', xgboost: '0', openmp: '0'}
+          - {pg: '18', xgboost: '1', openmp: '1'}
     steps:
       - uses: actions/checkout@v4
       - name: PostgreSQL build dependencies
@@ -32,13 +33,13 @@ jobs:
       - name: Verify vendored source integrity
         run: python3 tools/vendor_xgboost.py --verify
       - name: Build from repository sources
-        run: make -j2 PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} XGB_JOBS=2
+        run: make -j2 PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} WITH_OPENMP=${{ matrix.openmp }} XGB_JOBS=2
       - name: Install
-        run: sudo make PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} install
+        run: sudo make PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} WITH_OPENMP=${{ matrix.openmp }} install
       - name: Integration tests
         run: |
           set -o pipefail
-          PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} sh test/run.sh | tee integration-test.log
+          PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg }}/bin/pg_config WITH_XGBOOST=${{ matrix.xgboost }} WITH_OPENMP=${{ matrix.openmp }} sh test/run.sh | tee integration-test.log
       - name: Dynamic dependency check
         run: |
           ldd pg_db4ai.so | tee dynamic-dependencies.log
@@ -49,7 +50,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-pg${{ matrix.pg }}-xgb${{ matrix.xgboost }}
+          name: test-results-pg${{ matrix.pg }}-xgb${{ matrix.xgboost }}-omp${{ matrix.openmp }}
           path: |
             integration-test.log
             dynamic-dependencies.log
