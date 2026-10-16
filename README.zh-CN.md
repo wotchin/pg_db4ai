@@ -1,70 +1,167 @@
-# pg_db4ai：PostgreSQL 内置机器学习扩展
+# pg_db4ai：PostgreSQL 原生机器学习扩展
 
-这是一个面向 PostgreSQL 的 0.1 版实现。自己的代码为 C11，直接使用 PG 的 SPI、MemoryContext、TupleTableSlot、tuplestore 和错误处理机制，不设计数据库无关层，不修改 PG 内核。
+0.2 已实现固定版本 openGauss DB4AI 注册表中的 **11 个算法入口**，补入
+NGD、One-vs-All 多分类、Gaussian/Polynomial 核特征映射、随机 PCA、KMeans
+两类初始化与四种距离、类型化标签、Bayes network 和训练 shuffle cache；
+另提供真正的 **PG CustomScan `ShuffleScan`**。
 
-**当前版本已打通训练、模型保存、跨连接加载、预测、权限隔离和备份恢复，但不是 openGauss DB4AI 全部功能的等价移植。** 原版优化器、初始化方式、类别类型等差异见 [迁移边界](docs/PORTING.md)。
+自己的代码全部为 **C11**，直接使用 PG 的 SPI、MemoryContext、Tuple、tuplestore
+和错误处理。模型表是 **`db4ai.pg_db4ai_models`**，不改 PG 内核、不设计数据库无关层。
+XGBoost 3.4.2 及依赖源码内置，静态链接，通过纯 C API 调用；上游内部仍是 C++。
 
-## 已实现
+这里的“11 个算法入口齐全”不表示已经与原版运行中的 openGauss 做完全差分验收，
+也不保证相同种子会逐位产生相同结果。[迁移边界](docs/PORTING.md)明确列出差异。
 
-| 部分 | 实现 |
-|---|---|
-| 模型表 | `db4ai.pg_db4ai_models`，普通 WAL 持久化扩展表 |
-| 原生算法 | 线性回归、二分类逻辑回归、线性 SVM、KMeans、PCA |
-| XGBoost | 平方误差回归、二分类 logistic、logistic 回归、gamma 回归 |
-| 数据输入 | SPI 分批取数，转换后写入可溢写 tuplestore，多轮训练不重跑源 SQL |
-| 持久化 | 原生模型为显式版本化 JSON；XGBoost 默认 UBJSON，也支持 JSON |
-| 权限 | 源查询以调用者身份执行；模型按当前角色隔离，普通用户不能直接改模型二进制 |
-| 事务 | 训练成功后才保存模型；支持回滚及事务内删除后重建 |
-
-XGBoost 3.4.2 及其随附依赖源码已内置于 `third_party/xgboost`，有发布包 SHA-256 和逐文件清单。正常编译不联网拉源码，不需要 submodule、pip 或外部 `libxgboost.so`。适配器为纯 C；XGBoost 上游内部仍是 C++，通过 C API 调用。其静态库链接进扩展，但启用它时仍需 C++ 编译器及系统 C++ 运行库。
-
-## 编译安装
-
-目前验证平台为 Linux x86-64；不同 PostgreSQL 主版本需要分别编译。
+## 编译与升级
 
 ```sh
 git clone https://github.com/wotchin/pg_db4ai.git
 cd pg_db4ai
 make PG_CONFIG=/path/to/pg_config WITH_XGBOOST=1 XGB_JOBS=2
 sudo make PG_CONFIG=/path/to/pg_config WITH_XGBOOST=1 install
-# 以普通操作系统用户运行，脚本会建立临时测试数据库实例。
+# 非 root 用户运行，建立临时测试实例：
 make PG_CONFIG=/path/to/pg_config WITH_XGBOOST=1 test
 ```
 
-关闭 XGBoost 可使用 `WITH_XGBOOST=0`，此时扩展不依赖 C++ 运行库。切换该选项或 PG 版本前先执行 `make clean`。
-
-## 可执行示例
+安装目标 PG 开发头文件、C 编译器、GNU Make；启用 XGBoost 还需要 CMake/C++17。
+正常构建不联网下载源码、不使用 submodule/pip，不需外部 `libxgboost.so`。
+`WITH_XGBOOST=0` 包含全部原生算法，且不依赖 C++ 运行库。
+切换 PG 版本或此选项前执行 `make clean`。
 
 ```sql
-CREATE EXTENSION pg_db4ai;
-CREATE TABLE public.db4ai_demo AS
-SELECT 1 + 2*x - 3*x*x AS y, x, x*x AS x2
-FROM (SELECT i::float8/50 AS x FROM generate_series(-50,50) AS i) s;
-
-SELECT db4ai.train('demo', 'linear_regression',
-    'SELECT y,x,x2 FROM public.db4ai_demo ORDER BY x',
-    '{"max_iterations":1500,"learning_rate":0.15,"tolerance":1e-12}');
-SELECT db4ai.predict_float8('demo', ARRAY[0.25,0.0625]);
--- 结果应接近 1.3125。
-SELECT db4ai.explain_model('demo');
-
-SELECT db4ai.train('demo_xgb', 'xgboost_regression_squarederror',
-    'SELECT y,x,x2 FROM public.db4ai_demo',
-    '{"max_iterations":80,"learning_rate":0.15,"max_depth":3}', 'json');
-SELECT db4ai.predict_float8('demo_xgb', ARRAY[0.25,0.0625]);
-SELECT convert_from(db4ai.export_model('demo_xgb'), 'UTF8')::jsonb;
+CREATE EXTENSION pg_db4ai; -- 新安装
+-- 已安装 0.1，安装新库和 SQL 脚本后：
+ALTER EXTENSION pg_db4ai UPDATE TO '0.2.0';
 ```
 
-监督学习输入的第一列是标签，后续为按顺序排列的标量特征；KMeans/PCA 输入只有特征。当前支持数值及布尔列，二分类标签为 0/1。NULL、NaN 和无穷值被明确拒绝，预处理由 SQL 显式完成。
+替换动态库后请重新连接，已加载的 C 代码不会被 ALTER EXTENSION 热替换。
+升级不改写已有模型；0.1 原生 JSON 仍可预测，但其旧分类模型没有标签字典，
+新增类型化标签接口需要重训。这里不支持直接导入旧 openGauss 二进制模型。
 
-## 测试与边界
+## 1. GD / NGD 与训练 ShuffleScan
 
-本地 PostgreSQL 18.0 上，开启和关闭 XGBoost 的两套完整集成测试均通过。覆盖数值结果、JSON/UBJSON 一致性、跨连接加载、角色隔离、回滚、模型切换缓存、低内存溢写、源 SQL 只执行一次、超时取消及 pg_dump/pg_restore。源码已经按 Git blob SHA 与本地测试版本逐个核对。
+NGD 是原版的 **Normalized Gradient Descent（归一化梯度下降）**，不是自然梯度。
+监督训练第一列为标签，后续为特征。特征可以是数值/布尔标量，也支持定长
+`float4[]/float8[]`，按列展开。预测特征顺序必须一致。
 
-CI 配置了 PG 16、17、18 以及 PG 18 纯 C 构建；以具体提交的 Actions 结果为准，不把“配置了测试矩阵”等同于“所有版本已通过”。
+```sql
+CREATE TABLE public.regression_demo AS
+SELECT 1+2*x-3*x*x AS y, x, x*x AS x2
+FROM (SELECT i::float8/50 AS x FROM generate_series(-50,50)i)s;
+SELECT db4ai.train('reg', 'linear_regression',
+    'SELECT y,x,x2 FROM public.regression_demo ORDER BY x',
+    '{"optimizer":"ngd","max_iterations":100,"learning_rate":0.1,
+      "batch_size":16,"shuffle":"batch","shuffle_buffer_size":8,"seed":42}');
+SELECT db4ai.predict_float8('reg', ARRAY[0.25,0.0625]);
+SELECT db4ai.explain_model('reg');
+```
 
-尚未提供原版所有求解器、任意类型分类标签、多分类/Bayes、旧 openGauss 模型导入、并行/分布式训练、XGBoost 外存训练。KMeans 初始化及 PCA 求解器与原版不同，不能视为完全相同的算法实现。
+默认 `profile:"stable"` 保留保守学习率、严格 NULL 检查及 Jacobi PCA。
+`profile:"opengauss"` 选择原版风格的 GD 默认参数、legacy NULL 策略及不居中的随机 PCA；
+它不是“结果逐位一致”开关。明确传入的参数覆盖 profile。
 
-`db4ai.xgboost_max_input_mb` 只限制输入复制，不是 XGBoost 进程总内存上限。取消在上游调用之间检查，不能保证正在执行的单次 XGBoost 调用立即中止。尚未做生产负载性能基准。
+训练源 SQL **只执行一次**，之后重扫可溢写 tuplestore。第 0 轮默认顺序读取；
+后续轮次整批缓存洗牌，内存不足时有界随机替换并随机排空，保证每轮不漏不重。
+整份数据可缓存时批次排列均匀；有界模式不是全局均匀洗牌。
+`shuffle:"row"` 先按行洗牌，再重新组装指定大小的训练批次；`shuffle:"none"` 关闭乱序。
+固定 seed 还不够，复现实验也应固定源 ORDER BY、batch/cache 大小和软件版本。
 
-详细说明：[英文 README](README.md)、[架构](docs/ARCHITECTURE.md)、[迁移差异](docs/PORTING.md)、[验证记录](docs/VALIDATION.md)、[许可证与来源](THIRD_PARTY_NOTICES.md)。
+## 2. 类型化标签与多分类
+
+```sql
+CREATE TABLE public.classes_demo(label text, x0 float8, x1 float8, x2 float8);
+INSERT INTO public.classes_demo VALUES
+  ('apple',1,0,0),('pear',0,1,0),('peach',0,0,1);
+SELECT db4ai.train('fruit', 'multiclass',
+  'SELECT * FROM public.classes_demo ORDER BY label',
+  '{"classifier":"logistic_regression","optimizer":"gd","max_iterations":200,
+    "learning_rate":0.3,"batch_size":3,"tolerance":0}');
+SELECT db4ai.predict_text('fruit', ARRAY[0.0,1.0,0.0]);
+SELECT db4ai.predict_label('fruit', ARRAY[0.0,1.0,0.0], NULL::text);
+SELECT db4ai.class_labels('fruit'), db4ai.predict_scores('fruit', ARRAY[0.0,1.0,0.0]);
+```
+
+多分类采用 One-vs-All，基分类器可选 logistic 或 SVM，并支持 NGD。
+标签通过 PG 类型的 hash/equality 保存，不把 bigint/numeric 标签先转换成浮点数。
+`predict_label` 的第三参数提供返回类型；枚举、text、numeric 等使用对应的 `NULL::类型`。
+域类型展开为底层类型；不支持 pseudo-type/匿名 record。
+OVA logistic 分数不是 softmax，SVM 分数是 margin。二分类 0/1 和 bool 标签规范为 0,1 顺序；
+其他类型按首次出现顺序映射，`class_labels` 可检查。
+
+## 3. 非线性 SVM 与随机 PCA
+
+```sql
+SELECT db4ai.train('nonlinear', 'svm_classification',
+  'SELECT (x*y<0)::int, x::float8, y::float8
+   FROM (VALUES(-1),(1))a(x) CROSS JOIN (VALUES(-1),(1))b(y)',
+  '{"kernel":"gaussian","components":128,"gamma":0.5,"optimizer":"ngd",
+    "max_iterations":200,"learning_rate":0.3,"tolerance":0}');
+-- polynomial 使用 degree/coef0/components；真实映射随模型持久化。
+SELECT db4ai.train('pca_stochastic', 'pca',
+  'SELECT i::float8, 2*i::float8 FROM generate_series(-30,30)i',
+  '{"profile":"opengauss","number_components":1,"max_iterations":20,
+    "batch_size":8,"shuffle":"row","tolerance":0}');
+SELECT db4ai.transform('pca_stochastic', ARRAY[1.0,2.0]);
+```
+
+PCA 可以显式 `pca_solver:"stochastic"` / `"jacobi"` 和 `center:true/false`。
+Jacobi 不执行训练乱序，显式提供 shuffle 参数会报错，避免参数被悄悄忽略。
+KMeans 支持 `seeding_function:"Random++"/"KMeans||"/"reservoir"`、
+`distance_function:"L1"/"L2"/"L2_Squared"/"Linf"`，以及 `num_centroids`。
+
+## 4. Bayes network 联合概率/选择率
+
+这里是原版 `bayes_net_internal` 的联合选择率估计路线，**不是 Naive Bayes 分类器**。
+包括离散条件统计、MCV、数值分箱、样本 distinct 估计、浮点父变量的条件 Gaussian
+统计和 DAG 传播；Gaussian CDF 用 C 的 `erfc`，不新增 Boost 依赖。
+
+```sql
+SELECT db4ai.train('joint', 'bayes_net_internal',
+  'SELECT x,y FROM (VALUES(0,0),(0,0),(0,1),(1,1))t(x,y)',
+  '{"edges_of_network":"0,1","num_edges":1,"num_nodes":2}');
+SELECT db4ai.predict_joint('joint',0,0); -- 0.5
+SELECT db4ai.predict_joint('joint',0,1); -- 0.25
+SELECT db4ai.predict_joint('joint',1,0); -- 0
+```
+
+边以从 0 开始的 `parent,child` 对编码，拒绝环、重复边、自环、越界和错误边数。
+NULL 表示真实观察到的 NULL 类别，不表示缺失证据或通配符。
+此 API 提供等值联合估计，不自动接管 PG 优化器，不提供任意范围/边缘化推理接口；
+一般图上的估计不应当被解释为精确且必然归一化的贝叶斯网络推理。
+
+## 5. 可以被 EXPLAIN 看到的 ShuffleScan
+
+```sql
+LOAD 'pg_db4ai'; -- 在该连接规划查询之前加载 hook
+EXPLAIN (ANALYZE, COSTS OFF)
+SELECT x*2 FROM db4ai.shuffle_scan(
+  'SELECT i FROM generate_series(1,100)i', 42, 16, 1
+) AS s(x integer) WHERE x>10;
+```
+
+适用的常量参数调用显示 **`Custom Scan (ShuffleScan)`**，支持过滤、投影、重扫及
+执行统计。`epoch=0` 顺序扫描，`epoch>=1` 乱序；重扫复用同一份数据，同一 seed/epoch
+保持相同排列。普通 EXPLAIN 不执行源 SQL。
+动态参数、LATERAL、whole-row/ordinality 等情况可能走普通 FunctionScan 回退，语义不变。
+函数 EXECUTE 权限和源表 RLS 都被检查；不用修改 PG grammar，也不要求 shared_preload。
+这与训练内部的批量 shuffle 是两个接入面，训练不必逐行调用 SQL 函数。
+
+## 持久化、测试与范围
+
+模型表仍为 `db4ai.pg_db4ai_models`。原生模型使用版本化 JSON，包含标签类型/值、
+权重、实际随机核映射、PCA 均值/基向量/特征值估计；不保存内存地址或裸 Datum。
+XGBoost 四种原有 objective 使用 JSON/UBJSON model IO，默认 UBJSON。
+普通用户不能直接修改模型二进制，源 SQL 以调用者身份执行，模型保存支持事务回滚。
+
+本地 Linux x86-64 / PG18.0 的 WITH_XGBOOST=1 和 =0 完整套件均通过，覆盖原有回归、
+新增算法、手算/独立数学 oracle、ShuffleScan 实际计划、权限/RLS、重扫/溢写、
+0.1→0.2 升级、跨连接加载及 pg_dump/pg_restore。PG16/17/18 远端结果应看对应提交的 CI，
+不能把“配置测试矩阵”当成“全部测试已通过”。
+
+仍未验证运行中 openGauss 的全链路差分、相同随机种子的逐位一致性、生产性能、
+Windows/macOS、并行/分布式训练、XGBoost 外存训练和旧 openGauss 二进制模型导入。
+资源预算是每个 tuplestore/cache/模型的预算，不是整个 backend 的总内存硬限制。
+XGBoost 取消在上游调用之间检查。原始 snapshots 数据版本功能仍不在范围内。
+
+[英文 API 与完整约束](README.md) · [架构](docs/ARCHITECTURE.md) ·
+[原版映射与差异](docs/PORTING.md) · [验证记录](docs/VALIDATION.md) · [更新记录](CHANGELOG.md)

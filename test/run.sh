@@ -18,6 +18,11 @@ trap cleanup EXIT HUP INT TERM
   -o "-F -k $WORK -c listen_addresses='' -p 65432" -w start >/dev/null
 export PGHOST="$WORK" PGPORT=65432 PGUSER=db4ai_test PGDATABASE=postgres
 "$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/native.sql"
+"$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/extended.sql"
+"$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/shufflescan_boundaries.sql"
+python3 "$ROOT/test/numerical_reference.py"
+"$BIN/createdb" db4ai_upgrade
+"$BIN/psql" -X -d db4ai_upgrade -v ON_ERROR_STOP=1 -f "$ROOT/test/upgrade.sql"
 if [ "${WITH_XGBOOST:-1}" = 1 ]; then
   "$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/xgboost.sql"
 fi
@@ -39,8 +44,17 @@ cmp "$WORK/before" "$WORK/after"
 "$BIN/psql" -X -d db4ai_restored -v ON_ERROR_STOP=1 <<'SQL'
 SELECT public.assert_true(abs(db4ai.predict_float8('reg',ARRAY[0.25,0.0625])-1.3125)<0.001,'restored predictor');
 SELECT db4ai.train('post_restore','linear_regression','SELECT 1,1');
+SELECT public.assert_true(db4ai.predict_text('text_labels',ARRAY[2.0])='blue','restored typed labels');
+SELECT public.assert_true(db4ai.predict_label('numeric_labels',ARRAY[2.0],NULL::numeric)=9007199254740993::numeric,'restored numeric label');
+SELECT public.assert_true(db4ai.predict_label('enum_labels',ARRAY[1.0],NULL::public.db4ai_label_enum)='hot','restored enum label');
+SELECT public.assert_true(db4ai.predict_text('ova_svm_ngd',ARRAY[0.0,1.0,0.0])='pear','restored multiclass NGD');
+SELECT public.assert_true(abs(db4ai.predict_joint('bayes_chain',0,0)-0.5)<1e-14,'restored Bayes estimator');
+SELECT public.assert_true(abs(db4ai.predict_joint('bayes_bins',40)-0.01)<1e-14,'restored Bayes bins');
 SQL
 if [ "${WITH_XGBOOST:-1}" = 1 ]; then
   "$BIN/psql" -X -d db4ai_restored -v ON_ERROR_STOP=1 -c "SELECT public.assert_true(abs(db4ai.predict_float8('xgb_ubj',ARRAY[0.25,0.0625])-1.3125)<0.3,'restored XGBoost predictor');"
 fi
+# Both kernel maps and PCA bases must remain exactly usable after a new backend
+# and logical restore, independently of in-memory handles.
+PGDATABASE=db4ai_restored python3 "$ROOT/test/numerical_reference.py"
 printf '\nAll integration tests passed (PostgreSQL: %s; WITH_XGBOOST=%s).\n' "$("$BIN/pg_config" --version)" "${WITH_XGBOOST:-1}"

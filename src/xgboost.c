@@ -13,6 +13,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/json.h"
 #include "utils/memutils.h"
+#include "utils/timestamp.h"
 
 #ifdef DB4AI_WITH_XGBOOST
 #include "xgboost/c_api.h"
@@ -99,12 +100,15 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
     float *labels;
     double *row;
     int64 i = 0;
+    int64 positives = 0;
     int j, epoch, major, minor, patch;
     bst_ulong model_size;
     const char *model_data;
     const char *evaluation;
     const char *eval_names[] = {"train"};
     StringInfoData metrics;
+    TimestampTz started=GetCurrentTimestamp();
+    int completed=0;
 
     if (cells > MaxAllocSize / sizeof(float) || (Size) data->nrows > MaxAllocSize / sizeof(float))
         ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED), errmsg("XGBoost dense input is too large")));
@@ -127,22 +131,29 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
             (algorithm == DB4AI_XGB_LOGISTIC && (row[0] < 0 || row[0] > 1)) ||
             (algorithm == DB4AI_XGB_GAMMA && row[0] <= 0))
             ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("label is outside the objective's supported range")));
+        if(row[0]>0) positives++;
         labels[i] = (float) row[0];
         for (j = 0; j < data->nfeatures; j++)
             features[i * data->nfeatures + j] = (float) row[j + 1];
         i++;
     }
+    if((strcmp(o->eval_metric,"auc")==0 || strcmp(o->eval_metric,"aucpr")==0) &&
+       (positives==0 || positives==data->nrows))
+        ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("auc/aucpr require both positive and negative labels")));
     xgb_check(XGDMatrixCreateFromMat(features, data->nrows, data->nfeatures, NAN, &r->matrix));
     xgb_check(XGDMatrixSetFloatInfo(r->matrix, "label", labels, data->nrows));
     pfree(features); pfree(labels); pfree(row);
     xgb_check(XGBoosterCreate(&r->matrix, 1, &r->booster));
     xgb_check(XGBoosterSetParam(r->booster, "objective", objective(algorithm)));
-    xgb_check(XGBoosterSetParam(r->booster, "tree_method", "hist"));
+    xgb_check(XGBoosterSetParam(r->booster, "tree_method", o->tree_method));
+    xgb_check(XGBoosterSetParam(r->booster, "booster", o->booster));
+    if(*o->eval_metric) xgb_check(XGBoosterSetParam(r->booster, "eval_metric", o->eval_metric));
     xgb_check(XGBoosterSetParam(r->booster, "device", "cpu"));
     xgb_check(XGBoosterSetParam(r->booster, "nthread", "1"));
-    xgb_check(XGBoosterSetParam(r->booster, "verbosity", "0"));
+    xgb_check(XGBoosterSetParam(r->booster, "verbosity", o->verbose?"1":"0"));
     set_integer(r->booster, "max_depth", o->max_depth);
     set_integer(r->booster, "seed", o->seed);
+    set_number(r->booster, "gamma", o->gamma);
     set_number(r->booster, "eta", o->learning_rate);
     set_number(r->booster, "lambda", o->l2);
     set_number(r->booster, "min_child_weight", o->min_child_weight);
@@ -153,6 +164,8 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
     {
         CHECK_FOR_INTERRUPTS();
         xgb_check(XGBoosterUpdateOneIter(r->booster, epoch, r->matrix));
+        completed=epoch+1;
+        if(o->max_seconds && TimestampDifferenceExceeds(started,GetCurrentTimestamp(),o->max_seconds*1000)) break;
     }
     xgb_check(XGBoosterSaveModelToBuffer(r->booster,
                 strcmp(format, "json") == 0 ? "{\"format\":\"json\"}" : "{\"format\":\"ubj\"}",
@@ -160,11 +173,11 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
     out->data = db4ai_bytes(model_data, model_size);
     out->format = pstrdup(format);
     out->noutputs = 1;
-    xgb_check(XGBoosterEvalOneIter(r->booster, o->iterations - 1, &r->matrix, eval_names, 1, &evaluation));
+    xgb_check(XGBoosterEvalOneIter(r->booster, completed - 1, &r->matrix, eval_names, 1, &evaluation));
     XGBoostVersion(&major, &minor, &patch);
     initStringInfo(&metrics);
     appendStringInfo(&metrics, "{\"rows\":" INT64_FORMAT ",\"iterations\":%d,\"library_version\":\"%d.%d.%d\","
-                              "\"training_evaluation\":", data->nrows, o->iterations, major, minor, patch);
+                              "\"training_evaluation\":", data->nrows, completed, major, minor, patch);
     escape_json(&metrics, evaluation);
     appendStringInfoChar(&metrics, '}');
     out->metrics = DatumGetJsonbP(DirectFunctionCall1(jsonb_in, CStringGetDatum(metrics.data)));

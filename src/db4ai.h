@@ -17,7 +17,8 @@
 typedef enum Db4aiAlgorithm
 {
     DB4AI_LINEAR, DB4AI_LOGISTIC, DB4AI_SVM, DB4AI_KMEANS, DB4AI_PCA,
-    DB4AI_XGB_SQUARED, DB4AI_XGB_BINARY, DB4AI_XGB_LOGISTIC, DB4AI_XGB_GAMMA
+    DB4AI_XGB_SQUARED, DB4AI_XGB_BINARY, DB4AI_XGB_LOGISTIC, DB4AI_XGB_GAMMA,
+    DB4AI_MULTICLASS, DB4AI_BAYES
 } Db4aiAlgorithm;
 
 typedef struct Db4aiOptions
@@ -34,6 +35,41 @@ typedef struct Db4aiOptions
     double min_child_weight;
     double subsample;
     double colsample_bytree;
+    int optimizer;             /* 0: GD, 1: normalized GD (not natural GD) */
+    int kernel;                /* 0: linear, 1: Gaussian RFF, 2: polynomial RM */
+    int kernel_components;
+    int degree;
+    double gamma;
+    double coef0;
+    double decay;
+    double svm_lambda;
+    int classifier;            /* OVA binary learner, logistic or SVM */
+    int shuffle_mode;
+    bool shuffle_first;
+    int shuffle_buffer;
+    int seeding;               /* 0: Random++, 1: KMeans||, 2: reservoir */
+    int distance;              /* 0: L1, 1: L2, 2: L2 squared, 3: Linf */
+    int seeding_rounds;
+    int oversampling;
+    int pca_solver;            /* 0: covariance/Jacobi, 1: stochastic */
+    bool center;
+    int null_policy;           /* 0: error, 1: skip label / zero features */
+    int max_seconds;
+    bool verbose;
+    bool legacy_profile;
+    int num_features;
+    int num_nodes;
+    int num_edges;
+    int num_bins;
+    int num_mcvs;
+    int64 num_sample_rows;
+    int64 num_total_rows;
+    char *edges;
+    char *eval_metric;
+    char *tree_method;
+    char *booster;
+    int nthread;
+
 } Db4aiOptions;
 
 typedef struct Db4aiData
@@ -45,6 +81,14 @@ typedef struct Db4aiData
     int nfeatures;
     int64 nrows;
     char **feature_names;
+    struct Db4aiDictionary *labels;
+    struct Db4aiDictionary **domains;  /* Bayes variables, including numeric ones */
+    int64 discarded;
+    int64 passes;
+    bool spilled;
+    int shuffle_capacity;
+    bool shuffle_full_cache;
+
 } Db4aiData;
 
 typedef struct Db4aiNative
@@ -56,6 +100,21 @@ typedef struct Db4aiNative
     double loss;
     double *weights;
     double *mean;
+    struct Db4aiDictionary *labels;
+    int nclasses;
+    int ncoefficients;
+    int classifier;
+    int distance;
+    int kernel;
+    int kernel_components;
+    int kernel_rows;
+    double *kernel_weights;
+    double *kernel_offsets;
+    double *kernel_repetitions;
+    double *kernel_coefs;
+    double *eigenvalues;
+    double *eigen_stddev;
+
 } Db4aiNative;
 
 typedef struct Db4aiModel
@@ -85,7 +144,7 @@ extern double db4ai_json_number(Jsonb *json, const char *key, double def);
 extern bytea *db4ai_bytes(const void *data, Size len);
 extern void db4ai_check_finite(double x);
 
-extern Db4aiData *db4ai_data_open(const char *query, Db4aiAlgorithm algorithm);
+extern Db4aiData *db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions *options);
 extern bool db4ai_data_next(Db4aiData *data, double *row);
 extern void db4ai_data_rewind(Db4aiData *data);
 extern void db4ai_data_close(Db4aiData *data);
@@ -107,5 +166,7 @@ extern int64 db4ai_model_store(const char *name, const char *query, const Db4aiD
                               const Db4aiModel *model, Jsonb *options, Oid caller);
 extern Db4aiModel *db4ai_model_load(const char *name, Oid caller);
 extern bool db4ai_model_delete(const char *name, Oid caller);
+
+#include "extended.h"
 
 #endif

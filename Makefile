@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := all
 EXTENSION = pg_db4ai
 MODULE_big = pg_db4ai
-OBJS = src/pg_db4ai.o src/options.o src/data.o src/models.o src/native.o src/xgboost.o
-DATA = sql/pg_db4ai--0.1.0.sql
+OBJS = src/pg_db4ai.o src/options.o src/data.o src/models.o src/native.o src/xgboost.o src/categories.o src/shuffle.o src/kernel.o src/gradient.o src/bayes.o src/shufflescan.o
+DATA = sql/pg_db4ai--0.1.0.sql sql/pg_db4ai--0.2.0.sql sql/pg_db4ai--0.1.0--0.2.0.sql
 PGFILEDESC = "pg_db4ai - PostgreSQL-native machine learning"
 PG_CONFIG ?= pg_config
 WITH_XGBOOST ?= 1

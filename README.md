@@ -1,105 +1,198 @@
 # pg_db4ai
 
-PostgreSQL-native, in-process machine learning based on the DB4AI design in openGauss. The first-party implementation is **C11** and intentionally uses PostgreSQL memory contexts, SPI, tuples, tuplestore and error handling. There is no database-independent abstraction layer.
+PostgreSQL-native, in-process machine learning adapted from openGauss DB4AI.
+First-party code is **C11** and deliberately uses PostgreSQL memory contexts,
+SPI, slots, tuplestore, error handling and CustomScan. There is no
+cross-database abstraction layer and no PostgreSQL core patch.
 
-**Status: working 0.1 implementation, not a drop-in migration of every openGauss DB4AI feature.** Numerical and integration tests pass locally on PostgreSQL 18.0 in both bundled-XGBoost and native-only configurations. See [validation](docs/VALIDATION.md) and [porting boundaries](docs/PORTING.md); matching algorithm names does not imply identical original solvers or old-model compatibility.
+**0.2 implements all 11 algorithm entries in the pinned original registry**, plus
+GD/normalized-GD, One-vs-All, Gaussian/polynomial feature mappings, stochastic
+PCA, KMeans seeding/norm families, typed labels and the training shuffle cache.
+It also adds an explicit SQL `ShuffleScan` CustomScan provider.
+This is algorithm-path coverage, **not a claim of bitwise equivalence or a
+completed live-openGauss differential qualification**. See
+[porting boundaries](docs/PORTING.md) and [validation](docs/VALIDATION.md).
 
-## Build and install
+[中文说明与示例](README.zh-CN.md)
 
-Linux, PostgreSQL server development headers, a C compiler and GNU Make are required. Bundled XGBoost additionally requires CMake 3.18+ and a C++17 compiler. CI targets PostgreSQL 16, 17 and 18; each major version needs its own compiled extension.
+## Build and upgrade
+
+Linux, PostgreSQL server development headers, GNU Make and a C compiler are
+required. Bundled XGBoost also needs CMake 3.18+ and a C++17 compiler. CI targets
+PG 16/17/18; each PostgreSQL major requires a separate build.
 
 ```sh
 git clone https://github.com/wotchin/pg_db4ai.git
 cd pg_db4ai
 make PG_CONFIG=/path/to/pg_config WITH_XGBOOST=1 XGB_JOBS=2
 sudo make PG_CONFIG=/path/to/pg_config WITH_XGBOOST=1 install
-# Run as a non-root OS user; tests create an isolated disposable cluster.
+# Non-root OS user; creates a disposable database cluster.
 make PG_CONFIG=/path/to/pg_config WITH_XGBOOST=1 test
 ```
 
-No submodule initialization, pip installation, system libxgboost or build-time download is required. Source and dependency sources are committed under `third_party/xgboost`. Use `WITH_XGBOOST=0` for only native algorithms, requiring no C++ runtime. Run `make clean` when changing PostgreSQL versions or this option. `make clean-vendor-build` removes the third-party build cache.
+Use `WITH_XGBOOST=0` for all native algorithms without a C++ runtime dependency.
+Run `make clean` when changing PostgreSQL or this option; `make clean-vendor-build`
+removes the third-party build cache. Normal builds download no source, use no
+submodules, and require neither pip nor system `libxgboost.so`.
 
 ```sql
-CREATE EXTENSION pg_db4ai;
+CREATE EXTENSION pg_db4ai; -- fresh installation
+-- Or, after installing the new library/scripts, upgrade an existing 0.1:
+ALTER EXTENSION pg_db4ai UPDATE TO '0.2.0';
 ```
 
-The model table is **`db4ai.pg_db4ai_models`**, an ordinary WAL-logged extension table, not a patched system catalog. No custom grammar, PostgreSQL core changes or shared_preload_libraries are required.
+Reconnect existing sessions after replacing the shared library: loaded C code is
+not hot-swapped by ALTER EXTENSION. Upgrade adds APIs without rewriting existing
+model payloads. Version-1 native JSON remains readable. Old 0.1 classifiers have
+no typed dictionary; use their legacy prediction API or retrain for typed labels.
+This does not import old openGauss binary model blobs.
 
-## SQL API
+## Algorithms and prediction APIs
 
-Supervised training SQL returns **label first, then scalar features**. KMeans/PCA receive only features. Numeric/boolean columns are supported; cast domains and expand arrays explicitly. NULL/non-finite values are rejected. Prediction features must match training order. Poorly conditioned features should be scaled in SQL before native gradient descent.
-
-```sql
-SELECT db4ai.train(
-    'house_price_v1', 'linear_regression',
-    'SELECT price, area, age FROM public.houses',
-    '{"max_iterations":300,"learning_rate":0.01}'::jsonb
-);
-SELECT id, db4ai.predict_float8('house_price_v1', ARRAY[area, age]::float8[])
-FROM public.houses;
-SELECT db4ai.explain_model('house_price_v1');
-SELECT db4ai.export_model('house_price_v1'); -- bytea, native JSON payload
-SELECT db4ai.drop_model('house_price_v1');
-```
-
-| Algorithm | Implementation | Prediction |
+| Registry entry | Training paths | Prediction |
 |---|---|---|
-| `linear_regression` | C mini-batch gradient descent, intercept | `predict_float8` |
-| `logistic_regression` | C binary logistic regression, 0/1 labels | probability: `predict_float8`; class: `predict_bool` |
-| `svm_classification` | C linear hinge loss, 0/1 labels | margin: `predict_float8`; class: `predict_bool` |
-| `kmeans` | C Lloyd iteration, seeded reservoir initialization | `predict_cluster`, 1-based ID |
-| `pca` | C centered sample covariance + Jacobi eigensolver | `transform`, component array |
-| `xgboost_regression_squarederror` | XGBoost reg:squarederror | `predict_float8` |
-| `xgboost_binary_logistic` | XGBoost binary:logistic | `predict_float8` / `predict_bool` |
-| `xgboost_regression_logistic` | XGBoost reg:logistic, labels in [0,1] | `predict_float8` |
-| `xgboost_regression_gamma` | XGBoost reg:gamma, positive labels | `predict_float8` |
+| `linear_regression` | GD / normalized GD | `predict_float8` |
+| `logistic_regression` | GD / NGD, typed binary labels | `predict_label`, `predict_text`, `predict_scores` |
+| `svm_classification` | GD / NGD; linear, Gaussian, polynomial maps | typed labels or scalar margin |
+| `multiclass` | One-vs-All logistic / SVM, GD / NGD | typed labels, class-ordered scores |
+| `kmeans` | Random++, KMeans\|\|, optional reservoir; L1/L2/L2_Squared/Linf | `predict_cluster` (1-based) |
+| `pca` | Original-family matrix-free stochastic updates; optional Jacobi | `transform` |
+| `bayes_net_internal` | Typed DAG equality/selectivity estimator, MCV/bins and Gaussian parents | `predict_joint` |
+| `xgboost_regression_squarederror` | `reg:squarederror` | `predict_float8` |
+| `xgboost_binary_logistic` | `binary:logistic` | `predict_float8`, `predict_bool` |
+| `xgboost_regression_logistic` | `reg:logistic` | `predict_float8` |
+| `xgboost_regression_gamma` | `reg:gamma` | `predict_float8` |
 
-Unknown/inapplicable hyperparameters are errors. Defaults: max_iterations=100; learning_rate=0.01 for native GD / 0.1 for XGBoost; l2=0 except native SVM=0.01; native batch_size=128; native tolerance=1e-8; KMeans k=8, seed=42; PCA n_components=2. XGBoost also accepts max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1, seed=42. `src/options.c` defines validated ranges. `explain_model` reports effective applicable settings and training-set metrics, not holdout validation.
-
-## Vendored XGBoost and durable models
-
-XGBoost **3.4.2**, including dmlc-core and bundled dependencies, is pinned by source-release SHA-256 in `third_party/xgboost.lock.json`. The manifest records file hashes; `python3 tools/vendor_xgboost.py --verify` checks a clean source checkout. The importer is a maintainer-only tool, never an ordinary build step.
-
-Our adapter is C; upstream XGBoost remains C++ behind `xgboost/c_api.h`. Static PIC archives are linked into pg_db4ai.so. No separate libxgboost.so is installed or loaded. Standard OS/C++ runtime dependencies remain. The default CPU-only build disables OpenMP, CUDA, NCCL, federation and GPU plugins, with one XGBoost compute thread per backend.
+Supervised input is **label first, then features**. KMeans/PCA receive only
+features; Bayes receives all graph variables without a distinguished label.
+Features support numeric/boolean scalars and fixed-width `float4[]`/`float8[]`
+columns, flattened in query-column order. Prediction uses the same flat order.
+Native classification uses PG hash/equality and concrete label types, including
+text, enum, integer and numeric values beyond float8 precision. Domain label types
+are flattened to their base types. Pseudo-types and anonymous records are not
+supported. Bayes NULL is an observed category, not an unobserved variable.
 
 ```sql
-SELECT db4ai.train('xgb_price', 'xgboost_regression_squarederror',
-                  'SELECT price, area, age FROM public.houses',
-                  '{"max_iterations":100,"max_depth":4}'::jsonb);
--- Defaults to UBJSON (format name: ubj).
-SELECT db4ai.train('xgb_price_json', 'xgboost_regression_squarederror',
-                  'SELECT price, area, age FROM public.houses',
-                  '{"max_iterations":100}'::jsonb, 'json');
+SELECT db4ai.train('price', 'linear_regression',
+    'SELECT price, area, age FROM public.houses',
+    '{"optimizer":"ngd","max_iterations":100,"shuffle":"batch"}');
+SELECT db4ai.predict_float8('price', ARRAY[120.0, 15.0]);
+SELECT db4ai.explain_model('price');
+SELECT db4ai.export_model('price'); -- bytea
+SELECT db4ai.drop_model('price');
 ```
 
-Persistence uses **XGBoosterSaveModelToBuffer / XGBoosterLoadModelFromBuffer**, not runtime snapshots or display-only tree dumps. Native models use explicit versioned JSON, never raw structs, pointers or Datum arrays. Native float encoding is independent of extra_float_digits. These artifacts preserve inference models, not a guarantee of bit-exact training-state resumption.
+`predict_float8` retains binary probability/margin semantics and returns a class
+index for multiclass. Prefer `predict_label(name, features, NULL::label_type)`
+for the actual classification label. Numeric/bool 0/1 labels are ordered 0,1;
+other labels use first occurrence. `class_labels` reveals the score order.
+OVA logistic scores are independent binary probabilities, **not softmax**;
+SVM scores are margins. Metrics are training-set metrics, not holdout validation.
 
-Both model data and the identity sequence are registered for pg_dump/pg_restore. Owners use regrole so dumps encode role names; restore required roles first. Old openGauss model blobs need an explicit converter and are not supported here. Public arbitrary third-party model import is deliberately absent.
+### Options and input profiles
 
-## Transactions, permissions and resource limits
+`profile:"stable"` is the default: conservative native learning-rate defaults,
+Jacobi/centered PCA, and NULL rejection. `profile:"opengauss"` selects original-
+style GD defaults, legacy NULL policy and stochastic/uncentered PCA. It is **not**
+a switch promising an identical original execution. Explicit values override the
+profile. Unknown, inapplicable and conflicting alias options raise errors.
 
-Training executes as the caller with normal source-table permissions/RLS. Only fixed parameterized registry writes use the extension owner's identity, restored on success and errors. User training SQL never runs in that privileged block. Regular users cannot modify artifacts directly; model reads are owner-filtered by RLS.
+Common GD controls: `optimizer` (`gd`/`ngd`), `batch_size`, `learning_rate`,
+`decay`, `tolerance`, `max_iterations`, `max_seconds`, `seed`, `verbose`.
+SVM: `kernel`, `components`, `gamma`, `degree`, `coef0`, `lambda`.
+Multiclass: `classifier` (`logistic_regression`/`svm_classification`).
+KMeans: `num_centroids` (`k`), `num_features`, `seeding_function`,
+`distance_function`, `seeding_rounds`, `oversampling`.
+PCA: `number_components` (`n_components`), `pca_solver`, `center`.
+Validated ranges and effective defaults live in `src/options.c`.
 
-Names are unique per current role. Models are immutable; replace by drop plus train in one transaction. Publication occurs only after training succeeds, and rollback restores committed state. Cross-role model sharing is not implemented. Administrators must manage dropped-role orphan entries; regrole alone does not establish a native object dependency.
+Legacy NULL policy: supervised NULL labels are skipped; GD scalar NULL features
+become zero; a NULL whole feature array is skipped and NULL elements are rejected.
+XGBoost rows with NULL fields are skipped. Non-finite numeric features are errors.
+Choose preprocessing explicitly for application use; automatic SQL feature
+standardization is not performed.
 
-The input SELECT executes once, through batched SPI fetches, into a normalized spillable tuplestore. All epochs reread that fixed input. Add ORDER BY for repeatable GD row order. Exactly one SELECT is admitted; modifying CTEs, INTO and row locks are rejected. This is not a sandbox against side effects in invoker-permitted user-defined functions.
+## ShuffleScan: two related implementations
 
-| Setting | Default | Scope |
+**Training shuffle** (`src/shuffle.c`) supplies GD/NGD/OVA/stochastic PCA. Source
+SQL runs once into a normalized spillable tuplestore. Epoch zero is sequential
+unless `shuffle_first_epoch:true`. Later epochs shuffle cached batches. If all
+batches fit, permutation is uniform; otherwise bounded random replacement and
+random drain give exact-once coverage, **not a globally uniform permutation**.
+`shuffle:"row"` shuffles rows then reassembles the requested training batch size.
+`shuffle:"none"` keeps the fixed input order. `shuffle_buffer_size` counts batches
+in batch mode and rows in row mode, subject to the cache memory budget.
+
+**SQL ShuffleScan** (`src/shufflescan.c`) exposes arbitrary typed tuples:
+
+```sql
+LOAD 'pg_db4ai'; -- load the path hook BEFORE planning, in each relevant session
+EXPLAIN (ANALYZE, COSTS OFF)
+SELECT x * 2
+FROM db4ai.shuffle_scan(
+    'SELECT i FROM generate_series(1,100)i', 42, 16, 1
+) AS s(x integer)
+WHERE x > 10;
+```
+
+Eligible calls show **`Custom Scan (ShuffleScan)`**, with input rows, spill status,
+cache size, seed and epoch. `epoch=0` is sequential. ExecReScan replays the fixed
+input with the same seed/epoch, not the original SQL. An EXPLAIN without ANALYZE
+does not execute the source. Function EXECUTE privileges and source RLS remain
+enforced. Parameterized/LATERAL/whole-row/ordinality cases can use the ordinary
+FunctionScan fallback, which preserves the same SQL shuffle semantics. The hook
+does not rewrite arbitrary queries or add random sorts. No preload requirement.
+
+For reproducibility, provide a source ORDER BY and fix seed, batch/cache size,
+profile and software version. A seed alone cannot stabilize a nondeterministically
+ordered source. Training epochs do not use the SQL CustomScan node: they use the
+batch-oriented runtime to avoid per-tuple SQL invocation overhead.
+
+## Persistence, permissions and resources
+
+Models live in **`db4ai.pg_db4ai_models`**, an ordinary WAL-logged extension table.
+Source SQL uses caller privileges/RLS. Only fixed parameterized catalog writes
+use the extension owner's identity, restored on success/error. Models are
+immutable and names are per role; replace using drop/train in one transaction.
+Regular users cannot update artifacts directly. Roles must exist before restore;
+regrole preserves names but is not an automatic DROP ROLE dependency. Cross-role
+model sharing and automatic orphan cleanup are not implemented.
+
+Native JSON v2 stores explicit dimensions, typed dictionaries, weights, actual
+random feature maps and PCA means/bases/eigenvalue estimates. Type identities use
+namespace/name and typmod, not serialized OIDs. Date/time dictionary IO uses
+canonical settings. Custom type input/output code and collations must remain
+compatible across servers. Artifacts are inference models, not resumable training
+snapshots.
+
+Vendored **XGBoost 3.4.2** and dmlc-core remain upstream C++, used only through the
+C API. Static PIC libraries are linked into `pg_db4ai.so`; standard OS/C++ runtime
+libraries remain. CPU-only/no-OpenMP is the default; `nthread` is restricted to 1.
+JSON/UBJSON persistence uses `XGBoosterSaveModelToBuffer` and
+`XGBoosterLoadModelFromBuffer`, never runtime snapshots or tree display dumps.
+The default format is `ubj`; pass `'json'` as the last training argument for JSON.
+`python3 tools/vendor_xgboost.py --verify` checks pinned source hashes offline.
+
+| Setting | Default | Meaning |
 |---|---:|---|
-| `db4ai.work_mem` | 16 MB | Tuplestore memory before spill; user-settable |
-| `db4ai.max_rows` | 10,000,000 | Maximum input rows; administrator-settable |
-| `db4ai.max_model_mb` | 64 MB | Serialized-model cap; administrator-settable |
-| `db4ai.xgboost_max_input_mb` | 128 MB | Dense float32 input-copy cap; administrator-settable |
+| `db4ai.work_mem` | 16 MB | Per-tuplestore/cache budget before spill or reduction |
+| `db4ai.max_rows` | 10,000,000 | Per-call input row limit |
+| `db4ai.max_model_mb` | 64 MB | Serialized model cap and relevant algorithm allocation guards |
+| `db4ai.xgboost_max_input_mb` | 128 MB | Dense float32 input-copy cap |
 
-**The XGBoost input cap is not a total-process memory limit.** DMatrix/histogram/model allocations are additional. External-memory XGBoost is not implemented. Maximum features: 1,024 generally, 256 for PCA. Cancellation is checked in PG/native loops and between boosting iterations, not inside every upstream call. Training holds a transaction/snapshot.
+These are **not total backend RSS limits**: source and normalized stores, shuffle
+cache, numerical workspace and XGBoost allocations are separate. XGBoost still
+uses a complete DMatrix, not external-memory training. `max_seconds` is a soft
+algorithm-phase budget; PG statement_timeout/cancellation is checked in C loops
+and between XGBoost calls, not inside every upstream call. Functions are
+PARALLEL UNSAFE. GPU/distributed training, production performance qualification,
+old-openGauss-blob import and full SQL grammar compatibility are not implemented.
 
-Predictors cache by model name, role, statement and command ID. Third-party handles have explicit cleanup and memory-context callbacks. SQL functions remain PARALLEL UNSAFE until separately audited. Windows/macOS support and performance claims are not established.
+## Documentation
 
-## Documentation and license
+[Architecture](docs/ARCHITECTURE.md) · [Original-source mapping and differences](docs/PORTING.md) ·
+[Validation](docs/VALIDATION.md) · [Changelog](CHANGELOG.md) · [Notices](THIRD_PARTY_NOTICES.md)
 
-- [Architecture and security](docs/ARCHITECTURE.md)
-- [Original-source mapping and deliberate semantic differences](docs/PORTING.md)
-- [Validation record](docs/VALIDATION.md)
-- [Upstream notices](THIRD_PARTY_NOTICES.md)
-
-First-party and openGauss-derived work is licensed under Mulan PSL v2. All upstream XGBoost/dependency licenses remain in their original source directories. The openGauss snapshots/ data-versioning feature is excluded.
+First-party and openGauss-derived work uses Mulan PSL v2. Vendored upstream
+licenses remain unchanged. The independent `snapshots/` data-versioning feature
+is deliberately excluded.

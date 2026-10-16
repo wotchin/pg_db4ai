@@ -10,6 +10,8 @@ Copyright (c) 2020 Huawei Technologies Co.,Ltd.
 openGauss is licensed under Mulan PSL v2. The full license is reproduced in LICENSE.
 The software is provided on an AS IS basis without warranties, including non-infringement, merchantability or fitness for a particular purpose. See LICENSE for the complete notice.
 
+The 0.2 numerical adaptations include the original GD/normalized-GD, OVA, random-feature kernel, shuffle-cache, stochastic-PCA, KMeans and internal Bayes algorithm families. Corresponding C files retain upstream copyright where adapted. The exact source hashes are recorded in docs/UPSTREAM_REFERENCE.json. Internal Bayes replaces Boost normal-CDF usage with standard C erfc; no Boost dependency is added.
+
 The new PostgreSQL-only C runtime and numerical adaptation are not represented as an unchanged copy of all original DB4AI implementations. The migration scope is recorded in docs/PORTING.md.
 
 ## XGBoost
