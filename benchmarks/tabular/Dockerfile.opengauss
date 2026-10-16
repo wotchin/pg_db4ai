@@ -1,0 +1,9 @@
+ARG OG_IMAGE=enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+FROM ${OG_IMAGE}
+# The upstream Ubuntu 22.04 image contains libxgboost but omits libgomp.so.1.
+# Install its own distribution's runtime, without replacing database/XGBoost code.
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 python3-minimal \
+    && rm -rf /var/lib/apt/lists/* \
+    && ldd /usr/local/opengauss/lib/libxgboost.so \
+    && ! ldd /usr/local/opengauss/lib/libxgboost.so | grep 'not found'
+ENV OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1

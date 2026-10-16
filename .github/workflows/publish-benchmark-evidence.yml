@@ -1,0 +1,99 @@
+name: Publish verified benchmark evidence
+on:
+  push:
+    branches: [benchmark-public-tabular]
+    paths: [.github/workflows/publish-benchmark-evidence.yml]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve and audit exact measured artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m venv /tmp/evidence-env
+          /tmp/evidence-env/bin/pip install numpy==2.3.3 scipy==1.16.2 pandas==2.3.3 scikit-learn==1.7.2
+          /tmp/evidence-env/bin/python - <<'PY'
+          import hashlib,io,json,os,shutil,sys,urllib.request,zipfile
+          from pathlib import Path
+          sys.path.insert(0,'benchmarks/tabular')
+          from audit import audit
+          from summarize import summarize
+          base='https://api.github.com/repos/wotchin/pg_db4ai'
+          def fetch(path):
+              req=urllib.request.Request(base+path,headers={'Accept':'application/vnd.github+json'})
+              # GitHub redirects to a SAS-signed Azure URL. Do not forward the
+              # GitHub bearer token to that different origin.
+              req.add_unredirected_header('Authorization','Bearer '+os.environ['GH_TOKEN'])
+              with urllib.request.urlopen(req,timeout=90) as r:return r.read()
+          def artifact(i,sha,dst):
+              data=fetch('/actions/artifacts/'+str(i)+'/zip')
+              assert hashlib.sha256(data).hexdigest()==sha, 'artifact digest mismatch'
+              dst.mkdir(parents=True,exist_ok=True)
+              with zipfile.ZipFile(io.BytesIO(data)) as z:
+                  for f in z.infolist():
+                      p=Path(f.filename)
+                      assert not p.is_absolute() and '..' not in p.parts
+                  z.extractall(dst)
+          records=[(42,12063108102,'84db2b99d6cce4ba15581bf7ab419162bbce4394bed1b58a0a1d035af160d0f2'),
+                   (2024,12063183225,'10fcb7b29bf27c98b1044ebc997056a9dd57d00827681ea3af0caf54c2b0ef8a'),
+                   (7,12063542146,'7d6be8920b04129aa78659d0bec6279bf8715a080806b47fb100e172b3d6a2a0')]
+          work=Path('/tmp/benchmark-evidence');combined=work/'combined';combined.mkdir(parents=True)
+          out=Path('benchmarks/tabular/results/2026-10-16');out.mkdir(parents=True,exist_ok=True)
+          rows=[];cases=[];audits=[];environments=[]
+          for seed,i,sha in records:
+              block=work/str(seed);artifact(i,sha,block);root=block/'results'
+              data=json.loads((root/'results.json').read_text())
+              assert len(data)==248 and all(r['status']=='ok' for r in data)
+              rows.extend(data);audit_result=audit(root);assert audit_result['ready_with_stated_methodology_caveats']
+              audits.append({'seed':seed,**audit_result})
+              env=json.loads((root/'environment.json').read_text())
+              assert env['source_commit']=='95d0078efae9eff4ae5b6b86fdf6d464cb5730ea'
+              env['pg_version']=(root/'pg-version.txt').read_text().strip();env['og_version']=(root/'og-version.txt').read_text().strip()
+              environments.append(env)
+              for c in json.loads((root/'datasets.json').read_text())['cases']:
+                  cases.append(c);shutil.copytree(root/c,combined/c)
+          canonical=json.dumps(rows,sort_keys=True,separators=(',',':'),allow_nan=False).encode()
+          assert hashlib.sha256(canonical).hexdigest()=='6c6487b908abd3364c7114f6bba422a0bcebbc55ba78e20272aaa1b8c8408384'
+          (combined/'results.json').write_text(json.dumps(rows,indent=2)+'\n')
+          (combined/'datasets.json').write_text(json.dumps({'cases':cases,'seeds':[42,2024,7]},indent=2)+'\n')
+          summarize(combined,out)
+          shutil.copy(combined/'results.json',out/'raw-results.json')
+          (out/'independent-audits.json').write_text(json.dumps(audits,indent=2)+'\n')
+          (out/'environments.json').write_text(json.dumps(environments,indent=2)+'\n')
+          parity=json.loads((out/'xgboost-parity.json').read_text())
+          assert len(parity)==18 and all(r['independent_training_max_abs_diff']==0 and r['export_reload_raw_prediction_max_abs_diff']==0 for r in parity)
+          shutil.copy(work/'42/prediction-ab/results.json',out/'prediction-ab.json')
+          iterations=work/'iteration-audit'
+          artifact(12063935863,'6f73b91b1544246d22d6ca7f9b3bc7baf2384fca6c6c74167b6f86de5776b97c',iterations)
+          its=json.loads((iterations/'executed-iterations.json').read_text());assert len(its)==78
+          for r in its:
+              m=json.loads((combined/f"{r['dataset']}-{r['seed']}"/'meta.json').read_text())
+              for k in ['train_X_sha256','train_ids_sha256']:assert r[k]==m[k]
+          shutil.copy(iterations/'executed-iterations.json',out/'supplemental-og-iterations.json')
+          provenance={'measured_commit':'95d0078efae9eff4ae5b6b86fdf6d464cb5730ea','run_id':38940991413,
+            'artifacts':[{'seed':s,'id':i,'sha256':h} for s,i,h in records],
+            'iteration_audit_run':38941694021,'iteration_audit_artifact':12063935863,
+            'canonical_raw_results_sha256':hashlib.sha256(canonical).hexdigest(),
+            'note':'Iteration metadata was recovered in an untimed rerun, not silently substituted into raw timed-run records.'}
+          (out/'provenance.json').write_text(json.dumps(provenance,indent=2)+'\n')
+          print('Verified 744 records, 156 independent DB metric cases, 18 XGBoost parity cases and 78 matched-input iteration audits')
+          PY
+      - name: Commit verified evidence without overwriting concurrent work
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add benchmarks/tabular/results/2026-10-16
+          git diff --cached --quiet || git commit -m 'Publish independently verified 744-record public tabular benchmark evidence'
+          git push origin HEAD:benchmark-public-tabular
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verified-benchmark-summary
+          path: benchmarks/tabular/results/2026-10-16
+          retention-days: 30
