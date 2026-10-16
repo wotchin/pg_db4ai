@@ -27,3 +27,28 @@ SELECT public.assert_true(db4ai.explain_model('xgb_exact')->'metrics'->>'trainin
 SELECT public.expect_error($q$SELECT db4ai.train('bad_metric','xgboost_binary_logistic','SELECT 1,1','{"eval_metric":"auc"}')$q$,'22023');
 SELECT public.expect_error($q$SELECT db4ai.train('bad_tree','xgboost_binary_logistic','SELECT 1,1','{"tree_method":"gpu_hist"}')$q$,'22023');
 SELECT public.expect_error($q$SELECT db4ai.train('bad_alias','xgboost_binary_logistic','SELECT 1,1','{"eta":0.1,"learning_rate":0.2}')$q$,'22023');
+
+-- Reused in-place buffers must see each new row, not cached input values.
+CREATE TEMP TABLE xgb_varying_predictions AS
+SELECT x, db4ai.predict_float8('xgb_ubj', ARRAY[x,x2]) AS prediction
+FROM public.regression ORDER BY x;
+SELECT public.assert_true((SELECT count(DISTINCT prediction)>10 FROM xgb_varying_predictions),
+                          'in-place prediction consumes changing row values');
+SELECT public.assert_true((SELECT max(abs(p.prediction-db4ai.predict_float8('xgb_json',ARRAY[r.x,r.x2])))<1e-7
+                           FROM xgb_varying_predictions p JOIN public.regression r USING(x)),
+                          'in-place JSON/UBJSON all-row equality');
+-- Non-gbtree boosters retain the compatible DMatrix fallback.
+SELECT db4ai.train('xgb_linear_fallback','xgboost_regression_squarederror',
+  'SELECT 1+2*x AS y,x FROM public.regression',
+  '{"booster":"gblinear","max_iterations":100,"learning_rate":0.3,"l2":0}');
+SELECT public.assert_true(abs(db4ai.predict_float8('xgb_linear_fallback',ARRAY[0.25])-1.5)<0.02,
+                          'gblinear fallback remains functional');
+SELECT db4ai.train('xgb_dart_fallback','xgboost_regression_squarederror',
+  'SELECT y,x,x2 FROM public.regression',
+  '{"booster":"dart","max_iterations":30,"learning_rate":0.2,"max_depth":3}');
+SELECT public.assert_true(abs(db4ai.predict_float8('xgb_dart_fallback',ARRAY[0.25,0.0625])-1.3125)<0.5,
+                          'dart fallback remains functional');
+SELECT public.expect_error($q$SELECT db4ai.predict_float8('xgb_ubj',ARRAY[1e300,1.0])$q$,'22003');
+SELECT public.assert_true(abs(db4ai.predict_float8('xgb_ubj',ARRAY[0.25,0.0625])-1.3125)<0.3,
+                          'predictor usable after invalid row fails in subtransaction');
+SELECT 'XGBoost in-place/fallback regressions passed' AS result;

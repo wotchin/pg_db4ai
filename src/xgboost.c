@@ -5,6 +5,7 @@
 #include "postgres.h"
 #include <float.h>
 #include <math.h>
+#include <stdint.h>
 #include "db4ai.h"
 #include "common/shortest_dec.h"
 #include "lib/stringinfo.h"
@@ -23,6 +24,11 @@ typedef struct Db4aiXgb
     MemoryContextCallback cleanup;
     BoosterHandle booster;
     DMatrixHandle matrix;
+    DMatrixHandle proxy;
+    bool inplace;
+    int nfeatures;
+    float *prediction_row;
+    char *array_interface;
 } Db4aiXgb;
 
 static void
@@ -41,6 +47,11 @@ xgb_release(void *arg)
     {
         (void) XGDMatrixFree(resource->matrix);
         resource->matrix = NULL;
+    }
+    if (resource->proxy != NULL)
+    {
+        (void) XGDMatrixFree(resource->proxy);
+        resource->proxy = NULL;
     }
     if (resource->booster != NULL)
     {
@@ -184,6 +195,40 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
     xgb_release(r);
 }
 
+/* Inspect the booster once. Non-tree boosters keep the existing DMatrix path. */
+static bool
+xgb_supports_inplace(BoosterHandle booster)
+{
+    bst_ulong length;
+    const char *buffer;
+    char *text;
+    char *name;
+    Jsonb *config;
+    JsonbValue *value;
+    bool result;
+    xgb_check(XGBoosterSaveJsonConfig(booster, &length, &buffer));
+    if (length >= MaxAllocSize)
+        ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED), errmsg("XGBoost configuration is too large")));
+    text = pnstrdup(buffer, (Size) length);
+    config = DatumGetJsonbP(DirectFunctionCall1(jsonb_in, CStringGetDatum(text)));
+    value = db4ai_json_field(config, "learner", true);
+    if (value->type != jbvBinary || !JsonContainerIsObject(value->val.binary.data))
+        ereport(ERROR, (errcode(ERRCODE_DATA_CORRUPTED), errmsg("invalid XGBoost learner configuration")));
+    config = JsonbValueToJsonb(value);
+    value = db4ai_json_field(config, "gradient_booster", true);
+    if (value->type != jbvBinary || !JsonContainerIsObject(value->val.binary.data))
+        ereport(ERROR, (errcode(ERRCODE_DATA_CORRUPTED), errmsg("invalid XGBoost booster configuration")));
+    config = JsonbValueToJsonb(value);
+    name = db4ai_json_string(config, "name", NULL);
+    if (name == NULL)
+        ereport(ERROR, (errcode(ERRCODE_DATA_CORRUPTED), errmsg("missing XGBoost booster name")));
+    /* Deliberately retain the old path for dart and gblinear. */
+    result = strcmp(name, "gbtree") == 0;
+    pfree(name);
+    pfree(text);
+    return result;
+}
+
 void *
 db4ai_xgb_load(const Db4aiModel *model)
 {
@@ -198,6 +243,24 @@ db4ai_xgb_load(const Db4aiModel *model)
     xgb_check(XGBoosterGetNumFeature(r->booster, &nfeatures));
     if (nfeatures != model->nfeatures)
         ereport(ERROR, (errcode(ERRCODE_DATA_CORRUPTED), errmsg("XGBoost feature schema does not match model metadata")));
+    r->nfeatures = model->nfeatures;
+    r->prediction_row = palloc(r->nfeatures * sizeof(float));
+    r->inplace = xgb_supports_inplace(r->booster);
+    if (r->inplace)
+    {
+#ifdef WORDS_BIGENDIAN
+        const char *typestr = ">f4";
+#else
+        const char *typestr = "<f4";
+#endif
+        /* Stable PG-owned buffer and reusable proxy: no per-row DMatrix build.
+         * PredictFromDense is synchronous; the array remains valid until this
+         * predictor's MemoryContext is reset. Never persist its address. */
+        r->array_interface = psprintf(
+            "{\"data\":[" UINT64_FORMAT ",false],\"shape\":[1,%d],\"typestr\":\"%s\",\"version\":3}",
+            (uint64) (uintptr_t) r->prediction_row, r->nfeatures, typestr);
+        xgb_check(XGProxyDMatrixCreate(&r->proxy));
+    }
     return r;
 }
 
@@ -205,12 +268,14 @@ double
 db4ai_xgb_predict(void *predictor, const double *features, int nfeatures)
 {
     Db4aiXgb *r = (Db4aiXgb *) predictor;
-    float *row = palloc(nfeatures * sizeof(float));
+    float *row = r->prediction_row;
     const bst_ulong *shape;
     bst_ulong ndim;
     const float *result;
     volatile double out = 0;
     int i;
+    if (nfeatures != r->nfeatures)
+        ereport(ERROR, (errcode(ERRCODE_DATATYPE_MISMATCH), errmsg("XGBoost feature count changed")));
     for (i = 0; i < nfeatures; i++)
     {
         if (fabs(features[i]) > FLT_MAX)
@@ -220,15 +285,25 @@ db4ai_xgb_predict(void *predictor, const double *features, int nfeatures)
     CHECK_FOR_INTERRUPTS();
     PG_TRY();
     {
-        xgb_check(XGDMatrixCreateFromMat(row, 1, nfeatures, NAN, &r->matrix));
-        xgb_check(XGBoosterPredictFromDMatrix(r->booster, r->matrix,
-                  "{\"type\":0,\"training\":false,\"iteration_begin\":0,\"iteration_end\":0,\"strict_shape\":true}",
-                  &shape, &ndim, &result));
+        if (r->inplace)
+            xgb_check(XGBoosterPredictFromDense(r->booster, r->array_interface,
+                      "{\"type\":0,\"iteration_begin\":0,\"iteration_end\":0,\"strict_shape\":true,\"missing\":NaN}",
+                      r->proxy, &shape, &ndim, &result));
+        else
+        {
+            xgb_check(XGDMatrixCreateFromMat(row, 1, nfeatures, NAN, &r->matrix));
+            xgb_check(XGBoosterPredictFromDMatrix(r->booster, r->matrix,
+                      "{\"type\":0,\"training\":false,\"iteration_begin\":0,\"iteration_end\":0,\"strict_shape\":true}",
+                      &shape, &ndim, &result));
+        }
         if (ndim != 2 || shape[0] != 1 || shape[1] != 1)
             ereport(ERROR, (errcode(ERRCODE_DATA_CORRUPTED), errmsg("unexpected XGBoost prediction shape")));
         out = result[0];
-        xgb_check(XGDMatrixFree(r->matrix));
-        r->matrix = NULL;
+        if (r->matrix != NULL)
+        {
+            xgb_check(XGDMatrixFree(r->matrix));
+            r->matrix = NULL;
+        }
     }
     PG_CATCH();
     {
@@ -240,7 +315,6 @@ db4ai_xgb_predict(void *predictor, const double *features, int nfeatures)
         PG_RE_THROW();
     }
     PG_END_TRY();
-    pfree(row);
     db4ai_check_finite(out);
     return out;
 }
