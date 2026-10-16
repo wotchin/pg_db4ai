@@ -36,7 +36,7 @@ void _PG_init(void);
 void
 _PG_init(void)
 {
-    DefineCustomIntVariable("db4ai.work_mem", "Memory for normalized training tuplestore, in kB.", NULL,
+    DefineCustomIntVariable("db4ai.work_mem", "Memory per training replay store and shuffle buffer, in kB.", NULL,
                             &db4ai_work_mem, 16384, 64, 1048576, PGC_USERSET, GUC_UNIT_KB, NULL, NULL, NULL);
     DefineCustomIntVariable("db4ai.xgboost_max_input_mb", "Maximum dense XGBoost input copy, in MB.", NULL,
                             &db4ai_xgboost_max_input_mb, 128, 1, 1024, PGC_SUSET, 0, NULL, NULL, NULL);
@@ -89,6 +89,7 @@ pg_db4ai_train(PG_FUNCTION_ARGS)
         MemoryContextSwitchTo(context);
         memset(&model, 0, sizeof(model));
         data = db4ai_data_open(query, algorithm, &options);
+        data->input_seconds=(GetCurrentTimestamp()-started)/1000000.0;
         model.algorithm = algorithm;
         model.nfeatures = data->nfeatures;
         if (db4ai_is_xgboost(algorithm))
@@ -138,6 +139,10 @@ pg_db4ai_train(PG_FUNCTION_ARGS)
                 pfree(row);
             }
             model.metrics = DatumGetJsonbP(DirectFunctionCall1(jsonb_in, CStringGetDatum(metrics.data)));
+            if(native->diagnostics)
+                model.metrics=DatumGetJsonbP(DirectFunctionCall2(jsonb_concat,
+                    JsonbPGetDatum(model.metrics),JsonbPGetDatum(native->diagnostics)));
+
         }
         {
             StringInfoData stats;
@@ -150,6 +155,33 @@ pg_db4ai_train(PG_FUNCTION_ARGS)
                              data->shuffle_full_cache?"true":"false", seconds + micros/1000000.0);
             model.metrics = DatumGetJsonbP(DirectFunctionCall2(jsonb_concat, JsonbPGetDatum(model.metrics),
                 DirectFunctionCall1(jsonb_in, CStringGetDatum(stats.data))));
+        }
+        {
+            StringInfoData phases;
+            initStringInfo(&phases);
+            appendStringInfo(&phases,"{\"input_seconds\":%.9f,\"feature_prepare_seconds\":%.9f,"
+                "\"optimize_seconds\":%.9f,\"evaluation_seconds\":%.9f,"
+                "\"prepared_cache\":%s,\"prepared_cache_spilled\":%s,\"kernel_transformed_rows\":" INT64_FORMAT ","
+                "\"shuffle_blocks\":" INT64_FORMAT ",\"shuffle_window_rows\":%d,\"replay_format\":\"dense-float8\"}",
+                data->input_seconds,data->feature_seconds,data->optimize_seconds,data->evaluation_seconds,
+                data->kernel_cached?"true":"false",data->kernel_spilled?"true":"false",data->kernel_rows,
+                data->shuffle_blocks,data->shuffle_window_rows);
+            model.metrics=DatumGetJsonbP(DirectFunctionCall2(jsonb_concat,JsonbPGetDatum(model.metrics),
+                DirectFunctionCall1(jsonb_in,CStringGetDatum(phases.data))));
+        }
+        if(data->dense)
+        {
+            uint64 read,written,seeks;
+            StringInfoData io;
+            db4ai_rows_stats(data->dense,&read,&written,&seeks);
+            initStringInfo(&io);
+            appendStringInfo(&io,"{\"replay_bytes_read\":" UINT64_FORMAT
+                ",\"replay_bytes_written\":" UINT64_FORMAT ",\"replay_seeks\":" UINT64_FORMAT
+                ",\"prepared_bytes_read\":" UINT64_FORMAT ",\"prepared_bytes_written\":" UINT64_FORMAT
+                ",\"prepared_seeks\":" UINT64_FORMAT "}",read,written,seeks,
+                data->prepared_bytes_read,data->prepared_bytes_written,data->prepared_seeks);
+            model.metrics=DatumGetJsonbP(DirectFunctionCall2(jsonb_concat,JsonbPGetDatum(model.metrics),
+                DirectFunctionCall1(jsonb_in,CStringGetDatum(io.data))));
         }
         id = db4ai_model_store(name, query, data, &model, db4ai_options_json(&options, algorithm), caller);
         db4ai_data_close(data);
@@ -398,4 +430,26 @@ pg_db4ai_predict_joint(PG_FUNCTION_ARGS)
     for(i=0;i<n;i++)
     { values[i]=PG_GETARG_DATUM(i+1); nulls[i]=PG_ARGISNULL(i+1); types[i]=get_fn_expr_argtype(fcinfo->flinfo,i+1); }
     PG_RETURN_FLOAT8(db4ai_bayes_predict(cache->bayes,values,nulls,types,n));
+}
+
+/* Compilation capabilities; this does not promise a compatible top-level SQL grammar. */
+PG_FUNCTION_INFO_V1(pg_db4ai_build_info);
+Datum
+pg_db4ai_build_info(PG_FUNCTION_ARGS)
+{
+#ifdef DB4AI_WITH_XGBOOST
+    const char *xgboost="true";
+#else
+    const char *xgboost="false";
+#endif
+#ifdef DB4AI_WITH_OPENMP
+    const char *openmp="true";
+#else
+    const char *openmp="false";
+#endif
+    char *info=psprintf("{\"extension_version\":\"0.3.0\",\"postgres_major\":%d,"
+        "\"xgboost\":%s,\"openmp\":%s,\"training_corgipile\":true,"
+        "\"dense_replay\":true,\"model_ddl\":\"explicit execute_ddl entrypoint\","
+        "\"native_create_model_grammar\":false}",PG_VERSION_NUM/10000,xgboost,openmp);
+    PG_RETURN_DATUM(DirectFunctionCall1(jsonb_in,CStringGetDatum(info)));
 }

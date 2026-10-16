@@ -1,3 +1,24 @@
+# pg_db4ai 0.3 update
+
+PostgreSQL-only C11. New: dense numerical replay, prepared-feature caching,
+CorgiPile block/window row shuffle, explicit model-DDL interpreter, richer model
+diagnostics, fractional time budgets, and optional XGBoost training OpenMP.
+
+ABO optimizer integration and snapshots are excluded. Numerical implementation
+choices are accepted, not a missing-function checklist. Bare CREATE MODEL is NOT
+registered in stock PG; use the explicit `db4ai.execute_ddl(text)` entrypoint.
+
+[Functional audit](docs/FUNCTIONAL_COVERAGE.md) · [DDL](docs/MODEL_DDL.md) ·
+[CorgiPile](docs/CORGIPILE.md) · [Current-only measurements](benchmarks/native/README.md)
+
+Install and reconnect, then `ALTER EXTENSION pg_db4ai UPDATE TO '0.3.0';`.
+Default builds still use single-thread XGBoost without OpenMP. Optional
+`make WITH_XGBOOST=1 WITH_OPENMP=1` enables nthread=1..64 for training, with the
+system OpenMP runtime dependency. Prediction stays single-thread per SQL call.
+`SELECT db4ai.build_info();` reports actual build capabilities.
+
+---
+
 # pg_db4ai
 
 PostgreSQL-native, in-process machine learning adapted from openGauss DB4AI.

@@ -1,5 +1,18 @@
 # pg_db4ai：PostgreSQL 原生机器学习扩展
 
+## 0.3 更新
+
+新增 CorgiPile 两级训练混排、连续数值重扫与可溢写的特征预计算缓存；补齐模型 DDL 显式解析入口、KMeans/PCA 诊断、小数 max_seconds，以及可选 `WITH_OPENMP=1` 的 XGBoost 多线程训练。
+
+**ABO 和 snapshots 不在迁移范围。** RNG、KMeans 采样、随机 PCA 和 OVA 状态的差异是允许的实现选择，不再作为功能缺失。
+
+`SELECT db4ai.execute_ddl($ddl$CREATE MODEL ...$ddl$)` 在插件内解析执行；**原生 PG 顶层裸 CREATE MODEL 仍不支持**。`SELECT db4ai.build_info()` 可查看编译能力。
+
+升级：安装新库、重新连接，然后 `ALTER EXTENSION pg_db4ai UPDATE TO '0.3.0';`。
+
+[功能核查](docs/FUNCTIONAL_COVERAGE.md) · [DDL 边界](docs/MODEL_DDL.md) · [论文与 CorgiPile 实现](docs/CORGIPILE.md) · [仅测本插件的实验](benchmarks/native/README.md)
+
+
 0.2 已实现固定版本 openGauss DB4AI 注册表中的 **11 个算法入口**，补入
 NGD、One-vs-All 多分类、Gaussian/Polynomial 核特征映射、随机 PCA、KMeans
 两类初始化与四种距离、类型化标签、Bayes network 和训练 shuffle cache；
@@ -158,7 +171,7 @@ XGBoost 四种原有 objective 使用 JSON/UBJSON model IO，默认 UBJSON。
 0.1→0.2 升级、跨连接加载及 pg_dump/pg_restore。PG16/17/18 远端结果应看对应提交的 CI，
 不能把“配置测试矩阵”当成“全部测试已通过”。
 
-仍未验证运行中 openGauss 的全链路差分、相同随机种子的逐位一致性、生产性能、
+仍未验证运行中 openGauss 的全功能逐位等价、相同随机种子的逐位一致性、生产性能、
 Windows/macOS、并行/分布式训练、XGBoost 外存训练和旧 openGauss 二进制模型导入。
 资源预算是每个 tuplestore/cache/模型的预算，不是整个 backend 的总内存硬限制。
 XGBoost 取消在上游调用之间检查。原始 snapshots 数据版本功能仍不在范围内。

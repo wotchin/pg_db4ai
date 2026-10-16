@@ -52,3 +52,17 @@ SELECT public.expect_error($q$SELECT db4ai.predict_float8('xgb_ubj',ARRAY[1e300,
 SELECT public.assert_true(abs(db4ai.predict_float8('xgb_ubj',ARRAY[0.25,0.0625])-1.3125)<0.3,
                           'predictor usable after invalid row fails in subtransaction');
 SELECT 'XGBoost in-place/fallback regressions passed' AS result;
+-- nthread is a real training capability only in explicitly enabled builds.
+DO $$ BEGIN
+ IF (db4ai.build_info()->>'openmp')::boolean THEN
+   PERFORM db4ai.train('xgb_threads','xgboost_regression_squarederror',
+     'SELECT y,x,x2 FROM public.regression','{"nthread":2,"max_iterations":15}');
+   IF (db4ai.explain_model('xgb_threads')->'hyperparameters'->>'nthread')::int<>2
+     THEN RAISE EXCEPTION 'requested training threads not preserved'; END IF;
+ ELSE
+   PERFORM public.expect_error($q$SELECT db4ai.train('xgb_threads','xgboost_regression_squarederror',
+       'SELECT y,x,x2 FROM public.regression','{"nthread":2}')$q$,'0A000');
+ END IF;
+END $$;
+SELECT public.assert_true((db4ai.build_info()->>'native_create_model_grammar')::boolean=false,
+                          'explicit DDL must not claim native grammar');

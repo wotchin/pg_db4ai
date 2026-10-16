@@ -28,3 +28,11 @@ DO $$ BEGIN
  IF db4ai.predict_text('post_upgrade',ARRAY[0.0,1.0,0.0])<>'b' THEN RAISE EXCEPTION 'new algorithm after upgrade'; END IF;
 END $$;
 SELECT '0.1 to 0.2 upgrade and legacy model fixtures passed' result;
+ALTER EXTENSION pg_db4ai UPDATE TO '0.3.0';
+DO $$ BEGIN
+  IF EXISTS(SELECT FROM original_payload p JOIN db4ai.pg_db4ai_models m USING(model_name) WHERE p.checksum<>md5(m.model_data)) THEN RAISE EXCEPTION '0.3 upgrade rewrote model'; END IF;
+  IF db4ai.predict_float8('v01_linear',ARRAY[3.0])<>7 THEN RAISE EXCEPTION '0.3 legacy model load'; END IF;
+  IF array_length(db4ai.shuffle_indices(200,'{"shuffle":"corgipile","shuffle_block_rows":7,"shuffle_window_blocks":3}',1),1)<>200 THEN RAISE EXCEPTION '0.3 shuffle upgrade'; END IF;
+END $$;
+SELECT db4ai.execute_ddl('CREATE MODEL after_v03 USING linear_regression FEATURES x TARGET y FROM (SELECT 2.0 AS y,1.0 AS x)t WITH max_iterations=2');
+SELECT '0.2 to 0.3 upgrade passed' result;

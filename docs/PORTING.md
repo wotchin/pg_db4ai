@@ -1,3 +1,16 @@
+# Scope update for 0.3
+
+The detailed numerical differences below are accepted implementation choices,
+not unresolved functional migration gaps. ABO optimizer integration is excluded
+by project scope, as is snapshots. See [FUNCTIONAL_COVERAGE.md](FUNCTIONAL_COVERAGE.md)
+for the current capability audit. Model diagnostics, fractional time limits,
+optional XGBoost threads and explicit model-DDL interpretation are now included.
+The new CorgiPile training iterator and dense/prepared replay are described in
+[CORGIPILE.md](CORGIPILE.md); native top-level grammar remains outside ordinary
+PG extension hooks, documented in [MODEL_DDL.md](MODEL_DDL.md).
+
+## Historical numerical reference (0.2)
+
 # Original DB4AI coverage and deliberate differences (0.2)
 
 Reference: `opengauss-mirror/openGauss-server` commit
@@ -83,8 +96,8 @@ complex cases use the same semantics through FunctionScan fallback.
 9. XGBoost uses one complete DMatrix across boosting iterations instead of the old
    chunk-wise warm-start procedure. Four objectives and the supported CPU options
    are exposed, but not unrestricted future XGBoost parameter passthrough. Upstream
-   C++/standard runtime remains; GPU/OpenMP/distributed/external-memory training is
-   not enabled. nthread is 1; training metrics are not held-out validation.
+   C++/standard runtime remains; GPU/distributed/external-memory training is
+   not enabled. OpenMP is now optional in 0.3; default nthread is 1; training metrics are not held-out validation.
 10. All native models use new explicit JSON and XGBoost uses model IO. Old openGauss
     struct/Datum/memory-snapshot blobs cannot be directly loaded. The extension's
     own 0.1 JSON is supported; tests distinguish this from openGauss compatibility.

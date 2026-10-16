@@ -160,7 +160,7 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
     xgb_check(XGBoosterSetParam(r->booster, "booster", o->booster));
     if(*o->eval_metric) xgb_check(XGBoosterSetParam(r->booster, "eval_metric", o->eval_metric));
     xgb_check(XGBoosterSetParam(r->booster, "device", "cpu"));
-    xgb_check(XGBoosterSetParam(r->booster, "nthread", "1"));
+    set_integer(r->booster, "nthread", o->nthread);
     xgb_check(XGBoosterSetParam(r->booster, "verbosity", o->verbose?"1":"0"));
     set_integer(r->booster, "max_depth", o->max_depth);
     set_integer(r->booster, "seed", o->seed);

@@ -32,9 +32,18 @@ typedef struct Db4aiDictionary
 
 typedef enum Db4aiShuffleMode
 {
-    DB4AI_SHUFFLE_NONE, DB4AI_SHUFFLE_BATCH, DB4AI_SHUFFLE_ROW
+    DB4AI_SHUFFLE_NONE, DB4AI_SHUFFLE_BATCH, DB4AI_SHUFFLE_ROW, DB4AI_SHUFFLE_CORGIPILE
 } Db4aiShuffleMode;
 typedef struct Db4aiShuffle Db4aiShuffle;
+typedef struct Db4aiRowStore Db4aiRowStore;
+extern Db4aiRowStore *db4ai_rows_create(int ncolumns, Size budget);
+extern void db4ai_rows_append(Db4aiRowStore *store, const double *row);
+extern void db4ai_rows_seal(Db4aiRowStore *store);
+extern int db4ai_rows_slice(Db4aiRowStore *store, int64 start, int maximum, const double **rows);
+extern int db4ai_rows_read(Db4aiRowStore *store, int64 start, int maximum, double *out);
+extern bool db4ai_rows_spilled(Db4aiRowStore *store);
+extern void db4ai_rows_stats(Db4aiRowStore *store, uint64 *read, uint64 *written, uint64 *seeks);
+extern void db4ai_rows_free(Db4aiRowStore *store);
 typedef struct Db4aiBayes Db4aiBayes;
 
 extern bool db4ai_classifier(Db4aiAlgorithm a);

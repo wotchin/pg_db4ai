@@ -122,6 +122,7 @@ static const OptionKey keys[] = {
     {"tolerance",GD|PCA|KM}, {"decay",GD}, {"optimizer",GD},
     {"max_seconds",GD|PCA|KM|XGB}, {"null_policy",GD|KM|PCA|XGB},
     {"shuffle",GD|PCA}, {"shuffle_first_epoch",GD|PCA}, {"shuffle_buffer_size",GD|PCA},
+    {"shuffle_block_rows",GD|PCA}, {"shuffle_window_blocks",GD|PCA}, {"kernel_cache",GD},
     {"kernel",SVM}, {"components",SVM}, {"gamma",SVM|XGB}, {"degree",SVM}, {"coef0",SVM},
     {"lambda",SVM|XGB}, {"classifier",A(DB4AI_MULTICLASS)},
     {"k",KM}, {"num_centroids",KM}, {"num_features",KM},
@@ -178,6 +179,16 @@ choice(Jsonb *json, const char *key, const char *def, const char *a, const char 
 }
 
 void
+db4ai_validate_option_name(const char *name, Db4aiAlgorithm algorithm)
+{
+    int i;
+    unsigned int bit=A(algorithm);
+    for(i=0;i<lengthof(keys);i++)
+        if(strcmp(name,keys[i].key)==0 && (keys[i].algorithms & bit)) return;
+    ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("unknown or inapplicable hyperparameter: %s",name)));
+}
+
+void
 db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *o)
 {
     JsonbIterator *it;
@@ -224,9 +235,15 @@ db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *o)
     o->decay=bounded(json,"decay",legacy?0.95:1,1e-12,1e6,false);
     o->svm_lambda=xgb?0:bounded(json,"lambda",legacy?0.01:0.5,1e-12,1e6,false);
     o->classifier=choice(json,"classifier","svm_classification","logistic_regression","svm_classification",NULL,NULL);
-    o->shuffle_mode=choice(json,"shuffle","batch","none","batch","row",NULL);
-    o->shuffle_first=db4ai_json_boolean(json,"shuffle_first_epoch",false);
+    o->shuffle_mode=choice(json,"shuffle","batch","none","batch","row","corgipile");
+    o->shuffle_first=db4ai_json_boolean(json,"shuffle_first_epoch",o->shuffle_mode==DB4AI_SHUFFLE_CORGIPILE);
     o->shuffle_buffer=bounded(json,"shuffle_buffer_size",128,1,1048576,true);
+    o->shuffle_block_rows=bounded(json,"shuffle_block_rows",256,1,1048576,true);
+    o->shuffle_window_blocks=bounded(json,"shuffle_window_blocks",8,2,65536,true);
+    o->kernel_cache=db4ai_json_boolean(json,"kernel_cache",true);
+    if(o->shuffle_mode!=DB4AI_SHUFFLE_CORGIPILE &&
+       (db4ai_json_field(json,"shuffle_block_rows",false) || db4ai_json_field(json,"shuffle_window_blocks",false)))
+        ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("block/window options require shuffle=corgipile")));
     o->seeding=choice(json,"seeding_function","Random++","Random++","KMeans||","reservoir",NULL);
     o->distance=choice(json,"distance_function","L2_Squared","L1","L2","L2_Squared","Linf");
     o->seeding_rounds=bounded(json,"seeding_rounds",5,1,10,true);
@@ -234,7 +251,7 @@ db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *o)
     o->pca_solver=choice(json,"pca_solver",legacy?"stochastic":"jacobi","jacobi","stochastic",NULL,NULL);
     o->center=db4ai_json_boolean(json,"center",!legacy);
     o->null_policy=choice(json,"null_policy",legacy?"legacy":"error","error","legacy",NULL,NULL);
-    o->max_seconds=bounded(json,"max_seconds",0,0,86400,true);
+    o->max_seconds=bounded(json,"max_seconds",0,0,86400,false);
     v.type=jbvNull;
     {
         JsonbValue *vv=db4ai_json_field(json,"verbose",false);
@@ -257,13 +274,20 @@ db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *o)
         ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("unsupported CPU XGBoost tree_method")));
     if(xgb && strcmp(o->booster,"gbtree") && strcmp(o->booster,"dart") && strcmp(o->booster,"gblinear"))
         ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("unsupported XGBoost booster")));
-    o->nthread=bounded(json,"nthread",1,1,1,true); /* bundled build intentionally has no OpenMP */
+    o->nthread=bounded(json,"nthread",1,1,64,true);
+#ifndef DB4AI_WITH_OPENMP
+    if(o->nthread != 1)
+        ereport(ERROR,(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                       errmsg("nthread > 1 requires WITH_OPENMP=1"),
+                       errhint("Rebuild the bundled XGBoost with WITH_XGBOOST=1 WITH_OPENMP=1; default builds remain single-threaded.")));
+#endif
     if (db4ai_json_field(json,"verbosity",false)) o->verbose=bounded(json,"verbosity",0,0,3,true)>0;
     if (algorithm==DB4AI_PCA && o->pca_solver==0)
     {
         if (db4ai_json_field(json,"shuffle",false) ||
             db4ai_json_field(json,"shuffle_first_epoch",false) ||
-            db4ai_json_field(json,"shuffle_buffer_size",false))
+            db4ai_json_field(json,"shuffle_buffer_size",false) ||
+            db4ai_json_field(json,"shuffle_block_rows",false) || db4ai_json_field(json,"shuffle_window_blocks",false))
             ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                            errmsg("shuffle options require pca_solver=stochastic")));
         o->shuffle_mode=0;
@@ -301,9 +325,15 @@ db4ai_options_json(const Db4aiOptions *o, Db4aiAlgorithm a)
     if (gd) { option_string(&b,"optimizer",o->optimizer?"ngd":"gd"); option_number(&b,"decay",o->decay); }
     if (gd || (a==DB4AI_PCA && o->pca_solver==1))
     {
-        option_string(&b,"shuffle",o->shuffle_mode==0?"none":(o->shuffle_mode==1?"batch":"row"));
+        option_string(&b,"shuffle",o->shuffle_mode==0?"none":(o->shuffle_mode==1?"batch":(o->shuffle_mode==2?"row":"corgipile")));
         option_number(&b,"shuffle_buffer_size",o->shuffle_buffer);
         appendStringInfo(&b,",\"shuffle_first_epoch\":%s",o->shuffle_first?"true":"false");
+    }
+    if (gd) appendStringInfo(&b,",\"kernel_cache\":%s",o->kernel_cache?"true":"false");
+    if (o->shuffle_mode==DB4AI_SHUFFLE_CORGIPILE)
+    {
+        option_number(&b,"shuffle_block_rows",o->shuffle_block_rows);
+        option_number(&b,"shuffle_window_blocks",o->shuffle_window_blocks);
     }
     if (a==DB4AI_SVM || a==DB4AI_MULTICLASS)
     {

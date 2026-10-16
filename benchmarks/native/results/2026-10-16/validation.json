@@ -1,0 +1,18 @@
+{
+  "complete": true,
+  "current_cases": 122,
+  "current_stress_cases": 9,
+  "metric_checks": 131,
+  "frozen_prediction_checks": 60,
+  "frozen_prediction_exact_matches": 60,
+  "feature_cache_model_identity_checks": 2,
+  "external_baselines_executed": 0,
+  "historical_thresholds_met": 20,
+  "historical_threshold_cases": 20,
+  "current_corgipile_over_batch_median_ratio": 1.2848525723799693,
+  "limitations": [
+    "historical timing comparisons are not same-machine ablations",
+    "stress epoch budgets are independent fits, not continuation checkpoints",
+    "no async producer-consumer or physical disk I/O throughput claim"
+  ]
+}
