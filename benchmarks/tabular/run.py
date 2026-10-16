@@ -15,6 +15,7 @@ import traceback
 from pathlib import Path
 import numpy as np
 from common import SOURCES, dump, prepare, metrics
+from export_transport import collect_export, require_final_server
 
 ROOT=Path(__file__).resolve().parents[2]
 OG_IMAGE='opengauss-db4ai-benchmark:local'
@@ -29,6 +30,8 @@ def command(args, text=None, timeout=180):
 
 
 def sql(engine, text, out:Path|None=None, timeout=300):
+    if out is None and text == 'SELECT version();':
+        require_final_server(engine)
     cli='psql' if engine=='pg' else 'gsql'; user='postgres' if engine=='pg' else 'omm'
     cmd=['docker','exec','-i','-u',user,'bench-'+engine,'bash','-lc',f'{cli} -d postgres -X -q -A -t -v ON_ERROR_STOP=1']
     r=subprocess.run(cmd,input=text,text=True,capture_output=True,timeout=timeout)
@@ -36,6 +39,9 @@ def sql(engine, text, out:Path|None=None, timeout=300):
         out.write_text(r.stdout+'\n--- STDERR ---\n'+r.stderr)
         out.with_suffix('.sql').write_text(text)
     if r.returncode: raise RuntimeError(r.stderr[-4000:]+'\n'+r.stdout[-4000:])
+    if engine == 'og' and out is not None and out.name.endswith('-prediction-export.log'):
+        target = out.with_name(out.name.replace('-prediction-export.log', '-predictions.csv'))
+        collect_export(target, '/bench/' + out.parent.name + '/' + target.name, engine)
     return r.stdout
 
 
@@ -153,7 +159,7 @@ def benchmark_db(engine,case,meta,method,repeats):
                     p=f'/bench/{case.name}/pg_xgboost.hex'
                     sql(engine,f'COPY (SELECT encode(db4ai.export_model({quote(last)}),\'hex\')) TO {quote(p)};')
             else:
-                text=sql(engine,f"SELECT iterations FROM gs_model_warehouse WHERE model_name={quote(last)};")
+                text=sql(engine,f"SELECT iterations FROM gs_model_warehouse WHERE modelname={quote(last)};")
                 train_metrics={'iterations':int(text.strip())}
                 (case/(prefix+'-explain.log')).write_text(sql(engine,'EXPLAIN MODEL '+last+';'))
         except Exception as exc:
