@@ -1,0 +1,23 @@
+﻿2026-10-16T17:23:15.3136764Z Post job cleanup.
+2026-10-16T17:23:15.5557742Z ##[group]Generating build summary
+2026-10-16T17:23:15.5575527Z exporting build record to /home/runner/work/_temp/docker-actions-toolkit-trWURp/export
+2026-10-16T17:23:15.5580162Z (node:22754) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-16T17:23:15.5581361Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-16T17:23:15.7369409Z [command]/usr/bin/docker buildx history export --builder builder-e7d83728-5459-41f3-82c2-d95b1f0ef16e --output /home/runner/work/_temp/docker-actions-toolkit-trWURp/export/wotchin~pg_db4ai~OR7LU5.dockerbuild or7lu5abko7jwd06laqjgov3a --finalize
+2026-10-16T17:23:15.9290801Z Build record written to /home/runner/work/_temp/docker-actions-toolkit-trWURp/export/wotchin~pg_db4ai~OR7LU5.dockerbuild (54.96 KB)
+2026-10-16T17:23:15.9314752Z Uploading wotchin~pg_db4ai~OR7LU5.dockerbuild to blob storage
+2026-10-16T17:23:16.3025361Z Beginning upload of artifact content to blob storage
+2026-10-16T17:23:16.3115903Z (node:22754) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-16T17:23:16.3158969Z Uploaded bytes 56274
+2026-10-16T17:23:16.7179169Z Finished uploading artifact content to blob storage!
+2026-10-16T17:23:16.7185601Z SHA256 hash of uploaded artifact is 89ecad781d98c345dbb79981df341671277b90452574a1ad46e3b8b350cf45f9
+2026-10-16T17:23:16.7187930Z Finalizing artifact upload
+2026-10-16T17:23:17.1243941Z Artifact successfully finalized (12061804281)
+2026-10-16T17:23:17.1245625Z Artifact download URL: https://github.com/wotchin/pg_db4ai/actions/runs/38935367352/artifacts/12061804281
+2026-10-16T17:23:17.1272900Z Writing summary
+2026-10-16T17:23:17.1285744Z ##[endgroup]
+2026-10-16T17:23:17.1286649Z ##[group]Removing temp folder /home/runner/work/_temp/docker-actions-toolkit-a3yoTs
+2026-10-16T17:23:17.1290532Z ##[endgroup]
+2026-10-16T17:23:17.1291140Z ##[group]Post cache
+2026-10-16T17:23:17.1292647Z State not set
+2026-10-16T17:23:17.1293285Z ##[endgroup]

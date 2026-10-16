@@ -1,0 +1,7 @@
+﻿2026-10-16T17:05:07.9327550Z ##[group]Run mkdir -p /tmp/db4ai-before
+2026-10-16T17:05:07.9327878Z [36;1mmkdir -p /tmp/db4ai-before[0m
+2026-10-16T17:05:07.9328250Z [36;1mgit archive bde6ee99fc14ad0b2e7cc8e27868470702fe78f8 | tar -x -C /tmp/db4ai-before[0m
+2026-10-16T17:05:07.9328670Z [36;1mmkdir -p /tmp/db4ai-before/benchmarks[0m
+2026-10-16T17:05:07.9328980Z [36;1mcp -R benchmarks/tabular /tmp/db4ai-before/benchmarks/[0m
+2026-10-16T17:05:07.9363355Z shell: /usr/bin/bash -e {0}
+2026-10-16T17:05:07.9363600Z ##[endgroup]

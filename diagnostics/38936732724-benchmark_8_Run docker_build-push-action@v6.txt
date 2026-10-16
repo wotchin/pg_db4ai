@@ -1,0 +1,536 @@
+﻿2026-10-16T17:05:21.9709678Z ##[group]Run docker/build-push-action@v6
+2026-10-16T17:05:21.9709941Z with:
+2026-10-16T17:05:21.9710117Z   context: .
+2026-10-16T17:05:21.9710324Z   file: benchmarks/tabular/Dockerfile.opengauss
+2026-10-16T17:05:21.9710660Z   load: true
+2026-10-16T17:05:21.9710849Z   tags: opengauss-db4ai-benchmark:local
+2026-10-16T17:05:21.9711108Z   cache-from: type=gha,scope=db4ai-tabular-og
+2026-10-16T17:05:21.9711390Z   cache-to: type=gha,mode=max,scope=db4ai-tabular-og
+2026-10-16T17:05:21.9711657Z   no-cache: false
+2026-10-16T17:05:21.9711839Z   pull: false
+2026-10-16T17:05:21.9712013Z   push: false
+2026-10-16T17:05:21.9713866Z   github-token: ***
+2026-10-16T17:05:21.9714051Z ##[endgroup]
+2026-10-16T17:05:22.1598619Z (node:3800) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-16T17:05:22.1599693Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-16T17:05:22.1614241Z ##[group]GitHub Actions runtime token ACs
+2026-10-16T17:05:22.1621221Z refs/heads/benchmark-public-tabular: read/write
+2026-10-16T17:05:22.1621684Z refs/heads/main: read
+2026-10-16T17:05:22.1622233Z ##[endgroup]
+2026-10-16T17:05:22.1622715Z ##[group]Docker info
+2026-10-16T17:05:22.1659948Z [command]/usr/bin/docker version
+2026-10-16T17:05:22.1831944Z Client: Docker Engine - Community
+2026-10-16T17:05:22.1833652Z  Version:           28.0.4
+2026-10-16T17:05:22.1834069Z  API version:       1.48
+2026-10-16T17:05:22.1834491Z  Go version:        go1.23.7
+2026-10-16T17:05:22.1834903Z  Git commit:        b8034c0
+2026-10-16T17:05:22.1835246Z  Built:             Tue Mar 25 15:07:16 2025
+2026-10-16T17:05:22.1835569Z  OS/Arch:           linux/amd64
+2026-10-16T17:05:22.1835856Z  Context:           default
+2026-10-16T17:05:22.1836060Z 
+2026-10-16T17:05:22.1836226Z Server: Docker Engine - Community
+2026-10-16T17:05:22.1836515Z  Engine:
+2026-10-16T17:05:22.1836766Z   Version:          28.0.4
+2026-10-16T17:05:22.1837068Z   API version:      1.48 (minimum version 1.24)
+2026-10-16T17:05:22.1837412Z   Go version:       go1.23.7
+2026-10-16T17:05:22.1837685Z   Git commit:       6430e49
+2026-10-16T17:05:22.1837970Z   Built:            Tue Mar 25 15:07:16 2025
+2026-10-16T17:05:22.1838282Z   OS/Arch:          linux/amd64
+2026-10-16T17:05:22.1838560Z   Experimental:     false
+2026-10-16T17:05:22.1838834Z  containerd:
+2026-10-16T17:05:22.1839245Z   Version:          v2.4.1
+2026-10-16T17:05:22.1839756Z   GitCommit:        f2551031d7276a770f65f98c9b52e57e7dad07e8
+2026-10-16T17:05:22.1840129Z  runc:
+2026-10-16T17:05:22.1840433Z   Version:          1.5.2
+2026-10-16T17:05:22.1840633Z   GitCommit:        v1.5.2-0-g29dd3dc2
+2026-10-16T17:05:22.1840851Z  docker-init:
+2026-10-16T17:05:22.1841023Z   Version:          0.19.0
+2026-10-16T17:05:22.1841214Z   GitCommit:        de40ad0
+2026-10-16T17:05:22.1866698Z [command]/usr/bin/docker info
+2026-10-16T17:05:22.2320045Z Client: Docker Engine - Community
+2026-10-16T17:05:22.2321753Z  Version:    28.0.4
+2026-10-16T17:05:22.2322173Z  Context:    default
+2026-10-16T17:05:22.2322561Z  Debug Mode: false
+2026-10-16T17:05:22.2322913Z  Plugins:
+2026-10-16T17:05:22.2323255Z   buildx: Docker Buildx (Docker Inc.)
+2026-10-16T17:05:22.2323702Z     Version:  v0.38.0
+2026-10-16T17:05:22.2324182Z     Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+2026-10-16T17:05:22.2324697Z   compose: Docker Compose (Docker Inc.)
+2026-10-16T17:05:22.2325108Z     Version:  v2.38.2
+2026-10-16T17:05:22.2325573Z     Path:     /usr/libexec/docker/cli-plugins/docker-compose
+2026-10-16T17:05:22.2326016Z 
+2026-10-16T17:05:22.2326209Z Server:
+2026-10-16T17:05:22.2326534Z  Containers: 1
+2026-10-16T17:05:22.2326860Z   Running: 1
+2026-10-16T17:05:22.2327166Z   Paused: 0
+2026-10-16T17:05:22.2327480Z   Stopped: 0
+2026-10-16T17:05:22.2327794Z  Images: 11
+2026-10-16T17:05:22.2328125Z  Server Version: 28.0.4
+2026-10-16T17:05:22.2328490Z  Storage Driver: overlay2
+2026-10-16T17:05:22.2329245Z   Backing Filesystem: extfs
+2026-10-16T17:05:22.2329633Z   Supports d_type: true
+2026-10-16T17:05:22.2330004Z   Using metacopy: false
+2026-10-16T17:05:22.2330649Z   Native Overlay Diff: false
+2026-10-16T17:05:22.2331068Z   userxattr: false
+2026-10-16T17:05:22.2331573Z  Logging Driver: json-file
+2026-10-16T17:05:22.2331968Z  Cgroup Driver: systemd
+2026-10-16T17:05:22.2332335Z  Cgroup Version: 2
+2026-10-16T17:05:22.2332679Z  Plugins:
+2026-10-16T17:05:22.2333004Z   Volume: local
+2026-10-16T17:05:22.2333376Z   Network: bridge host ipvlan macvlan null overlay
+2026-10-16T17:05:22.2334086Z   Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+2026-10-16T17:05:22.2334647Z  Swarm: inactive
+2026-10-16T17:05:22.2335030Z  Runtimes: runc io.containerd.runc.v2
+2026-10-16T17:05:22.2336431Z  Default Runtime: runc
+2026-10-16T17:05:22.2336882Z  Init Binary: docker-init
+2026-10-16T17:05:22.2337415Z  containerd version: f2551031d7276a770f65f98c9b52e57e7dad07e8
+2026-10-16T17:05:22.2337930Z  runc version: v1.5.2-0-g29dd3dc2
+2026-10-16T17:05:22.2338464Z  init version: de40ad0
+2026-10-16T17:05:22.2338813Z  Security Options:
+2026-10-16T17:05:22.2339423Z   apparmor
+2026-10-16T17:05:22.2339777Z   seccomp
+2026-10-16T17:05:22.2340023Z    Profile: builtin
+2026-10-16T17:05:22.2340283Z   cgroupns
+2026-10-16T17:05:22.2340518Z  Kernel Version: 6.17.0-1022-azure
+2026-10-16T17:05:22.2340847Z  Operating System: Ubuntu 24.04.5 LTS
+2026-10-16T17:05:22.2341156Z  OSType: linux
+2026-10-16T17:05:22.2341400Z  Architecture: x86_64
+2026-10-16T17:05:22.2341647Z  CPUs: 4
+2026-10-16T17:05:22.2341872Z  Total Memory: 15.61GiB
+2026-10-16T17:05:22.2342219Z  Name: runnervm8k3b6
+2026-10-16T17:05:22.2342427Z  ID: 6134b6ae-8eb1-4f62-889e-a360c80bcfbf
+2026-10-16T17:05:22.2342671Z  Docker Root Dir: /var/lib/docker
+2026-10-16T17:05:22.2342883Z  Debug Mode: false
+2026-10-16T17:05:22.2343065Z  Username: githubactions
+2026-10-16T17:05:22.2343263Z  Experimental: false
+2026-10-16T17:05:22.2343448Z  Insecure Registries:
+2026-10-16T17:05:22.2343658Z   ::1/128
+2026-10-16T17:05:22.2343816Z   127.0.0.0/8
+2026-10-16T17:05:22.2343990Z  Live Restore Enabled: false
+2026-10-16T17:05:22.2344128Z 
+2026-10-16T17:05:22.2344526Z ##[endgroup]
+2026-10-16T17:05:22.2344961Z ##[group]Proxy configuration
+2026-10-16T17:05:22.2345228Z No proxy configuration found
+2026-10-16T17:05:22.2345611Z ##[endgroup]
+2026-10-16T17:05:22.2807083Z ##[group]Buildx version
+2026-10-16T17:05:22.2824266Z [command]/usr/bin/docker buildx version
+2026-10-16T17:05:22.3185276Z github.com/docker/buildx v0.38.0 0dbe87f36ed472fe36b6796c3f70b4210a731fc5
+2026-10-16T17:05:22.3202073Z ##[endgroup]
+2026-10-16T17:05:22.3202453Z ##[group]Builder info
+2026-10-16T17:05:22.3894810Z {
+2026-10-16T17:05:22.3895223Z   "nodes": [
+2026-10-16T17:05:22.3895532Z     {
+2026-10-16T17:05:22.3895925Z       "name": "builder-cb52af65-fc92-482c-9ada-90e469fdb0140",
+2026-10-16T17:05:22.3896483Z       "endpoint": "unix:///var/run/docker.sock",
+2026-10-16T17:05:22.3896894Z       "status": "running",
+2026-10-16T17:05:22.3897495Z       "buildkitd-flags": "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host",
+2026-10-16T17:05:22.3898031Z       "buildkit": "v0.33.1",
+2026-10-16T17:05:22.3898425Z       "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/amd64/v4,linux/386",
+2026-10-16T17:05:22.3898793Z       "features": {
+2026-10-16T17:05:22.3899616Z         "Automatically load images to the Docker Engine image store": true,
+2026-10-16T17:05:22.3901044Z         "Cache export": true,
+2026-10-16T17:05:22.3901437Z         "Direct push": true,
+2026-10-16T17:05:22.3901724Z         "Docker exporter": true,
+2026-10-16T17:05:22.3901989Z         "Multi-platform build": true,
+2026-10-16T17:05:22.3902327Z         "OCI exporter": true
+2026-10-16T17:05:22.3902669Z       },
+2026-10-16T17:05:22.3902841Z       "labels": {
+2026-10-16T17:05:22.3903074Z         "org.mobyproject.buildkit.worker.executor": "oci",
+2026-10-16T17:05:22.3903448Z         "org.mobyproject.buildkit.worker.hostname": "ada0c3a5c810",
+2026-10-16T17:05:22.3904519Z         "org.mobyproject.buildkit.worker.network": "host",
+2026-10-16T17:05:22.3905328Z         "org.mobyproject.buildkit.worker.oci.process-mode": "sandbox",
+2026-10-16T17:05:22.3906253Z         "org.mobyproject.buildkit.worker.selinux.enabled": "false",
+2026-10-16T17:05:22.3907442Z         "org.mobyproject.buildkit.worker.snapshotter": "overlayfs"
+2026-10-16T17:05:22.3908060Z       },
+2026-10-16T17:05:22.3908308Z       "gcPolicy": [
+2026-10-16T17:05:22.3908673Z         {
+2026-10-16T17:05:22.3908932Z           "all": false,
+2026-10-16T17:05:22.3909495Z           "filter": [
+2026-10-16T17:05:22.3909996Z             "type==source.local type==exec.cachemount type==source.git.checkout"
+2026-10-16T17:05:22.3910500Z           ],
+2026-10-16T17:05:22.3910774Z           "keepDuration": "48h0m0s",
+2026-10-16T17:05:22.3911147Z           "maxUsedSpace": "488.3MiB"
+2026-10-16T17:05:22.3911441Z         },
+2026-10-16T17:05:22.3911700Z         {
+2026-10-16T17:05:22.3911939Z           "all": false,
+2026-10-16T17:05:22.3912226Z           "keepDuration": "1440h0m0s",
+2026-10-16T17:05:22.3912550Z           "reservedSpace": "9.313GiB",
+2026-10-16T17:05:22.3912909Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T17:05:22.3913223Z           "minFreeSpace": "27.01GiB"
+2026-10-16T17:05:22.3913507Z         },
+2026-10-16T17:05:22.3913821Z         {
+2026-10-16T17:05:22.3914048Z           "all": false,
+2026-10-16T17:05:22.3914337Z           "reservedSpace": "9.313GiB",
+2026-10-16T17:05:22.3914639Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T17:05:22.3914972Z           "minFreeSpace": "27.01GiB"
+2026-10-16T17:05:22.3915391Z         },
+2026-10-16T17:05:22.3915724Z         {
+2026-10-16T17:05:22.3916001Z           "all": true,
+2026-10-16T17:05:22.3916214Z           "reservedSpace": "9.313GiB",
+2026-10-16T17:05:22.3916433Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T17:05:22.3916680Z           "minFreeSpace": "27.01GiB"
+2026-10-16T17:05:22.3916896Z         }
+2026-10-16T17:05:22.3917052Z       ]
+2026-10-16T17:05:22.3917214Z     }
+2026-10-16T17:05:22.3917367Z   ],
+2026-10-16T17:05:22.3917580Z   "name": "builder-cb52af65-fc92-482c-9ada-90e469fdb014",
+2026-10-16T17:05:22.3917880Z   "driver": "docker-container",
+2026-10-16T17:05:22.3918118Z   "lastActivity": "2026-10-16T17:05:08.000Z"
+2026-10-16T17:05:22.3918345Z }
+2026-10-16T17:05:22.3918713Z ##[endgroup]
+2026-10-16T17:05:22.5252102Z [command]/usr/bin/docker buildx build --cache-from type=gha,scope=db4ai-tabular-og --cache-to type=gha,mode=max,scope=db4ai-tabular-og --file benchmarks/tabular/Dockerfile.opengauss --iidfile /home/runner/work/_temp/docker-actions-toolkit-IXvmLD/build-iidfile-eeb2eb2812.txt --tag opengauss-db4ai-benchmark:local --load --metadata-file /home/runner/work/_temp/docker-actions-toolkit-IXvmLD/build-metadata-6ec930f0f7.json .
+2026-10-16T17:05:22.7448247Z #0 building with "builder-cb52af65-fc92-482c-9ada-90e469fdb014" instance using docker-container driver
+2026-10-16T17:05:22.7448687Z 
+2026-10-16T17:05:22.7448887Z #1 [internal] load build definition from Dockerfile.opengauss
+2026-10-16T17:05:22.7449383Z #1 transferring dockerfile: 628B done
+2026-10-16T17:05:22.7449648Z #1 DONE 0.0s
+2026-10-16T17:05:22.7449763Z 
+2026-10-16T17:05:22.7450104Z #2 [auth] enmotech/opengauss:pull token for registry-1.docker.io
+2026-10-16T17:05:22.8949758Z #2 DONE 0.0s
+2026-10-16T17:05:22.8950137Z 
+2026-10-16T17:05:22.8950781Z #3 [internal] load metadata for docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+2026-10-16T17:05:23.2223267Z #3 DONE 0.6s
+2026-10-16T17:05:23.4121766Z 
+2026-10-16T17:05:23.4123466Z #4 [internal] load .dockerignore
+2026-10-16T17:05:23.4123894Z #4 transferring context: 2B done
+2026-10-16T17:05:23.4124188Z #4 DONE 0.0s
+2026-10-16T17:05:23.4124322Z 
+2026-10-16T17:05:23.4124746Z #5 [1/2] FROM docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+2026-10-16T17:05:23.4125719Z #5 resolve docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5 done
+2026-10-16T17:05:23.4126384Z #5 DONE 0.0s
+2026-10-16T17:05:23.4126523Z 
+2026-10-16T17:05:23.4126981Z #6 importing cache manifest from gha:2671930995281116959
+2026-10-16T17:05:23.4127356Z #6 DONE 0.1s
+2026-10-16T17:05:23.4127511Z 
+2026-10-16T17:05:23.4128558Z #7 [2/2] RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 python3-minimal     && rm -rf /var/lib/apt/lists/*     && ldd /usr/local/opengauss/lib/libxgboost.so     && ! ldd /usr/local/opengauss/lib/libxgboost.so | grep 'not found'
+2026-10-16T17:05:23.4129796Z #7 CACHED
+2026-10-16T17:05:23.5729661Z 
+2026-10-16T17:05:23.5730273Z #8 exporting to docker image format
+2026-10-16T17:05:23.5730702Z #8 exporting layers done
+2026-10-16T17:05:23.5731175Z #8 exporting manifest sha256:ef4d6545080a5b08f8182bd50bfaf05dee8b8a3e94eb78a12ca330f07e61f919 done
+2026-10-16T17:05:23.5731833Z #8 exporting config sha256:e965305bad7e0890f6ec610964c748965634e55a6bf5022c968ce67744a580c4 done
+2026-10-16T17:05:28.3833279Z #8 ...
+2026-10-16T17:05:28.3833606Z 
+2026-10-16T17:05:28.3835147Z #7 [2/2] RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 python3-minimal     && rm -rf /var/lib/apt/lists/*     && ldd /usr/local/opengauss/lib/libxgboost.so     && ! ldd /usr/local/opengauss/lib/libxgboost.so | grep 'not found'
+2026-10-16T17:05:28.3836565Z #7 sha256:727523299393c78af9f28b8c816c0c77bc1cfb0c6575f7d97a6933ad32aa6432 5.12kB / 5.12kB 0.0s done
+2026-10-16T17:05:28.3837308Z #7 sha256:94db4750d112a9e859d1e116247d8ad08395b6025c10537d1e34b38d9d9bb586 5.15kB / 5.15kB 0.0s done
+2026-10-16T17:05:28.3838194Z #7 sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574 122.66MB / 122.66MB 4.8s done
+2026-10-16T17:05:28.3839203Z #7 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 29.54MB / 29.54MB 1.8s done
+2026-10-16T17:05:28.3840061Z #7 sha256:d400719333fdfb9734b496a604287b2ba6875e50237ebcd31c8c5980effecae8 27.46MB / 27.46MB 1.4s done
+2026-10-16T17:05:28.3840946Z #7 sha256:a7e168191e69201db59f6e7029aad8d275dee42ae65211d2c1bfcd19c314049c 6.56MB / 6.56MB 0.8s done
+2026-10-16T17:05:28.3841570Z #7 DONE 4.9s
+2026-10-16T17:05:28.3841741Z 
+2026-10-16T17:05:28.3844499Z #8 exporting to docker image format
+2026-10-16T17:05:28.3845093Z #8 sending tarball
+2026-10-16T17:05:29.0701547Z #8 ...
+2026-10-16T17:05:29.0701825Z 
+2026-10-16T17:05:29.0702084Z #9 importing to docker
+2026-10-16T17:05:29.2207073Z #9 loading layer 7833e36c3517 98.30kB / 6.56MB
+2026-10-16T17:05:30.0110555Z #9 loading layer 7833e36c3517 6.56MB / 6.56MB 0.9s done
+2026-10-16T17:05:30.1648371Z #9 DONE 0.9s
+2026-10-16T17:05:30.1648675Z 
+2026-10-16T17:05:30.1648905Z #8 exporting to docker image format
+2026-10-16T17:05:30.1649314Z #8 sending tarball 1.8s done
+2026-10-16T17:05:30.1649569Z #8 DONE 6.6s
+2026-10-16T17:05:30.1649692Z 
+2026-10-16T17:05:30.1649810Z #10 exporting to GitHub Actions Cache
+2026-10-16T17:05:30.1650122Z #10 preparing build cache for export done
+2026-10-16T17:05:30.1650389Z #10 sending cache export
+2026-10-16T17:05:30.6233311Z #10 sending cache export 0.6s done
+2026-10-16T17:05:30.6233776Z #10 DONE 0.6s
+2026-10-16T17:05:30.6384370Z 
+2026-10-16T17:05:30.6385055Z #11 resolving provenance for metadata file
+2026-10-16T17:05:30.6385747Z #11 DONE 0.0s
+2026-10-16T17:05:30.6438633Z ##[group]ImageID
+2026-10-16T17:05:30.6439426Z sha256:e965305bad7e0890f6ec610964c748965634e55a6bf5022c968ce67744a580c4
+2026-10-16T17:05:30.6442138Z ##[endgroup]
+2026-10-16T17:05:30.6442666Z ##[group]Digest
+2026-10-16T17:05:30.6443122Z sha256:ef4d6545080a5b08f8182bd50bfaf05dee8b8a3e94eb78a12ca330f07e61f919
+2026-10-16T17:05:30.6443778Z ##[endgroup]
+2026-10-16T17:05:30.6444161Z ##[group]Metadata
+2026-10-16T17:05:30.6444396Z {
+2026-10-16T17:05:30.6444664Z   "buildx.build.provenance": {
+2026-10-16T17:05:30.6444965Z     "builder": {
+2026-10-16T17:05:30.6445233Z       "id": ""
+2026-10-16T17:05:30.6445511Z     },
+2026-10-16T17:05:30.6445820Z     "buildType": "https://mobyproject.org/buildkit@v1",
+2026-10-16T17:05:30.6446243Z     "materials": [
+2026-10-16T17:05:30.6446496Z       {
+2026-10-16T17:05:30.6447188Z         "uri": "pkg:docker/enmotech/opengauss?digest=sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5&platform=linux%2Famd64",
+2026-10-16T17:05:30.6448334Z         "digest": {
+2026-10-16T17:05:30.6448919Z           "sha256": "9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5"
+2026-10-16T17:05:30.6449524Z         }
+2026-10-16T17:05:30.6449759Z       }
+2026-10-16T17:05:30.6449982Z     ],
+2026-10-16T17:05:30.6450211Z     "invocation": {
+2026-10-16T17:05:30.6450578Z       "configSource": {
+2026-10-16T17:05:30.6450809Z         "entryPoint": "Dockerfile.opengauss"
+2026-10-16T17:05:30.6451103Z       },
+2026-10-16T17:05:30.6451431Z       "parameters": {
+2026-10-16T17:05:30.6451721Z         "frontend": "dockerfile.v0",
+2026-10-16T17:05:30.6452016Z         "locals": [
+2026-10-16T17:05:30.6452348Z           {
+2026-10-16T17:05:30.6452802Z             "name": "context"
+2026-10-16T17:05:30.6453079Z           },
+2026-10-16T17:05:30.6453300Z           {
+2026-10-16T17:05:30.6453541Z             "name": "dockerfile"
+2026-10-16T17:05:30.6453802Z           }
+2026-10-16T17:05:30.6453961Z         ],
+2026-10-16T17:05:30.6454119Z         "root": {
+2026-10-16T17:05:30.6454298Z           "configSource": {
+2026-10-16T17:05:30.6454514Z             "path": "Dockerfile.opengauss"
+2026-10-16T17:05:30.6454732Z           },
+2026-10-16T17:05:30.6454895Z           "request": {
+2026-10-16T17:05:30.6455073Z             "args": {
+2026-10-16T17:05:30.6455288Z               "vcs:localdir:context": ".",
+2026-10-16T17:05:30.6455551Z               "vcs:localdir:dockerfile": "benchmarks/tabular",
+2026-10-16T17:05:30.6455913Z               "vcs:revision": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:30.6456265Z               "vcs:source": "https://github.com/wotchin/pg_db4ai"
+2026-10-16T17:05:30.6456520Z             }
+2026-10-16T17:05:30.6456682Z           }
+2026-10-16T17:05:30.6456880Z         },
+2026-10-16T17:05:30.6457059Z         "compatibilityVersion": 30
+2026-10-16T17:05:30.6457268Z       },
+2026-10-16T17:05:30.6457432Z       "environment": {
+2026-10-16T17:05:30.6457626Z         "dockerfileVersion": "1.27.0",
+2026-10-16T17:05:30.6457860Z         "github_actor": "wotchin",
+2026-10-16T17:05:30.6458075Z         "github_actor_id": "15714979",
+2026-10-16T17:05:30.6458304Z         "github_event_name": "push",
+2026-10-16T17:05:30.6458522Z         "github_event_payload": {
+2026-10-16T17:05:30.6458806Z           "after": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:30.6459351Z           "base_ref": null,
+2026-10-16T17:05:30.6459638Z           "before": "24236447e89103675fe38c1e559c514a7cb40769",
+2026-10-16T17:05:30.6459912Z           "commits": [
+2026-10-16T17:05:30.6460094Z             {
+2026-10-16T17:05:30.6460264Z               "author": {
+2026-10-16T17:05:30.6460474Z                 "email": "wotchin95@gmail.com",
+2026-10-16T17:05:30.6460738Z                 "name": "Jack W.",
+2026-10-16T17:05:30.6461030Z                 "username": "wotchin"
+2026-10-16T17:05:30.6461317Z               },
+2026-10-16T17:05:30.6461545Z               "committer": {
+2026-10-16T17:05:30.6461832Z                 "email": "wotchin95@gmail.com",
+2026-10-16T17:05:30.6462119Z                 "name": "Jack W.",
+2026-10-16T17:05:30.6462343Z                 "username": "wotchin"
+2026-10-16T17:05:30.6462568Z               },
+2026-10-16T17:05:30.6462767Z               "distinct": true,
+2026-10-16T17:05:30.6463042Z               "id": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:30.6463601Z               "message": "Run optimized three-way Docker benchmark plus paired identical-model pre/post prediction comparison",
+2026-10-16T17:05:30.6464187Z               "timestamp": "2026-10-16T13:03:27-04:00",
+2026-10-16T17:05:30.6464546Z               "tree_id": "18c9673b44bce969a4ab58391a7ca3518828dd60",
+2026-10-16T17:05:30.6464983Z               "url": "https://github.com/wotchin/pg_db4ai/commit/f0ee5df72924aa6537821e95c217d88b00232db1"
+2026-10-16T17:05:30.6465382Z             }
+2026-10-16T17:05:30.6465548Z           ],
+2026-10-16T17:05:30.6465828Z           "compare": "https://github.com/wotchin/pg_db4ai/compare/24236447e891...f0ee5df72924",
+2026-10-16T17:05:30.6466306Z           "created": false,
+2026-10-16T17:05:30.6466563Z           "deleted": false,
+2026-10-16T17:05:30.6466997Z           "forced": false,
+2026-10-16T17:05:30.6467342Z           "head_commit": {
+2026-10-16T17:05:30.6467630Z             "author": {
+2026-10-16T17:05:30.6467910Z               "email": "wotchin95@gmail.com",
+2026-10-16T17:05:30.6468220Z               "name": "Jack W.",
+2026-10-16T17:05:30.6468482Z               "username": "wotchin"
+2026-10-16T17:05:30.6468762Z             },
+2026-10-16T17:05:30.6469684Z             "committer": {
+2026-10-16T17:05:30.6470044Z               "email": "wotchin95@gmail.com",
+2026-10-16T17:05:30.6470389Z               "name": "Jack W.",
+2026-10-16T17:05:30.6470745Z               "username": "wotchin"
+2026-10-16T17:05:30.6471025Z             },
+2026-10-16T17:05:30.6471271Z             "distinct": true,
+2026-10-16T17:05:30.6471595Z             "id": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:30.6472181Z             "message": "Run optimized three-way Docker benchmark plus paired identical-model pre/post prediction comparison",
+2026-10-16T17:05:30.6472728Z             "timestamp": "2026-10-16T13:03:27-04:00",
+2026-10-16T17:05:30.6473102Z             "tree_id": "18c9673b44bce969a4ab58391a7ca3518828dd60",
+2026-10-16T17:05:30.6473601Z             "url": "https://github.com/wotchin/pg_db4ai/commit/f0ee5df72924aa6537821e95c217d88b00232db1"
+2026-10-16T17:05:30.6474020Z           },
+2026-10-16T17:05:30.6474251Z           "pusher": {
+2026-10-16T17:05:30.6474505Z             "email": "wotchin95@gmail.com",
+2026-10-16T17:05:30.6474802Z             "name": "wotchin"
+2026-10-16T17:05:30.6475077Z           },
+2026-10-16T17:05:30.6475344Z           "ref": "refs/heads/benchmark-public-tabular",
+2026-10-16T17:05:30.6475673Z           "repository": {
+2026-10-16T17:05:30.6475946Z             "allow_forking": true,
+2026-10-16T17:05:30.6476389Z             "archive_url": "https://api.github.com/repos/wotchin/pg_db4ai/{archive_format}{/ref}",
+2026-10-16T17:05:30.6476840Z             "archived": false,
+2026-10-16T17:05:30.6477254Z             "assignees_url": "https://api.github.com/repos/wotchin/pg_db4ai/assignees{/user}",
+2026-10-16T17:05:30.6477788Z             "blobs_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/blobs{/sha}",
+2026-10-16T17:05:30.6478340Z             "branches_url": "https://api.github.com/repos/wotchin/pg_db4ai/branches{/branch}",
+2026-10-16T17:05:30.6478856Z             "clone_url": "https://github.com/wotchin/pg_db4ai.git",
+2026-10-16T17:05:30.6479466Z             "collaborators_url": "https://api.github.com/repos/wotchin/pg_db4ai/collaborators{/collaborator}",
+2026-10-16T17:05:30.6480027Z             "comments_url": "https://api.github.com/repos/wotchin/pg_db4ai/comments{/number}",
+2026-10-16T17:05:30.6480565Z             "commits_url": "https://api.github.com/repos/wotchin/pg_db4ai/commits{/sha}",
+2026-10-16T17:05:30.6481079Z             "compare_url": "https://api.github.com/repos/wotchin/pg_db4ai/compare/{base}...{head}",
+2026-10-16T17:05:30.6481691Z             "contents_url": "https://api.github.com/repos/wotchin/pg_db4ai/contents/{+path}",
+2026-10-16T17:05:30.6482233Z             "contributors_url": "https://api.github.com/repos/wotchin/pg_db4ai/contributors",
+2026-10-16T17:05:30.6482650Z             "created_at": 1792097928,
+2026-10-16T17:05:30.6482941Z             "default_branch": "main",
+2026-10-16T17:05:30.6483393Z             "deployments_url": "https://api.github.com/repos/wotchin/pg_db4ai/deployments",
+2026-10-16T17:05:30.6483851Z             "description": "A database for AI extension",
+2026-10-16T17:05:30.6484105Z             "disabled": false,
+2026-10-16T17:05:30.6484433Z             "downloads_url": "https://api.github.com/repos/wotchin/pg_db4ai/downloads",
+2026-10-16T17:05:30.6484877Z             "events_url": "https://api.github.com/repos/wotchin/pg_db4ai/events",
+2026-10-16T17:05:30.6485178Z             "fork": false,
+2026-10-16T17:05:30.6485367Z             "forks": 0,
+2026-10-16T17:05:30.6485689Z             "forks_count": 0,
+2026-10-16T17:05:30.6486006Z             "forks_url": "https://api.github.com/repos/wotchin/pg_db4ai/forks",
+2026-10-16T17:05:30.6486484Z             "full_name": "wotchin/pg_db4ai",
+2026-10-16T17:05:30.6487031Z             "git_commits_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/commits{/sha}",
+2026-10-16T17:05:30.6487944Z             "git_refs_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/refs{/sha}",
+2026-10-16T17:05:30.6488495Z             "git_tags_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/tags{/sha}",
+2026-10-16T17:05:30.6489145Z             "git_url": "git://github.com/wotchin/pg_db4ai.git",
+2026-10-16T17:05:30.6489559Z             "has_discussions": false,
+2026-10-16T17:05:30.6489791Z             "has_downloads": true,
+2026-10-16T17:05:30.6490020Z             "has_issues": true,
+2026-10-16T17:05:30.6490225Z             "has_pages": false,
+2026-10-16T17:05:30.6490432Z             "has_projects": true,
+2026-10-16T17:05:30.6490662Z             "has_pull_requests": true,
+2026-10-16T17:05:30.6490887Z             "has_wiki": true,
+2026-10-16T17:05:30.6491097Z             "homepage": null,
+2026-10-16T17:05:30.6491375Z             "hooks_url": "https://api.github.com/repos/wotchin/pg_db4ai/hooks",
+2026-10-16T17:05:30.6491724Z             "html_url": "https://github.com/wotchin/pg_db4ai",
+2026-10-16T17:05:30.6491989Z             "id": 1421317902,
+2026-10-16T17:05:30.6492189Z             "is_template": false,
+2026-10-16T17:05:30.6492546Z             "issue_comment_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues/comments{/number}",
+2026-10-16T17:05:30.6493054Z             "issue_events_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues/events{/number}",
+2026-10-16T17:05:30.6493511Z             "issues_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues{/number}",
+2026-10-16T17:05:30.6493922Z             "keys_url": "https://api.github.com/repos/wotchin/pg_db4ai/keys{/key_id}",
+2026-10-16T17:05:30.6494362Z             "labels_url": "https://api.github.com/repos/wotchin/pg_db4ai/labels{/name}",
+2026-10-16T17:05:30.6494707Z             "language": "C",
+2026-10-16T17:05:30.6495001Z             "languages_url": "https://api.github.com/repos/wotchin/pg_db4ai/languages",
+2026-10-16T17:05:30.6495325Z             "license": {
+2026-10-16T17:05:30.6495537Z               "key": "mulanpsl-2.0",
+2026-10-16T17:05:30.6495802Z               "name": "Mulan Permissive Software License, Version 2",
+2026-10-16T17:05:30.6496093Z               "node_id": "L_kgCsbXVsYW5wc2wtMi4w",
+2026-10-16T17:05:30.6496350Z               "spdx_id": "MulanPSL-2.0",
+2026-10-16T17:05:30.6496619Z               "url": "https://api.github.com/licenses/mulanpsl-2.0"
+2026-10-16T17:05:30.6496879Z             },
+2026-10-16T17:05:30.6497058Z             "master_branch": "main",
+2026-10-16T17:05:30.6497350Z             "merges_url": "https://api.github.com/repos/wotchin/pg_db4ai/merges",
+2026-10-16T17:05:30.6497782Z             "milestones_url": "https://api.github.com/repos/wotchin/pg_db4ai/milestones{/number}",
+2026-10-16T17:05:30.6498128Z             "mirror_url": null,
+2026-10-16T17:05:30.6498341Z             "name": "pg_db4ai",
+2026-10-16T17:05:30.6498548Z             "node_id": "R_kgDOVLeXDg",
+2026-10-16T17:05:30.6498962Z             "notifications_url": "https://api.github.com/repos/wotchin/pg_db4ai/notifications{?since,all,participating}",
+2026-10-16T17:05:30.6499519Z             "open_issues": 1,
+2026-10-16T17:05:30.6499730Z             "open_issues_count": 1,
+2026-10-16T17:05:30.6499938Z             "owner": {
+2026-10-16T17:05:30.6500219Z               "avatar_url": "https://avatars.githubusercontent.com/u/15714979?v=4",
+2026-10-16T17:05:30.6500550Z               "email": "wotchin95@gmail.com",
+2026-10-16T17:05:30.6500869Z               "events_url": "https://api.github.com/users/wotchin/events{/privacy}",
+2026-10-16T17:05:30.6501338Z               "followers_url": "https://api.github.com/users/wotchin/followers",
+2026-10-16T17:05:30.6502199Z               "following_url": "https://api.github.com/users/wotchin/following{/other_user}",
+2026-10-16T17:05:30.6502619Z               "gists_url": "https://api.github.com/users/wotchin/gists{/gist_id}",
+2026-10-16T17:05:30.6502994Z               "gravatar_id": "",
+2026-10-16T17:05:30.6503261Z               "html_url": "https://github.com/wotchin",
+2026-10-16T17:05:30.6503526Z               "id": 15714979,
+2026-10-16T17:05:30.6503725Z               "login": "wotchin",
+2026-10-16T17:05:30.6503932Z               "name": "wotchin",
+2026-10-16T17:05:30.6504158Z               "node_id": "MDQ6VXNlcjE1NzE0OTc5",
+2026-10-16T17:05:30.6504485Z               "organizations_url": "https://api.github.com/users/wotchin/orgs",
+2026-10-16T17:05:30.6504887Z               "received_events_url": "https://api.github.com/users/wotchin/received_events",
+2026-10-16T17:05:30.6505273Z               "repos_url": "https://api.github.com/users/wotchin/repos",
+2026-10-16T17:05:30.6505560Z               "site_admin": false,
+2026-10-16T17:05:30.6505875Z               "starred_url": "https://api.github.com/users/wotchin/starred{/owner}{/repo}",
+2026-10-16T17:05:30.6506292Z               "subscriptions_url": "https://api.github.com/users/wotchin/subscriptions",
+2026-10-16T17:05:30.6506614Z               "type": "User",
+2026-10-16T17:05:30.6506851Z               "url": "https://api.github.com/users/wotchin",
+2026-10-16T17:05:30.6507113Z               "user_view_type": "public"
+2026-10-16T17:05:30.6507334Z             },
+2026-10-16T17:05:30.6507510Z             "private": false,
+2026-10-16T17:05:30.6507729Z             "pull_request_creation_policy": "all",
+2026-10-16T17:05:30.6508066Z             "pulls_url": "https://api.github.com/repos/wotchin/pg_db4ai/pulls{/number}",
+2026-10-16T17:05:30.6508430Z             "pushed_at": 1792170207,
+2026-10-16T17:05:30.6508753Z             "releases_url": "https://api.github.com/repos/wotchin/pg_db4ai/releases{/id}",
+2026-10-16T17:05:30.6509380Z             "size": 3440,
+2026-10-16T17:05:30.6509622Z             "ssh_url": "git@github.com:wotchin/pg_db4ai.git",
+2026-10-16T17:05:30.6509878Z             "stargazers": 0,
+2026-10-16T17:05:30.6510097Z             "stargazers_count": 0,
+2026-10-16T17:05:30.6510412Z             "stargazers_url": "https://api.github.com/repos/wotchin/pg_db4ai/stargazers",
+2026-10-16T17:05:30.6510842Z             "statuses_url": "https://api.github.com/repos/wotchin/pg_db4ai/statuses/{sha}",
+2026-10-16T17:05:30.6511272Z             "subscribers_url": "https://api.github.com/repos/wotchin/pg_db4ai/subscribers",
+2026-10-16T17:05:30.6511711Z             "subscription_url": "https://api.github.com/repos/wotchin/pg_db4ai/subscription",
+2026-10-16T17:05:30.6512092Z             "svn_url": "https://github.com/wotchin/pg_db4ai",
+2026-10-16T17:05:30.6512421Z             "tags_url": "https://api.github.com/repos/wotchin/pg_db4ai/tags",
+2026-10-16T17:05:30.6512787Z             "teams_url": "https://api.github.com/repos/wotchin/pg_db4ai/teams",
+2026-10-16T17:05:30.6513086Z             "topics": [],
+2026-10-16T17:05:30.6513372Z             "trees_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/trees{/sha}",
+2026-10-16T17:05:30.6513709Z             "updated_at": "2026-10-16T16:25:18Z",
+2026-10-16T17:05:30.6513990Z             "url": "https://api.github.com/repos/wotchin/pg_db4ai",
+2026-10-16T17:05:30.6514305Z             "visibility": "public",
+2026-10-16T17:05:30.6514523Z             "watchers": 0,
+2026-10-16T17:05:30.6514722Z             "watchers_count": 0,
+2026-10-16T17:05:30.6514945Z             "web_commit_signoff_required": false
+2026-10-16T17:05:30.6515172Z           },
+2026-10-16T17:05:30.6515340Z           "sender": {
+2026-10-16T17:05:30.6515620Z             "avatar_url": "https://avatars.githubusercontent.com/u/15714979?v=4",
+2026-10-16T17:05:30.6516006Z             "events_url": "https://api.github.com/users/wotchin/events{/privacy}",
+2026-10-16T17:05:30.6516388Z             "followers_url": "https://api.github.com/users/wotchin/followers",
+2026-10-16T17:05:30.6516860Z             "following_url": "https://api.github.com/users/wotchin/following{/other_user}",
+2026-10-16T17:05:30.6517254Z             "gists_url": "https://api.github.com/users/wotchin/gists{/gist_id}",
+2026-10-16T17:05:30.6517622Z             "gravatar_id": "",
+2026-10-16T17:05:30.6517856Z             "html_url": "https://github.com/wotchin",
+2026-10-16T17:05:30.6518110Z             "id": 15714979,
+2026-10-16T17:05:30.6518312Z             "login": "wotchin",
+2026-10-16T17:05:30.6518546Z             "node_id": "MDQ6VXNlcjE1NzE0OTc5",
+2026-10-16T17:05:30.6518866Z             "organizations_url": "https://api.github.com/users/wotchin/orgs",
+2026-10-16T17:05:30.6519471Z             "received_events_url": "https://api.github.com/users/wotchin/received_events",
+2026-10-16T17:05:30.6519858Z             "repos_url": "https://api.github.com/users/wotchin/repos",
+2026-10-16T17:05:30.6520184Z             "site_admin": false,
+2026-10-16T17:05:30.6520512Z             "starred_url": "https://api.github.com/users/wotchin/starred{/owner}{/repo}",
+2026-10-16T17:05:30.6521007Z             "subscriptions_url": "https://api.github.com/users/wotchin/subscriptions",
+2026-10-16T17:05:30.6521655Z             "type": "User",
+2026-10-16T17:05:30.6521986Z             "url": "https://api.github.com/users/wotchin",
+2026-10-16T17:05:30.6522314Z             "user_view_type": "public"
+2026-10-16T17:05:30.6522570Z           }
+2026-10-16T17:05:30.6522754Z         },
+2026-10-16T17:05:30.6522975Z         "github_job": "benchmark",
+2026-10-16T17:05:30.6523413Z         "github_ref": "refs/heads/benchmark-public-tabular",
+2026-10-16T17:05:30.6523706Z         "github_ref_name": "benchmark-public-tabular",
+2026-10-16T17:05:30.6523964Z         "github_ref_protected": "false",
+2026-10-16T17:05:30.6524194Z         "github_ref_type": "branch",
+2026-10-16T17:05:30.6524432Z         "github_repository": "wotchin/pg_db4ai",
+2026-10-16T17:05:30.6524684Z         "github_repository_id": "1421317902",
+2026-10-16T17:05:30.6524935Z         "github_repository_owner": "wotchin",
+2026-10-16T17:05:30.6525187Z         "github_repository_owner_id": "15714979",
+2026-10-16T17:05:30.6525428Z         "github_run_attempt": "1",
+2026-10-16T17:05:30.6525650Z         "github_run_id": "38936732724",
+2026-10-16T17:05:30.6525871Z         "github_run_number": "3",
+2026-10-16T17:05:30.6526085Z         "github_runner_arch": "X64",
+2026-10-16T17:05:30.6526331Z         "github_runner_environment": "github-hosted",
+2026-10-16T17:05:30.6526590Z         "github_runner_image_os": "ubuntu24",
+2026-10-16T17:05:30.6526848Z         "github_runner_image_version": "20261012.334.1",
+2026-10-16T17:05:30.6527131Z         "github_runner_name": "GitHub Actions 1000000174",
+2026-10-16T17:05:30.6527401Z         "github_runner_os": "Linux",
+2026-10-16T17:05:30.6527711Z         "github_runner_tracking_id": "github_1290c6d8-aa13-4d02-96fd-2dfa2d46ad28",
+2026-10-16T17:05:30.6528050Z         "github_server_url": "https://github.com",
+2026-10-16T17:05:30.6528309Z         "github_triggering_actor": "wotchin",
+2026-10-16T17:05:30.6528584Z         "github_workflow": "Public tabular Docker benchmark",
+2026-10-16T17:05:30.6529269Z         "github_workflow_ref": "wotchin/pg_db4ai/.github/workflows/public-tabular-benchmark.yml@refs/heads/benchmark-public-tabular",
+2026-10-16T17:05:30.6529825Z         "github_workflow_sha": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:30.6530127Z         "platform": "linux/amd64"
+2026-10-16T17:05:30.6530366Z       }
+2026-10-16T17:05:30.6530531Z     }
+2026-10-16T17:05:30.6530694Z   },
+2026-10-16T17:05:30.6531142Z   "buildx.build.ref": "builder-cb52af65-fc92-482c-9ada-90e469fdb014/builder-cb52af65-fc92-482c-9ada-90e469fdb0140/v5me41r9egvt96xp1o7fgoei7",
+2026-10-16T17:05:30.6531841Z   "containerimage.config.digest": "sha256:e965305bad7e0890f6ec610964c748965634e55a6bf5022c968ce67744a580c4",
+2026-10-16T17:05:30.6532261Z   "containerimage.descriptor": {
+2026-10-16T17:05:30.6532538Z     "mediaType": "application/vnd.oci.image.manifest.v1+json",
+2026-10-16T17:05:30.6532941Z     "digest": "sha256:ef4d6545080a5b08f8182bd50bfaf05dee8b8a3e94eb78a12ca330f07e61f919",
+2026-10-16T17:05:30.6533368Z     "size": 1439,
+2026-10-16T17:05:30.6533613Z     "annotations": {
+2026-10-16T17:05:30.6533866Z       "org.opencontainers.image.created": "2026-10-16T17:05:23Z"
+2026-10-16T17:05:30.6534143Z     },
+2026-10-16T17:05:30.6534305Z     "platform": {
+2026-10-16T17:05:30.6534488Z       "architecture": "amd64",
+2026-10-16T17:05:30.6534688Z       "os": "linux"
+2026-10-16T17:05:30.6534858Z     }
+2026-10-16T17:05:30.6535013Z   },
+2026-10-16T17:05:30.6535334Z   "containerimage.digest": "sha256:ef4d6545080a5b08f8182bd50bfaf05dee8b8a3e94eb78a12ca330f07e61f919",
+2026-10-16T17:05:30.6535798Z   "image.name": "docker.io/library/opengauss-db4ai-benchmark:local"
+2026-10-16T17:05:30.6536084Z }
+2026-10-16T17:05:30.6536440Z ##[endgroup]
+2026-10-16T17:05:30.6536744Z ##[group]Reference
+2026-10-16T17:05:30.6537153Z builder-cb52af65-fc92-482c-9ada-90e469fdb014/builder-cb52af65-fc92-482c-9ada-90e469fdb0140/v5me41r9egvt96xp1o7fgoei7
+2026-10-16T17:05:30.6537847Z ##[endgroup]
+2026-10-16T17:05:30.6538151Z ##[group]Check build summary support
+2026-10-16T17:05:30.6538501Z Build summary supported!
+2026-10-16T17:05:30.6538806Z ##[endgroup]

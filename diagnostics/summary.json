@@ -1,0 +1,472 @@
+[
+  {
+    "run": 38935367352,
+    "job": {
+      "id": 117089401998,
+      "run_id": 38935367352,
+      "workflow_name": "Public tabular Docker benchmark",
+      "head_branch": "benchmark-public-tabular",
+      "run_url": "https://api.github.com/repos/wotchin/pg_db4ai/actions/runs/38935367352",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOVLeXDs8AAAAbQxJ8jg",
+      "head_sha": "a5f74aa8ab98112aa036666006697118adad072f",
+      "url": "https://api.github.com/repos/wotchin/pg_db4ai/actions/jobs/117089401998",
+      "html_url": "https://github.com/wotchin/pg_db4ai/actions/runs/38935367352/job/117089401998",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-16T16:52:52Z",
+      "started_at": "2026-10-16T16:52:54Z",
+      "completed_at": "2026-10-16T17:23:24Z",
+      "name": "benchmark",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-16T16:52:55Z",
+          "completed_at": "2026-10-16T16:52:57Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-16T16:52:57Z",
+          "completed_at": "2026-10-16T16:52:58Z"
+        },
+        {
+          "name": "Lock actual base images",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-16T16:52:58Z",
+          "completed_at": "2026-10-16T16:53:12Z"
+        },
+        {
+          "name": "Run docker/setup-buildx-action@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-16T16:53:12Z",
+          "completed_at": "2026-10-16T16:53:17Z"
+        },
+        {
+          "name": "Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-16T16:53:17Z",
+          "completed_at": "2026-10-16T16:58:38Z"
+        },
+        {
+          "name": "Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-16T16:58:38Z",
+          "completed_at": "2026-10-16T16:59:21Z"
+        },
+        {
+          "name": "Verify complete extension regression suite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-16T16:59:21Z",
+          "completed_at": "2026-10-16T16:59:23Z"
+        },
+        {
+          "name": "Host data preparation environment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-16T16:59:23Z",
+          "completed_at": "2026-10-16T16:59:40Z"
+        },
+        {
+          "name": "Three-seed measured run",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 9,
+          "started_at": "2026-10-16T16:59:40Z",
+          "completed_at": "2026-10-16T17:23:09Z"
+        },
+        {
+          "name": "Capture inspectable code and environment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-16T17:23:09Z",
+          "completed_at": "2026-10-16T17:23:12Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 11,
+          "started_at": "2026-10-16T17:23:12Z",
+          "completed_at": "2026-10-16T17:23:13Z"
+        },
+        {
+          "name": "Post Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-16T17:23:13Z",
+          "completed_at": "2026-10-16T17:23:15Z"
+        },
+        {
+          "name": "Post Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-16T17:23:15Z",
+          "completed_at": "2026-10-16T17:23:17Z"
+        },
+        {
+          "name": "Post Run docker/setup-buildx-action@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-16T17:23:17Z",
+          "completed_at": "2026-10-16T17:23:21Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-10-16T17:23:21Z",
+          "completed_at": "2026-10-16T17:23:22Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-10-16T17:23:22Z",
+          "completed_at": "2026-10-16T17:23:22Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/wotchin/pg_db4ai/check-runs/117089401998",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "runner_id": 1000000169,
+      "runner_name": "GitHub Actions 1000000169",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    "annotations": [
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/wotchin/pg_db4ai/blob/a5f74aa8ab98112aa036666006697118adad072f/.github",
+        "start_line": 2,
+        "start_column": null,
+        "end_line": 2,
+        "end_column": null,
+        "annotation_level": "warning",
+        "title": "",
+        "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4, docker/build-push-action@v6, docker/setup-buildx-action@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+        "raw_details": ""
+      },
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/wotchin/pg_db4ai/blob/a5f74aa8ab98112aa036666006697118adad072f/.github",
+        "start_line": 17,
+        "start_column": null,
+        "end_line": 17,
+        "end_column": null,
+        "annotation_level": "failure",
+        "title": "",
+        "message": "An error has occurred while creating the zip file for upload",
+        "raw_details": ""
+      },
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/wotchin/pg_db4ai/blob/a5f74aa8ab98112aa036666006697118adad072f/.github",
+        "start_line": 1525,
+        "start_column": null,
+        "end_line": 1525,
+        "end_column": null,
+        "annotation_level": "failure",
+        "title": "",
+        "message": "Process completed with exit code 1.",
+        "raw_details": ""
+      }
+    ],
+    "log_files": [
+      "0_benchmark.txt",
+      "benchmark/system.txt",
+      "benchmark/1_Set up job.txt",
+      "benchmark/2_Run actions_checkout@v4.txt",
+      "benchmark/3_Lock actual base images.txt",
+      "benchmark/4_Run docker_setup-buildx-action@v3.txt",
+      "benchmark/5_Run docker_build-push-action@v6.txt",
+      "benchmark/6_Run docker_build-push-action@v6.txt",
+      "benchmark/7_Verify complete extension regression suite.txt",
+      "benchmark/8_Host data preparation environment.txt",
+      "benchmark/9_Three-seed measured run.txt",
+      "benchmark/10_Capture inspectable code and environment.txt",
+      "benchmark/11_Run actions_upload-artifact@v4.txt",
+      "benchmark/19_Post Run docker_build-push-action@v6.txt",
+      "benchmark/20_Post Run docker_build-push-action@v6.txt",
+      "benchmark/21_Post Run docker_setup-buildx-action@v3.txt",
+      "benchmark/22_Post Run actions_checkout@v4.txt",
+      "benchmark/23_Complete job.txt"
+    ]
+  },
+  {
+    "run": 38936732724,
+    "job": {
+      "id": 117094001059,
+      "run_id": 38936732724,
+      "workflow_name": "Public tabular Docker benchmark",
+      "head_branch": "benchmark-public-tabular",
+      "run_url": "https://api.github.com/repos/wotchin/pg_db4ai/actions/runs/38936732724",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOVLeXDs8AAAAbQ1ipow",
+      "head_sha": "f0ee5df72924aa6537821e95c217d88b00232db1",
+      "url": "https://api.github.com/repos/wotchin/pg_db4ai/actions/jobs/117094001059",
+      "html_url": "https://github.com/wotchin/pg_db4ai/actions/runs/38936732724/job/117094001059",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-10-16T17:03:30Z",
+      "started_at": "2026-10-16T17:03:32Z",
+      "completed_at": "2026-10-16T17:25:25Z",
+      "name": "benchmark",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-16T17:03:32Z",
+          "completed_at": "2026-10-16T17:03:35Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-16T17:03:35Z",
+          "completed_at": "2026-10-16T17:03:36Z"
+        },
+        {
+          "name": "Lock actual base images",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-16T17:03:36Z",
+          "completed_at": "2026-10-16T17:03:59Z"
+        },
+        {
+          "name": "Run docker/setup-buildx-action@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-16T17:03:59Z",
+          "completed_at": "2026-10-16T17:04:04Z"
+        },
+        {
+          "name": "Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-16T17:04:04Z",
+          "completed_at": "2026-10-16T17:05:07Z"
+        },
+        {
+          "name": "Stage original extension with identical benchmark tooling",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-16T17:05:07Z",
+          "completed_at": "2026-10-16T17:05:08Z"
+        },
+        {
+          "name": "Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-16T17:05:08Z",
+          "completed_at": "2026-10-16T17:05:21Z"
+        },
+        {
+          "name": "Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-16T17:05:21Z",
+          "completed_at": "2026-10-16T17:05:30Z"
+        },
+        {
+          "name": "Verify complete extension regression suite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-16T17:05:30Z",
+          "completed_at": "2026-10-16T17:05:32Z"
+        },
+        {
+          "name": "Host data preparation environment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-16T17:05:32Z",
+          "completed_at": "2026-10-16T17:05:46Z"
+        },
+        {
+          "name": "Three-seed measured run",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 11,
+          "started_at": "2026-10-16T17:05:46Z",
+          "completed_at": "2026-10-16T17:24:53Z"
+        },
+        {
+          "name": "Paired same-host prediction A/B",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-16T17:24:53Z",
+          "completed_at": "2026-10-16T17:25:11Z"
+        },
+        {
+          "name": "Capture inspectable code and environment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-16T17:25:11Z",
+          "completed_at": "2026-10-16T17:25:13Z"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 14,
+          "started_at": "2026-10-16T17:25:13Z",
+          "completed_at": "2026-10-16T17:25:14Z"
+        },
+        {
+          "name": "Post Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-10-16T17:25:14Z",
+          "completed_at": "2026-10-16T17:25:15Z"
+        },
+        {
+          "name": "Post Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-10-16T17:25:15Z",
+          "completed_at": "2026-10-16T17:25:17Z"
+        },
+        {
+          "name": "Post Run docker/build-push-action@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26,
+          "started_at": "2026-10-16T17:25:17Z",
+          "completed_at": "2026-10-16T17:25:18Z"
+        },
+        {
+          "name": "Post Run docker/setup-buildx-action@v3",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27,
+          "started_at": "2026-10-16T17:25:18Z",
+          "completed_at": "2026-10-16T17:25:23Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2026-10-16T17:25:23Z",
+          "completed_at": "2026-10-16T17:25:24Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2026-10-16T17:25:24Z",
+          "completed_at": "2026-10-16T17:25:24Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/wotchin/pg_db4ai/check-runs/117094001059",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "runner_id": 1000000174,
+      "runner_name": "GitHub Actions 1000000174",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    "annotations": [
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/wotchin/pg_db4ai/blob/f0ee5df72924aa6537821e95c217d88b00232db1/.github",
+        "start_line": 2,
+        "start_column": null,
+        "end_line": 2,
+        "end_column": null,
+        "annotation_level": "warning",
+        "title": "",
+        "message": "Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4, docker/build-push-action@v6, docker/setup-buildx-action@v3. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/",
+        "raw_details": ""
+      },
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/wotchin/pg_db4ai/blob/f0ee5df72924aa6537821e95c217d88b00232db1/.github",
+        "start_line": 17,
+        "start_column": null,
+        "end_line": 17,
+        "end_column": null,
+        "annotation_level": "failure",
+        "title": "",
+        "message": "An error has occurred while creating the zip file for upload",
+        "raw_details": ""
+      },
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/wotchin/pg_db4ai/blob/f0ee5df72924aa6537821e95c217d88b00232db1/.github",
+        "start_line": 1525,
+        "start_column": null,
+        "end_line": 1525,
+        "end_column": null,
+        "annotation_level": "failure",
+        "title": "",
+        "message": "Process completed with exit code 1.",
+        "raw_details": ""
+      }
+    ],
+    "log_files": [
+      "0_benchmark.txt",
+      "benchmark/system.txt",
+      "benchmark/1_Set up job.txt",
+      "benchmark/2_Run actions_checkout@v4.txt",
+      "benchmark/3_Lock actual base images.txt",
+      "benchmark/4_Run docker_setup-buildx-action@v3.txt",
+      "benchmark/5_Run docker_build-push-action@v6.txt",
+      "benchmark/6_Stage original extension with identical benchmark tooling.txt",
+      "benchmark/7_Run docker_build-push-action@v6.txt",
+      "benchmark/8_Run docker_build-push-action@v6.txt",
+      "benchmark/9_Verify complete extension regression suite.txt",
+      "benchmark/10_Host data preparation environment.txt",
+      "benchmark/11_Three-seed measured run.txt",
+      "benchmark/12_Paired same-host prediction A_B.txt",
+      "benchmark/13_Capture inspectable code and environment.txt",
+      "benchmark/14_Run actions_upload-artifact@v4.txt",
+      "benchmark/24_Post Run docker_build-push-action@v6.txt",
+      "benchmark/25_Post Run docker_build-push-action@v6.txt",
+      "benchmark/26_Post Run docker_build-push-action@v6.txt",
+      "benchmark/27_Post Run docker_setup-buildx-action@v3.txt",
+      "benchmark/28_Post Run actions_checkout@v4.txt",
+      "benchmark/29_Complete job.txt"
+    ]
+  }
+]

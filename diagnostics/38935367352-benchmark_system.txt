@@ -1,0 +1,8 @@
+2026-10-16T16:52:53.0330000Z Job is waiting for a hosted runner to come online.
+2026-10-16T16:52:53.0340000Z Job is about to start running on the hosted runner: GitHub Actions 1000000169
+2026-10-16T16:52:52.9290000Z Evaluating benchmark.if
+2026-10-16T16:52:52.9290000Z Evaluating: success()
+2026-10-16T16:52:52.9290000Z Result: true
+2026-10-16T16:52:53.0160000Z Requested labels: ubuntu-24.04
+2026-10-16T16:52:53.0160000Z Job defined at: wotchin/pg_db4ai/.github/workflows/public-tabular-benchmark.yml@refs/heads/benchmark-public-tabular
+2026-10-16T16:52:53.0160000Z Waiting for a runner to pick up this job...

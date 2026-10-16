@@ -1,0 +1,758 @@
+﻿2026-10-16T16:58:38.9520479Z ##[group]Run docker/build-push-action@v6
+2026-10-16T16:58:38.9520798Z with:
+2026-10-16T16:58:38.9520981Z   context: .
+2026-10-16T16:58:38.9521212Z   file: benchmarks/tabular/Dockerfile.opengauss
+2026-10-16T16:58:38.9521495Z   load: true
+2026-10-16T16:58:38.9521705Z   tags: opengauss-db4ai-benchmark:local
+2026-10-16T16:58:38.9521999Z   cache-from: type=gha,scope=db4ai-tabular-og
+2026-10-16T16:58:38.9522325Z   cache-to: type=gha,mode=max,scope=db4ai-tabular-og
+2026-10-16T16:58:38.9522617Z   no-cache: false
+2026-10-16T16:58:38.9522817Z   pull: false
+2026-10-16T16:58:38.9523004Z   push: false
+2026-10-16T16:58:38.9525392Z   github-token: ***
+2026-10-16T16:58:38.9525600Z ##[endgroup]
+2026-10-16T16:58:39.1970155Z (node:4492) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-16T16:58:39.1971444Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-16T16:58:39.1991406Z ##[group]GitHub Actions runtime token ACs
+2026-10-16T16:58:39.1999737Z refs/heads/benchmark-public-tabular: read/write
+2026-10-16T16:58:39.2000345Z refs/heads/main: read
+2026-10-16T16:58:39.2001037Z ##[endgroup]
+2026-10-16T16:58:39.2001685Z ##[group]Docker info
+2026-10-16T16:58:39.2057746Z [command]/usr/bin/docker version
+2026-10-16T16:58:39.2267845Z Client: Docker Engine - Community
+2026-10-16T16:58:39.2270966Z  Version:           28.0.4
+2026-10-16T16:58:39.2271598Z  API version:       1.48
+2026-10-16T16:58:39.2272334Z  Go version:        go1.23.7
+2026-10-16T16:58:39.2272975Z  Git commit:        b8034c0
+2026-10-16T16:58:39.2273451Z  Built:             Tue Mar 25 15:07:16 2025
+2026-10-16T16:58:39.2273920Z  OS/Arch:           linux/amd64
+2026-10-16T16:58:39.2274340Z  Context:           default
+2026-10-16T16:58:39.2274596Z 
+2026-10-16T16:58:39.2274773Z Server: Docker Engine - Community
+2026-10-16T16:58:39.2275186Z  Engine:
+2026-10-16T16:58:39.2275509Z   Version:          28.0.4
+2026-10-16T16:58:39.2276030Z   API version:      1.48 (minimum version 1.24)
+2026-10-16T16:58:39.2276549Z   Go version:       go1.23.7
+2026-10-16T16:58:39.2276968Z   Git commit:       6430e49
+2026-10-16T16:58:39.2277424Z   Built:            Tue Mar 25 15:07:16 2025
+2026-10-16T16:58:39.2277909Z   OS/Arch:          linux/amd64
+2026-10-16T16:58:39.2278311Z   Experimental:     false
+2026-10-16T16:58:39.2278687Z  containerd:
+2026-10-16T16:58:39.2279244Z   Version:          v2.4.1
+2026-10-16T16:58:39.2279725Z   GitCommit:        f2551031d7276a770f65f98c9b52e57e7dad07e8
+2026-10-16T16:58:39.2280244Z  runc:
+2026-10-16T16:58:39.2280549Z   Version:          1.5.2
+2026-10-16T16:58:39.2280929Z   GitCommit:        v1.5.2-0-g29dd3dc2
+2026-10-16T16:58:39.2281365Z  docker-init:
+2026-10-16T16:58:39.2281687Z   Version:          0.19.0
+2026-10-16T16:58:39.2282058Z   GitCommit:        de40ad0
+2026-10-16T16:58:39.2325618Z [command]/usr/bin/docker info
+2026-10-16T16:58:39.2930301Z Client: Docker Engine - Community
+2026-10-16T16:58:39.2931622Z  Version:    28.0.4
+2026-10-16T16:58:39.2932229Z  Context:    default
+2026-10-16T16:58:39.2932928Z  Debug Mode: false
+2026-10-16T16:58:39.2933486Z  Plugins:
+2026-10-16T16:58:39.2934009Z   buildx: Docker Buildx (Docker Inc.)
+2026-10-16T16:58:39.2934626Z     Version:  v0.38.0
+2026-10-16T16:58:39.2939562Z     Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+2026-10-16T16:58:39.2955412Z   compose: Docker Compose (Docker Inc.)
+2026-10-16T16:58:39.2956262Z     Version:  v2.38.2
+2026-10-16T16:58:39.2956964Z     Path:     /usr/libexec/docker/cli-plugins/docker-compose
+2026-10-16T16:58:39.2957853Z 
+2026-10-16T16:58:39.2958168Z Server:
+2026-10-16T16:58:39.2958719Z  Containers: 1
+2026-10-16T16:58:39.2960158Z   Running: 1
+2026-10-16T16:58:39.2960734Z   Paused: 0
+2026-10-16T16:58:39.2961642Z   Stopped: 0
+2026-10-16T16:58:39.2962225Z  Images: 10
+2026-10-16T16:58:39.2962787Z  Server Version: 28.0.4
+2026-10-16T16:58:39.2963943Z  Storage Driver: overlay2
+2026-10-16T16:58:39.2964623Z   Backing Filesystem: extfs
+2026-10-16T16:58:39.2965640Z   Supports d_type: true
+2026-10-16T16:58:39.2966662Z   Using metacopy: false
+2026-10-16T16:58:39.2968200Z   Native Overlay Diff: false
+2026-10-16T16:58:39.2969085Z   userxattr: false
+2026-10-16T16:58:39.2969919Z  Logging Driver: json-file
+2026-10-16T16:58:39.2970914Z  Cgroup Driver: systemd
+2026-10-16T16:58:39.2971602Z  Cgroup Version: 2
+2026-10-16T16:58:39.2973538Z  Plugins:
+2026-10-16T16:58:39.2974145Z   Volume: local
+2026-10-16T16:58:39.2974732Z   Network: bridge host ipvlan macvlan null overlay
+2026-10-16T16:58:39.2975708Z   Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+2026-10-16T16:58:39.2976854Z  Swarm: inactive
+2026-10-16T16:58:39.2977464Z  Runtimes: io.containerd.runc.v2 runc
+2026-10-16T16:58:39.2978168Z  Default Runtime: runc
+2026-10-16T16:58:39.2979038Z  Init Binary: docker-init
+2026-10-16T16:58:39.2980047Z  containerd version: f2551031d7276a770f65f98c9b52e57e7dad07e8
+2026-10-16T16:58:39.2980938Z  runc version: v1.5.2-0-g29dd3dc2
+2026-10-16T16:58:39.2981625Z  init version: de40ad0
+2026-10-16T16:58:39.2982257Z  Security Options:
+2026-10-16T16:58:39.2983009Z   apparmor
+2026-10-16T16:58:39.2983588Z   seccomp
+2026-10-16T16:58:39.2984146Z    Profile: builtin
+2026-10-16T16:58:39.2984720Z   cgroupns
+2026-10-16T16:58:39.2985255Z  Kernel Version: 6.17.0-1022-azure
+2026-10-16T16:58:39.2985875Z  Operating System: Ubuntu 24.04.5 LTS
+2026-10-16T16:58:39.2986491Z  OSType: linux
+2026-10-16T16:58:39.2987025Z  Architecture: x86_64
+2026-10-16T16:58:39.2987557Z  CPUs: 4
+2026-10-16T16:58:39.2988034Z  Total Memory: 15.61GiB
+2026-10-16T16:58:39.2988568Z  Name: runnervm8k3b6
+2026-10-16T16:58:39.2989716Z  ID: 6134b6ae-8eb1-4f62-889e-a360c80bcfbf
+2026-10-16T16:58:39.2990401Z  Docker Root Dir: /var/lib/docker
+2026-10-16T16:58:39.2991001Z  Debug Mode: false
+2026-10-16T16:58:39.2991525Z  Username: githubactions
+2026-10-16T16:58:39.2992076Z  Experimental: false
+2026-10-16T16:58:39.2992611Z  Insecure Registries:
+2026-10-16T16:58:39.2993146Z   ::1/128
+2026-10-16T16:58:39.2993642Z   127.0.0.0/8
+2026-10-16T16:58:39.2994172Z  Live Restore Enabled: false
+2026-10-16T16:58:39.2994614Z 
+2026-10-16T16:58:39.2995354Z ##[endgroup]
+2026-10-16T16:58:39.2996080Z ##[group]Proxy configuration
+2026-10-16T16:58:39.2996585Z No proxy configuration found
+2026-10-16T16:58:39.2997252Z ##[endgroup]
+2026-10-16T16:58:39.3768631Z ##[group]Buildx version
+2026-10-16T16:58:39.3804972Z [command]/usr/bin/docker buildx version
+2026-10-16T16:58:39.4493708Z github.com/docker/buildx v0.38.0 0dbe87f36ed472fe36b6796c3f70b4210a731fc5
+2026-10-16T16:58:39.4563642Z ##[endgroup]
+2026-10-16T16:58:39.4564242Z ##[group]Builder info
+2026-10-16T16:58:39.5700514Z {
+2026-10-16T16:58:39.5700985Z   "nodes": [
+2026-10-16T16:58:39.5701341Z     {
+2026-10-16T16:58:39.5701806Z       "name": "builder-e7d83728-5459-41f3-82c2-d95b1f0ef16e0",
+2026-10-16T16:58:39.5702465Z       "endpoint": "unix:///var/run/docker.sock",
+2026-10-16T16:58:39.5702989Z       "status": "running",
+2026-10-16T16:58:39.5703880Z       "buildkitd-flags": "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host",
+2026-10-16T16:58:39.5705262Z       "buildkit": "v0.33.1",
+2026-10-16T16:58:39.5705870Z       "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/386",
+2026-10-16T16:58:39.5706511Z       "features": {
+2026-10-16T16:58:39.5707031Z         "Automatically load images to the Docker Engine image store": true,
+2026-10-16T16:58:39.5707698Z         "Cache export": true,
+2026-10-16T16:58:39.5708167Z         "Direct push": true,
+2026-10-16T16:58:39.5708589Z         "Docker exporter": true,
+2026-10-16T16:58:39.5710213Z         "Multi-platform build": true,
+2026-10-16T16:58:39.5710726Z         "OCI exporter": true
+2026-10-16T16:58:39.5711144Z       },
+2026-10-16T16:58:39.5711506Z       "labels": {
+2026-10-16T16:58:39.5711982Z         "org.mobyproject.buildkit.worker.executor": "oci",
+2026-10-16T16:58:39.5712792Z         "org.mobyproject.buildkit.worker.hostname": "40961b9707da",
+2026-10-16T16:58:39.5713573Z         "org.mobyproject.buildkit.worker.network": "host",
+2026-10-16T16:58:39.5714336Z         "org.mobyproject.buildkit.worker.oci.process-mode": "sandbox",
+2026-10-16T16:58:39.5715528Z         "org.mobyproject.buildkit.worker.selinux.enabled": "false",
+2026-10-16T16:58:39.5716394Z         "org.mobyproject.buildkit.worker.snapshotter": "overlayfs"
+2026-10-16T16:58:39.5717044Z       },
+2026-10-16T16:58:39.5717371Z       "gcPolicy": [
+2026-10-16T16:58:39.5717697Z         {
+2026-10-16T16:58:39.5717986Z           "all": false,
+2026-10-16T16:58:39.5718349Z           "filter": [
+2026-10-16T16:58:39.5719156Z             "type==source.local type==exec.cachemount type==source.git.checkout"
+2026-10-16T16:58:39.5719799Z           ],
+2026-10-16T16:58:39.5720157Z           "keepDuration": "48h0m0s",
+2026-10-16T16:58:39.5720624Z           "maxUsedSpace": "488.3MiB"
+2026-10-16T16:58:39.5721056Z         },
+2026-10-16T16:58:39.5721399Z         {
+2026-10-16T16:58:39.5721747Z           "all": false,
+2026-10-16T16:58:39.5722157Z           "keepDuration": "1440h0m0s",
+2026-10-16T16:58:39.5722622Z           "reservedSpace": "9.313GiB",
+2026-10-16T16:58:39.5723101Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T16:58:39.5723572Z           "minFreeSpace": "27.01GiB"
+2026-10-16T16:58:39.5724040Z         },
+2026-10-16T16:58:39.5724352Z         {
+2026-10-16T16:58:39.5724670Z           "all": false,
+2026-10-16T16:58:39.5725071Z           "reservedSpace": "9.313GiB",
+2026-10-16T16:58:39.5725529Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T16:58:39.5726076Z           "minFreeSpace": "27.01GiB"
+2026-10-16T16:58:39.5726519Z         },
+2026-10-16T16:58:39.5726860Z         {
+2026-10-16T16:58:39.5727178Z           "all": true,
+2026-10-16T16:58:39.5727615Z           "reservedSpace": "9.313GiB",
+2026-10-16T16:58:39.5728091Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T16:58:39.5728563Z           "minFreeSpace": "27.01GiB"
+2026-10-16T16:58:39.5729254Z         }
+2026-10-16T16:58:39.5729606Z       ]
+2026-10-16T16:58:39.5729917Z     }
+2026-10-16T16:58:39.5730235Z   ],
+2026-10-16T16:58:39.5730647Z   "name": "builder-e7d83728-5459-41f3-82c2-d95b1f0ef16e",
+2026-10-16T16:58:39.5731241Z   "driver": "docker-container",
+2026-10-16T16:58:39.5731695Z   "lastActivity": "2026-10-16T16:53:18.000Z"
+2026-10-16T16:58:39.5732221Z }
+2026-10-16T16:58:39.5732903Z ##[endgroup]
+2026-10-16T16:58:39.7341629Z [command]/usr/bin/docker buildx build --cache-from type=gha,scope=db4ai-tabular-og --cache-to type=gha,mode=max,scope=db4ai-tabular-og --file benchmarks/tabular/Dockerfile.opengauss --iidfile /home/runner/work/_temp/docker-actions-toolkit-6FYw9q/build-iidfile-840ed36429.txt --tag opengauss-db4ai-benchmark:local --load --metadata-file /home/runner/work/_temp/docker-actions-toolkit-6FYw9q/build-metadata-74eee661f7.json .
+2026-10-16T16:58:39.9992793Z #0 building with "builder-e7d83728-5459-41f3-82c2-d95b1f0ef16e" instance using docker-container driver
+2026-10-16T16:58:39.9993551Z 
+2026-10-16T16:58:39.9993838Z #1 [internal] load build definition from Dockerfile.opengauss
+2026-10-16T16:58:39.9994891Z #1 transferring dockerfile: 628B done
+2026-10-16T16:58:39.9995360Z #1 DONE 0.0s
+2026-10-16T16:58:39.9995584Z 
+2026-10-16T16:58:39.9996211Z #2 [internal] load metadata for docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+2026-10-16T16:58:40.2133194Z #2 ...
+2026-10-16T16:58:40.2133579Z 
+2026-10-16T16:58:40.2133902Z #3 [auth] enmotech/opengauss:pull token for registry-1.docker.io
+2026-10-16T16:58:40.2134440Z #3 DONE 0.0s
+2026-10-16T16:58:40.3635090Z 
+2026-10-16T16:58:40.3636234Z #2 [internal] load metadata for docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+2026-10-16T16:58:40.6555225Z #2 DONE 0.8s
+2026-10-16T16:58:40.7590373Z 
+2026-10-16T16:58:40.7590973Z #4 [internal] load .dockerignore
+2026-10-16T16:58:40.7591642Z #4 transferring context: 2B done
+2026-10-16T16:58:40.7592225Z #4 DONE 0.0s
+2026-10-16T16:58:40.7592790Z 
+2026-10-16T16:58:40.7593225Z #5 importing cache manifest from gha:8025993332416896377
+2026-10-16T16:58:40.7593819Z #5 DONE 0.1s
+2026-10-16T16:58:40.7594030Z 
+2026-10-16T16:58:40.7594914Z #6 [1/2] FROM docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+2026-10-16T16:58:40.7596700Z #6 resolve docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5 done
+2026-10-16T16:58:40.7597675Z #6 DONE 0.0s
+2026-10-16T16:58:40.9151246Z 
+2026-10-16T16:58:40.9152265Z #6 [1/2] FROM docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+2026-10-16T16:58:40.9153671Z #6 sha256:94db4750d112a9e859d1e116247d8ad08395b6025c10537d1e34b38d9d9bb586 5.15kB / 5.15kB 0.1s done
+2026-10-16T16:58:40.9154886Z #6 sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574 0B / 122.66MB 0.2s
+2026-10-16T16:58:41.0666015Z #6 sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574 50.33MB / 122.66MB 0.3s
+2026-10-16T16:58:41.0667557Z #6 sha256:727523299393c78af9f28b8c816c0c77bc1cfb0c6575f7d97a6933ad32aa6432 5.12kB / 5.12kB 0.2s done
+2026-10-16T16:58:41.0670593Z #6 sha256:d400719333fdfb9734b496a604287b2ba6875e50237ebcd31c8c5980effecae8 0B / 27.46MB 0.2s
+2026-10-16T16:58:41.0672240Z #6 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 0B / 29.54MB 0.2s
+2026-10-16T16:58:41.2156217Z #6 sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574 104.86MB / 122.66MB 0.5s
+2026-10-16T16:58:41.2158721Z #6 sha256:d400719333fdfb9734b496a604287b2ba6875e50237ebcd31c8c5980effecae8 27.46MB / 27.46MB 0.3s done
+2026-10-16T16:58:41.2161920Z #6 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 29.54MB / 29.54MB 0.3s done
+2026-10-16T16:58:41.2163858Z #6 extracting sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac
+2026-10-16T16:58:41.4435363Z #6 sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574 122.66MB / 122.66MB 0.5s done
+2026-10-16T16:58:41.8788581Z #6 extracting sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 0.7s done
+2026-10-16T16:58:41.8789843Z #6 DONE 1.1s
+2026-10-16T16:58:42.0288561Z 
+2026-10-16T16:58:42.0289811Z #6 [1/2] FROM docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+2026-10-16T16:58:42.0290753Z #6 extracting sha256:d400719333fdfb9734b496a604287b2ba6875e50237ebcd31c8c5980effecae8
+2026-10-16T16:58:42.7802261Z #6 extracting sha256:d400719333fdfb9734b496a604287b2ba6875e50237ebcd31c8c5980effecae8 0.9s done
+2026-10-16T16:58:42.7802824Z #6 DONE 2.0s
+2026-10-16T16:58:42.9350087Z 
+2026-10-16T16:58:42.9351749Z #6 [1/2] FROM docker.io/enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
+2026-10-16T16:58:42.9353558Z #6 extracting sha256:727523299393c78af9f28b8c816c0c77bc1cfb0c6575f7d97a6933ad32aa6432 done
+2026-10-16T16:58:42.9354804Z #6 extracting sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574
+2026-10-16T16:58:44.4040521Z #6 extracting sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574 1.6s done
+2026-10-16T16:58:44.4042068Z #6 extracting sha256:94db4750d112a9e859d1e116247d8ad08395b6025c10537d1e34b38d9d9bb586
+2026-10-16T16:58:44.5598567Z #6 extracting sha256:94db4750d112a9e859d1e116247d8ad08395b6025c10537d1e34b38d9d9bb586 done
+2026-10-16T16:58:44.5599472Z #6 DONE 3.7s
+2026-10-16T16:58:44.5599606Z 
+2026-10-16T16:58:44.5600434Z #7 [2/2] RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 python3-minimal     && rm -rf /var/lib/apt/lists/*     && ldd /usr/local/opengauss/lib/libxgboost.so     && ! ldd /usr/local/opengauss/lib/libxgboost.so | grep 'not found'
+2026-10-16T16:58:44.7508858Z #7 0.342 Get:1 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]
+2026-10-16T16:58:44.9490699Z #7 0.390 Get:2 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+2026-10-16T16:58:45.1524258Z #7 0.743 Get:3 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+2026-10-16T16:58:45.3448169Z #7 0.839 Get:4 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+2026-10-16T16:58:45.3449767Z #7 0.936 Get:5 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]
+2026-10-16T16:58:45.5381676Z #7 0.977 Get:6 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1,792 kB]
+2026-10-16T16:58:45.5859996Z #7 1.177 Get:7 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [7,955 kB]
+2026-10-16T16:58:45.8032549Z #7 1.232 Get:8 http://archive.ubuntu.com/ubuntu jammy/multiverse amd64 Packages [266 kB]
+2026-10-16T16:58:45.8033381Z #7 1.243 Get:9 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]
+2026-10-16T16:58:46.0599247Z #7 1.650 Get:10 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [104 kB]
+2026-10-16T16:58:46.1816924Z #7 1.651 Get:11 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1,627 kB]
+2026-10-16T16:58:46.1819425Z #7 1.658 Get:12 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [8,243 kB]
+2026-10-16T16:58:46.1821112Z #7 1.728 Get:13 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [4,758 kB]
+2026-10-16T16:58:46.1821781Z #7 1.772 Get:14 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [35.6 kB]
+2026-10-16T16:58:46.3330392Z #7 1.773 Get:15 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [82.9 kB]
+2026-10-16T16:58:47.3977391Z #7 2.987 Get:16 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [96.8 kB]
+2026-10-16T16:58:47.5490026Z #7 2.989 Get:17 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [4,429 kB]
+2026-10-16T16:58:47.5807370Z #7 3.171 Get:18 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1,325 kB]
+2026-10-16T16:58:47.7931784Z #7 3.383 Fetched 49.0 MB in 3s (14.8 MB/s)
+2026-10-16T16:58:48.7362588Z #7 3.383 Reading package lists...
+2026-10-16T16:58:49.7268179Z #7 4.372 Reading package lists...
+2026-10-16T16:58:49.9590841Z #7 5.329 Building dependency tree...
+2026-10-16T16:58:49.9591580Z #7 5.550 Reading state information...
+2026-10-16T16:58:50.1183596Z #7 5.709 The following additional packages will be installed:
+2026-10-16T16:58:50.3189471Z #7 5.710   gcc-12-base libexpat1 libgcc-s1 libpython3.10-minimal libstdc++6
+2026-10-16T16:58:50.3190235Z #7 5.710   python3.10-minimal
+2026-10-16T16:58:50.3190519Z #7 5.711 Suggested packages:
+2026-10-16T16:58:50.3190801Z #7 5.711   binfmt-support
+2026-10-16T16:58:50.3191061Z #7 5.711 Recommended packages:
+2026-10-16T16:58:50.3191342Z #7 5.711   libpython3.10-stdlib python3.10
+2026-10-16T16:58:50.3191693Z #7 5.757 The following NEW packages will be installed:
+2026-10-16T16:58:50.3192196Z #7 5.758   libexpat1 libgomp1 libpython3.10-minimal python3-minimal python3.10-minimal
+2026-10-16T16:58:50.3192706Z #7 5.758 The following packages will be upgraded:
+2026-10-16T16:58:50.3193054Z #7 5.759   gcc-12-base libgcc-s1 libstdc++6
+2026-10-16T16:58:50.4998548Z #7 6.090 3 upgraded, 5 newly installed, 0 to remove and 59 not upgraded.
+2026-10-16T16:58:50.4999632Z #7 6.090 Need to get 4,310 kB of archives.
+2026-10-16T16:58:50.5000087Z #7 6.090 After this operation, 12.2 MB of additional disk space will be used.
+2026-10-16T16:58:50.5000852Z #7 6.090 Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libpython3.10-minimal amd64 3.10.12-1~22.04.18 [817 kB]
+2026-10-16T16:58:51.8275482Z #7 7.418 Get:2 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libexpat1 amd64 2.4.7-1ubuntu0.9 [96.9 kB]
+2026-10-16T16:58:51.9971336Z #7 7.437 Get:3 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3.10-minimal amd64 3.10.12-1~22.04.18 [2,277 kB]
+2026-10-16T16:58:52.3877868Z #7 7.979 Get:4 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3-minimal amd64 3.10.6-1~22.04.1 [24.3 kB]
+2026-10-16T16:58:52.5096077Z #7 7.982 Get:5 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gcc-12-base amd64 12.3.0-1ubuntu1~22.04.3 [216 kB]
+2026-10-16T16:58:52.5097019Z #7 8.055 Get:6 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libstdc++6 amd64 12.3.0-1ubuntu1~22.04.3 [699 kB]
+2026-10-16T16:58:52.5098725Z #7 8.100 Get:7 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libgcc-s1 amd64 12.3.0-1ubuntu1~22.04.3 [53.9 kB]
+2026-10-16T16:58:52.6152327Z #7 8.104 Get:8 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libgomp1 amd64 12.3.0-1ubuntu1~22.04.3 [127 kB]
+2026-10-16T16:58:52.6155025Z #7 8.206 debconf: delaying package configuration, since apt-utils is not installed
+2026-10-16T16:58:52.7371794Z #7 8.232 Fetched 4,310 kB in 2s (1,836 kB/s)
+2026-10-16T16:58:52.7372517Z #7 8.245 Selecting previously unselected package libpython3.10-minimal:amd64.
+2026-10-16T16:58:52.7373095Z #7 8.245 (Reading database ... 
+2026-10-16T16:58:52.7373442Z (Reading database ... 5%
+2026-10-16T16:58:52.7373764Z (Reading database ... 10%
+2026-10-16T16:58:52.7374083Z (Reading database ... 15%
+2026-10-16T16:58:52.7374395Z (Reading database ... 20%
+2026-10-16T16:58:52.7374707Z (Reading database ... 25%
+2026-10-16T16:58:52.7375049Z (Reading database ... 30%
+2026-10-16T16:58:52.7375358Z (Reading database ... 35%
+2026-10-16T16:58:52.7375679Z (Reading database ... 40%
+2026-10-16T16:58:52.7375986Z (Reading database ... 45%
+2026-10-16T16:58:52.7376303Z (Reading database ... 50%
+2026-10-16T16:58:52.7376611Z (Reading database ... 55%
+2026-10-16T16:58:52.7376923Z (Reading database ... 60%
+2026-10-16T16:58:52.7377233Z (Reading database ... 65%
+2026-10-16T16:58:52.7377542Z (Reading database ... 70%
+2026-10-16T16:58:52.7377902Z (Reading database ... 75%
+2026-10-16T16:58:52.7378286Z (Reading database ... 80%
+2026-10-16T16:58:52.7379131Z (Reading database ... 85%
+2026-10-16T16:58:52.7379552Z (Reading database ... 90%
+2026-10-16T16:58:52.7380585Z (Reading database ... 95%
+2026-10-16T16:58:52.7381051Z (Reading database ... 100%
+2026-10-16T16:58:52.7382575Z (Reading database ... 9329 files and directories currently installed.)
+2026-10-16T16:58:52.7383583Z #7 8.255 Preparing to unpack .../libpython3.10-minimal_3.10.12-1~22.04.18_amd64.deb ...
+2026-10-16T16:58:52.7384516Z #7 8.255 Unpacking libpython3.10-minimal:amd64 (3.10.12-1~22.04.18) ...
+2026-10-16T16:58:52.7385238Z #7 8.326 Selecting previously unselected package libexpat1:amd64.
+2026-10-16T16:58:52.9559132Z #7 8.329 Preparing to unpack .../libexpat1_2.4.7-1ubuntu0.9_amd64.deb ...
+2026-10-16T16:58:52.9560026Z #7 8.331 Unpacking libexpat1:amd64 (2.4.7-1ubuntu0.9) ...
+2026-10-16T16:58:52.9560776Z #7 8.346 Selecting previously unselected package python3.10-minimal.
+2026-10-16T16:58:52.9561655Z #7 8.348 Preparing to unpack .../python3.10-minimal_3.10.12-1~22.04.18_amd64.deb ...
+2026-10-16T16:58:52.9562469Z #7 8.352 Unpacking python3.10-minimal (3.10.12-1~22.04.18) ...
+2026-10-16T16:58:52.9563164Z #7 8.391 Setting up libpython3.10-minimal:amd64 (3.10.12-1~22.04.18) ...
+2026-10-16T16:58:52.9563890Z #7 8.394 Setting up libexpat1:amd64 (2.4.7-1ubuntu0.9) ...
+2026-10-16T16:58:52.9564540Z #7 8.396 Setting up python3.10-minimal (3.10.12-1~22.04.18) ...
+2026-10-16T16:58:53.3233659Z #7 8.914 Selecting previously unselected package python3-minimal.
+2026-10-16T16:58:53.4346389Z #7 8.914 (Reading database ... 
+2026-10-16T16:58:53.4347171Z (Reading database ... 5%
+2026-10-16T16:58:53.4347855Z (Reading database ... 10%
+2026-10-16T16:58:53.4348242Z (Reading database ... 15%
+2026-10-16T16:58:53.4349063Z (Reading database ... 20%
+2026-10-16T16:58:53.4349489Z (Reading database ... 25%
+2026-10-16T16:58:53.4349893Z (Reading database ... 30%
+2026-10-16T16:58:53.4350329Z (Reading database ... 35%
+2026-10-16T16:58:53.4350852Z (Reading database ... 40%
+2026-10-16T16:58:53.4351257Z (Reading database ... 45%
+2026-10-16T16:58:53.4351646Z (Reading database ... 50%
+2026-10-16T16:58:53.4352027Z (Reading database ... 55%
+2026-10-16T16:58:53.4352434Z (Reading database ... 60%
+2026-10-16T16:58:53.4352836Z (Reading database ... 65%
+2026-10-16T16:58:53.4353222Z (Reading database ... 70%
+2026-10-16T16:58:53.4353715Z (Reading database ... 75%
+2026-10-16T16:58:53.4354111Z (Reading database ... 80%
+2026-10-16T16:58:53.4354409Z (Reading database ... 85%
+2026-10-16T16:58:53.4354635Z (Reading database ... 90%
+2026-10-16T16:58:53.4355095Z (Reading database ... 95%
+2026-10-16T16:58:53.4355438Z (Reading database ... 100%
+2026-10-16T16:58:53.4355976Z (Reading database ... 9633 files and directories currently installed.)
+2026-10-16T16:58:53.4356652Z #7 8.921 Preparing to unpack .../python3-minimal_3.10.6-1~22.04.1_amd64.deb ...
+2026-10-16T16:58:53.4357090Z #7 8.922 Unpacking python3-minimal (3.10.6-1~22.04.1) ...
+2026-10-16T16:58:53.4357786Z #7 8.937 Preparing to unpack .../gcc-12-base_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+2026-10-16T16:58:53.4358755Z #7 8.939 Unpacking gcc-12-base:amd64 (12.3.0-1ubuntu1~22.04.3) over (12.3.0-1ubuntu1~22.04) ...
+2026-10-16T16:58:53.4360234Z #7 8.956 Setting up gcc-12-base:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+2026-10-16T16:58:53.4360808Z #7 8.973 (Reading database ... 
+2026-10-16T16:58:53.4361185Z (Reading database ... 5%
+2026-10-16T16:58:53.4361542Z (Reading database ... 10%
+2026-10-16T16:58:53.4361921Z (Reading database ... 15%
+2026-10-16T16:58:53.4362315Z (Reading database ... 20%
+2026-10-16T16:58:53.4362708Z (Reading database ... 25%
+2026-10-16T16:58:53.4363089Z (Reading database ... 30%
+2026-10-16T16:58:53.4363468Z (Reading database ... 35%
+2026-10-16T16:58:53.4363839Z (Reading database ... 40%
+2026-10-16T16:58:53.4364215Z (Reading database ... 45%
+2026-10-16T16:58:53.4364584Z (Reading database ... 50%
+2026-10-16T16:58:53.4364963Z (Reading database ... 55%
+2026-10-16T16:58:53.4365343Z (Reading database ... 60%
+2026-10-16T16:58:53.4365707Z (Reading database ... 65%
+2026-10-16T16:58:53.4366078Z (Reading database ... 70%
+2026-10-16T16:58:53.4366447Z (Reading database ... 75%
+2026-10-16T16:58:53.4366828Z (Reading database ... 80%
+2026-10-16T16:58:53.4367189Z (Reading database ... 85%
+2026-10-16T16:58:53.4367416Z (Reading database ... 90%
+2026-10-16T16:58:53.4367635Z (Reading database ... 95%
+2026-10-16T16:58:53.4367850Z (Reading database ... 100%
+2026-10-16T16:58:53.4368341Z (Reading database ... 9654 files and directories currently installed.)
+2026-10-16T16:58:53.4369393Z #7 8.981 Preparing to unpack .../libstdc++6_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+2026-10-16T16:58:53.4370092Z #7 8.994 Unpacking libstdc++6:amd64 (12.3.0-1ubuntu1~22.04.3) over (12.3.0-1ubuntu1~22.04) ...
+2026-10-16T16:58:53.4370926Z #7 9.025 Setting up libstdc++6:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+2026-10-16T16:58:53.6222075Z #7 9.041 (Reading database ... 
+2026-10-16T16:58:53.6222651Z (Reading database ... 5%
+2026-10-16T16:58:53.6224496Z (Reading database ... 10%
+2026-10-16T16:58:53.6224947Z (Reading database ... 15%
+2026-10-16T16:58:53.6225792Z (Reading database ... 20%
+2026-10-16T16:58:53.6226195Z (Reading database ... 25%
+2026-10-16T16:58:53.6226842Z (Reading database ... 30%
+2026-10-16T16:58:53.6227164Z (Reading database ... 35%
+2026-10-16T16:58:53.6227492Z (Reading database ... 40%
+2026-10-16T16:58:53.6228164Z (Reading database ... 45%
+2026-10-16T16:58:53.6228547Z (Reading database ... 50%
+2026-10-16T16:58:53.6229668Z (Reading database ... 55%
+2026-10-16T16:58:53.6230079Z (Reading database ... 60%
+2026-10-16T16:58:53.6231075Z (Reading database ... 65%
+2026-10-16T16:58:53.6231854Z (Reading database ... 70%
+2026-10-16T16:58:53.6232515Z (Reading database ... 75%
+2026-10-16T16:58:53.6233028Z (Reading database ... 80%
+2026-10-16T16:58:53.6244604Z (Reading database ... 85%
+2026-10-16T16:58:53.6244953Z (Reading database ... 90%
+2026-10-16T16:58:53.6245197Z (Reading database ... 95%
+2026-10-16T16:58:53.6245427Z (Reading database ... 100%
+2026-10-16T16:58:53.6245758Z (Reading database ... 9654 files and directories currently installed.)
+2026-10-16T16:58:53.6246249Z #7 9.050 Preparing to unpack .../libgcc-s1_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+2026-10-16T16:58:53.6246776Z #7 9.052 Unpacking libgcc-s1:amd64 (12.3.0-1ubuntu1~22.04.3) over (12.3.0-1ubuntu1~22.04) ...
+2026-10-16T16:58:53.6247254Z #7 9.069 Setting up libgcc-s1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+2026-10-16T16:58:53.6247668Z #7 9.085 Selecting previously unselected package libgomp1:amd64.
+2026-10-16T16:58:53.6248027Z #7 9.085 (Reading database ... 
+2026-10-16T16:58:53.6248492Z (Reading database ... 5%
+2026-10-16T16:58:53.6248721Z (Reading database ... 10%
+2026-10-16T16:58:53.6249212Z (Reading database ... 15%
+2026-10-16T16:58:53.6249441Z (Reading database ... 20%
+2026-10-16T16:58:53.6249656Z (Reading database ... 25%
+2026-10-16T16:58:53.6249867Z (Reading database ... 30%
+2026-10-16T16:58:53.6250078Z (Reading database ... 35%
+2026-10-16T16:58:53.6250291Z (Reading database ... 40%
+2026-10-16T16:58:53.6250507Z (Reading database ... 45%
+2026-10-16T16:58:53.6250720Z (Reading database ... 50%
+2026-10-16T16:58:53.6250931Z (Reading database ... 55%
+2026-10-16T16:58:53.6251145Z (Reading database ... 60%
+2026-10-16T16:58:53.6251357Z (Reading database ... 65%
+2026-10-16T16:58:53.6251581Z (Reading database ... 70%
+2026-10-16T16:58:53.6251799Z (Reading database ... 75%
+2026-10-16T16:58:53.6252014Z (Reading database ... 80%
+2026-10-16T16:58:53.6252227Z (Reading database ... 85%
+2026-10-16T16:58:53.6252449Z (Reading database ... 90%
+2026-10-16T16:58:53.6252661Z (Reading database ... 95%
+2026-10-16T16:58:53.6252890Z (Reading database ... 100%
+2026-10-16T16:58:53.6253213Z (Reading database ... 9654 files and directories currently installed.)
+2026-10-16T16:58:53.6253689Z #7 9.094 Preparing to unpack .../libgomp1_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+2026-10-16T16:58:53.6254137Z #7 9.094 Unpacking libgomp1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+2026-10-16T16:58:53.6254518Z #7 9.109 Setting up libgomp1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+2026-10-16T16:58:53.6254881Z #7 9.111 Setting up python3-minimal (3.10.6-1~22.04.1) ...
+2026-10-16T16:58:53.6255244Z #7 9.213 Processing triggers for libc-bin (2.35-0ubuntu3.8) ...
+2026-10-16T16:58:53.8152258Z #7 9.255 	linux-vdso.so.1 (0x00007fd120a57000)
+2026-10-16T16:58:53.8153071Z #7 9.255 	libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x00007fd120594000)
+2026-10-16T16:58:53.8153969Z #7 9.255 	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007fd120368000)
+2026-10-16T16:58:53.8154831Z #7 9.255 	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fd120281000)
+2026-10-16T16:58:53.8155639Z #7 9.255 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007fd120261000)
+2026-10-16T16:58:53.8156419Z #7 9.255 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fd120038000)
+2026-10-16T16:58:53.8157223Z #7 9.255 	/lib64/ld-linux-x86-64.so.2 (0x00007fd120a59000)
+2026-10-16T16:58:54.8266749Z #7 DONE 10.4s
+2026-10-16T16:58:54.9787547Z 
+2026-10-16T16:58:54.9788079Z #8 exporting to docker image format
+2026-10-16T16:58:54.9788577Z #8 exporting layers
+2026-10-16T16:58:55.4763707Z #8 exporting layers 0.6s done
+2026-10-16T16:58:55.6355925Z #8 exporting manifest sha256:ef4d6545080a5b08f8182bd50bfaf05dee8b8a3e94eb78a12ca330f07e61f919 done
+2026-10-16T16:58:55.6363138Z #8 exporting config sha256:e965305bad7e0890f6ec610964c748965634e55a6bf5022c968ce67744a580c4 done
+2026-10-16T16:58:55.6369532Z #8 sending tarball
+2026-10-16T16:58:57.1785673Z #8 sending tarball 1.5s done
+2026-10-16T16:58:57.1786496Z #8 DONE 2.1s
+2026-10-16T16:58:57.1786629Z 
+2026-10-16T16:58:57.1786738Z #9 importing to docker
+2026-10-16T16:58:57.1787034Z #9 loading layer 7833e36c3517 6.56MB / 6.56MB 0.5s done
+2026-10-16T16:58:57.1787373Z #9 DONE 0.5s
+2026-10-16T16:58:57.1787497Z 
+2026-10-16T16:58:57.1787611Z #10 exporting to GitHub Actions Cache
+2026-10-16T16:58:57.1787923Z #10 preparing build cache for export done
+2026-10-16T16:58:57.1788231Z #10 sending cache export
+2026-10-16T16:58:57.1788679Z #10 writing layer sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574
+2026-10-16T16:59:11.0394652Z #10 writing layer sha256:40cc3ff4a2b4b4beaf30daf0a7fb36528a2cce4eb54acdd681efa2e6537f3574 14.0s done
+2026-10-16T16:59:11.2782287Z #10 writing layer sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac
+2026-10-16T16:59:14.5794625Z #10 writing layer sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 3.5s done
+2026-10-16T16:59:14.8138524Z #10 writing layer sha256:727523299393c78af9f28b8c816c0c77bc1cfb0c6575f7d97a6933ad32aa6432
+2026-10-16T16:59:15.1511609Z #10 writing layer sha256:727523299393c78af9f28b8c816c0c77bc1cfb0c6575f7d97a6933ad32aa6432 0.5s done
+2026-10-16T16:59:15.3917103Z #10 writing layer sha256:94db4750d112a9e859d1e116247d8ad08395b6025c10537d1e34b38d9d9bb586
+2026-10-16T16:59:15.7452063Z #10 writing layer sha256:94db4750d112a9e859d1e116247d8ad08395b6025c10537d1e34b38d9d9bb586 0.5s done
+2026-10-16T16:59:15.9792293Z #10 writing layer sha256:a7e168191e69201db59f6e7029aad8d275dee42ae65211d2c1bfcd19c314049c
+2026-10-16T16:59:17.4911221Z #10 writing layer sha256:a7e168191e69201db59f6e7029aad8d275dee42ae65211d2c1bfcd19c314049c 1.7s done
+2026-10-16T16:59:17.7254230Z #10 writing layer sha256:d400719333fdfb9734b496a604287b2ba6875e50237ebcd31c8c5980effecae8
+2026-10-16T16:59:20.6845887Z #10 writing layer sha256:d400719333fdfb9734b496a604287b2ba6875e50237ebcd31c8c5980effecae8 3.1s done
+2026-10-16T16:59:21.0691681Z #10 sending cache export 24.1s done
+2026-10-16T16:59:21.0692346Z #10 DONE 24.1s
+2026-10-16T16:59:21.0879357Z 
+2026-10-16T16:59:21.0879944Z #11 resolving provenance for metadata file
+2026-10-16T16:59:21.0880721Z #11 DONE 0.0s
+2026-10-16T16:59:21.0954797Z ##[group]ImageID
+2026-10-16T16:59:21.0955160Z sha256:e965305bad7e0890f6ec610964c748965634e55a6bf5022c968ce67744a580c4
+2026-10-16T16:59:21.0956404Z ##[endgroup]
+2026-10-16T16:59:21.0956910Z ##[group]Digest
+2026-10-16T16:59:21.0957351Z sha256:ef4d6545080a5b08f8182bd50bfaf05dee8b8a3e94eb78a12ca330f07e61f919
+2026-10-16T16:59:21.0958026Z ##[endgroup]
+2026-10-16T16:59:21.0958412Z ##[group]Metadata
+2026-10-16T16:59:21.0959248Z {
+2026-10-16T16:59:21.0959597Z   "buildx.build.provenance": {
+2026-10-16T16:59:21.0960088Z     "builder": {
+2026-10-16T16:59:21.0960430Z       "id": ""
+2026-10-16T16:59:21.0960732Z     },
+2026-10-16T16:59:21.0961174Z     "buildType": "https://mobyproject.org/buildkit@v1",
+2026-10-16T16:59:21.0961715Z     "materials": [
+2026-10-16T16:59:21.0962112Z       {
+2026-10-16T16:59:21.0963160Z         "uri": "pkg:docker/enmotech/opengauss?digest=sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5&platform=linux%2Famd64",
+2026-10-16T16:59:21.0964336Z         "digest": {
+2026-10-16T16:59:21.0964894Z           "sha256": "9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5"
+2026-10-16T16:59:21.0965483Z         }
+2026-10-16T16:59:21.0965759Z       }
+2026-10-16T16:59:21.0966015Z     ],
+2026-10-16T16:59:21.0966286Z     "invocation": {
+2026-10-16T16:59:21.0966633Z       "configSource": {
+2026-10-16T16:59:21.0967017Z         "entryPoint": "Dockerfile.opengauss"
+2026-10-16T16:59:21.0967433Z       },
+2026-10-16T16:59:21.0967740Z       "parameters": {
+2026-10-16T16:59:21.0968104Z         "frontend": "dockerfile.v0",
+2026-10-16T16:59:21.0968560Z         "locals": [
+2026-10-16T16:59:21.0969113Z           {
+2026-10-16T16:59:21.0969443Z             "name": "context"
+2026-10-16T16:59:21.0969863Z           },
+2026-10-16T16:59:21.0970188Z           {
+2026-10-16T16:59:21.0970550Z             "name": "dockerfile"
+2026-10-16T16:59:21.0971338Z           }
+2026-10-16T16:59:21.0971637Z         ],
+2026-10-16T16:59:21.0971946Z         "root": {
+2026-10-16T16:59:21.0972252Z           "configSource": {
+2026-10-16T16:59:21.0972504Z             "path": "Dockerfile.opengauss"
+2026-10-16T16:59:21.0972781Z           },
+2026-10-16T16:59:21.0972962Z           "request": {
+2026-10-16T16:59:21.0973229Z             "args": {
+2026-10-16T16:59:21.0973647Z               "vcs:localdir:context": ".",
+2026-10-16T16:59:21.0973969Z               "vcs:localdir:dockerfile": "benchmarks/tabular",
+2026-10-16T16:59:21.0974354Z               "vcs:revision": "a5f74aa8ab98112aa036666006697118adad072f",
+2026-10-16T16:59:21.0975038Z               "vcs:source": "https://github.com/wotchin/pg_db4ai"
+2026-10-16T16:59:21.0975608Z             }
+2026-10-16T16:59:21.0975980Z           }
+2026-10-16T16:59:21.0976308Z         },
+2026-10-16T16:59:21.0976657Z         "compatibilityVersion": 30
+2026-10-16T16:59:21.0977085Z       },
+2026-10-16T16:59:21.0977417Z       "environment": {
+2026-10-16T16:59:21.0977797Z         "dockerfileVersion": "1.27.0",
+2026-10-16T16:59:21.0978507Z         "github_actor": "wotchin",
+2026-10-16T16:59:21.0979186Z         "github_actor_id": "15714979",
+2026-10-16T16:59:21.0979623Z         "github_event_name": "push",
+2026-10-16T16:59:21.0980051Z         "github_event_payload": {
+2026-10-16T16:59:21.0980535Z           "after": "a5f74aa8ab98112aa036666006697118adad072f",
+2026-10-16T16:59:21.0981077Z           "base_ref": null,
+2026-10-16T16:59:21.0981539Z           "before": "0ddbe7b43550d18647eba3a054049bcb353fb8d4",
+2026-10-16T16:59:21.0982000Z           "commits": [
+2026-10-16T16:59:21.0982194Z             {
+2026-10-16T16:59:21.0982381Z               "author": {
+2026-10-16T16:59:21.0982613Z                 "email": "wotchin95@gmail.com",
+2026-10-16T16:59:21.0982883Z                 "name": "Jack W.",
+2026-10-16T16:59:21.0983123Z                 "username": "wotchin"
+2026-10-16T16:59:21.0983384Z               },
+2026-10-16T16:59:21.0983588Z               "committer": {
+2026-10-16T16:59:21.0983846Z                 "email": "wotchin95@gmail.com",
+2026-10-16T16:59:21.0984120Z                 "name": "Jack W.",
+2026-10-16T16:59:21.0984379Z                 "username": "wotchin"
+2026-10-16T16:59:21.0984631Z               },
+2026-10-16T16:59:21.0984828Z               "distinct": true,
+2026-10-16T16:59:21.0985097Z               "id": "a5f74aa8ab98112aa036666006697118adad072f",
+2026-10-16T16:59:21.0985728Z               "message": "Repair openGauss image runtime and parameter compatibility; run three-seed benchmark with explicit failures",
+2026-10-16T16:59:21.0986362Z               "timestamp": "2026-10-16T12:52:46-04:00",
+2026-10-16T16:59:21.0986740Z               "tree_id": "1b6783bf2c96ff1d2cf8d5798ca957eb1f8311f8",
+2026-10-16T16:59:21.0987291Z               "url": "https://github.com/wotchin/pg_db4ai/commit/a5f74aa8ab98112aa036666006697118adad072f"
+2026-10-16T16:59:21.0987716Z             }
+2026-10-16T16:59:21.0987909Z           ],
+2026-10-16T16:59:21.0988271Z           "compare": "https://github.com/wotchin/pg_db4ai/compare/0ddbe7b43550...a5f74aa8ab98",
+2026-10-16T16:59:21.0988714Z           "created": false,
+2026-10-16T16:59:21.0989229Z           "deleted": false,
+2026-10-16T16:59:21.0989609Z           "forced": false,
+2026-10-16T16:59:21.0990010Z           "head_commit": {
+2026-10-16T16:59:21.0990248Z             "author": {
+2026-10-16T16:59:21.0990515Z               "email": "wotchin95@gmail.com",
+2026-10-16T16:59:21.0990787Z               "name": "Jack W.",
+2026-10-16T16:59:21.0991044Z               "username": "wotchin"
+2026-10-16T16:59:21.0991298Z             },
+2026-10-16T16:59:21.0991504Z             "committer": {
+2026-10-16T16:59:21.0991731Z               "email": "wotchin95@gmail.com",
+2026-10-16T16:59:21.0991994Z               "name": "Jack W.",
+2026-10-16T16:59:21.0992222Z               "username": "wotchin"
+2026-10-16T16:59:21.0992442Z             },
+2026-10-16T16:59:21.0992650Z             "distinct": true,
+2026-10-16T16:59:21.0993175Z             "id": "a5f74aa8ab98112aa036666006697118adad072f",
+2026-10-16T16:59:21.0993761Z             "message": "Repair openGauss image runtime and parameter compatibility; run three-seed benchmark with explicit failures",
+2026-10-16T16:59:21.0994387Z             "timestamp": "2026-10-16T12:52:46-04:00",
+2026-10-16T16:59:21.0994812Z             "tree_id": "1b6783bf2c96ff1d2cf8d5798ca957eb1f8311f8",
+2026-10-16T16:59:21.0995408Z             "url": "https://github.com/wotchin/pg_db4ai/commit/a5f74aa8ab98112aa036666006697118adad072f"
+2026-10-16T16:59:21.0995893Z           },
+2026-10-16T16:59:21.0996099Z           "pusher": {
+2026-10-16T16:59:21.0996337Z             "email": "wotchin95@gmail.com",
+2026-10-16T16:59:21.0996624Z             "name": "wotchin"
+2026-10-16T16:59:21.0996857Z           },
+2026-10-16T16:59:21.0997106Z           "ref": "refs/heads/benchmark-public-tabular",
+2026-10-16T16:59:21.0997417Z           "repository": {
+2026-10-16T16:59:21.0997678Z             "allow_forking": true,
+2026-10-16T16:59:21.0998117Z             "archive_url": "https://api.github.com/repos/wotchin/pg_db4ai/{archive_format}{/ref}",
+2026-10-16T16:59:21.0998724Z             "archived": false,
+2026-10-16T16:59:21.0999376Z             "assignees_url": "https://api.github.com/repos/wotchin/pg_db4ai/assignees{/user}",
+2026-10-16T16:59:21.0999953Z             "blobs_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/blobs{/sha}",
+2026-10-16T16:59:21.1000550Z             "branches_url": "https://api.github.com/repos/wotchin/pg_db4ai/branches{/branch}",
+2026-10-16T16:59:21.1001121Z             "clone_url": "https://github.com/wotchin/pg_db4ai.git",
+2026-10-16T16:59:21.1001714Z             "collaborators_url": "https://api.github.com/repos/wotchin/pg_db4ai/collaborators{/collaborator}",
+2026-10-16T16:59:21.1002355Z             "comments_url": "https://api.github.com/repos/wotchin/pg_db4ai/comments{/number}",
+2026-10-16T16:59:21.1002928Z             "commits_url": "https://api.github.com/repos/wotchin/pg_db4ai/commits{/sha}",
+2026-10-16T16:59:21.1003511Z             "compare_url": "https://api.github.com/repos/wotchin/pg_db4ai/compare/{base}...{head}",
+2026-10-16T16:59:21.1004119Z             "contents_url": "https://api.github.com/repos/wotchin/pg_db4ai/contents/{+path}",
+2026-10-16T16:59:21.1004695Z             "contributors_url": "https://api.github.com/repos/wotchin/pg_db4ai/contributors",
+2026-10-16T16:59:21.1005137Z             "created_at": 1792097928,
+2026-10-16T16:59:21.1005390Z             "default_branch": "main",
+2026-10-16T16:59:21.1005810Z             "deployments_url": "https://api.github.com/repos/wotchin/pg_db4ai/deployments",
+2026-10-16T16:59:21.1006282Z             "description": "A database for AI extension",
+2026-10-16T16:59:21.1006589Z             "disabled": false,
+2026-10-16T16:59:21.1006958Z             "downloads_url": "https://api.github.com/repos/wotchin/pg_db4ai/downloads",
+2026-10-16T16:59:21.1007497Z             "events_url": "https://api.github.com/repos/wotchin/pg_db4ai/events",
+2026-10-16T16:59:21.1007882Z             "fork": false,
+2026-10-16T16:59:21.1008119Z             "forks": 0,
+2026-10-16T16:59:21.1008353Z             "forks_count": 0,
+2026-10-16T16:59:21.1008697Z             "forks_url": "https://api.github.com/repos/wotchin/pg_db4ai/forks",
+2026-10-16T16:59:21.1010082Z             "full_name": "wotchin/pg_db4ai",
+2026-10-16T16:59:21.1010683Z             "git_commits_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/commits{/sha}",
+2026-10-16T16:59:21.1011274Z             "git_refs_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/refs{/sha}",
+2026-10-16T16:59:21.1011822Z             "git_tags_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/tags{/sha}",
+2026-10-16T16:59:21.1012301Z             "git_url": "git://github.com/wotchin/pg_db4ai.git",
+2026-10-16T16:59:21.1012637Z             "has_discussions": false,
+2026-10-16T16:59:21.1012936Z             "has_downloads": true,
+2026-10-16T16:59:21.1013181Z             "has_issues": true,
+2026-10-16T16:59:21.1013635Z             "has_pages": false,
+2026-10-16T16:59:21.1013888Z             "has_projects": true,
+2026-10-16T16:59:21.1014155Z             "has_pull_requests": true,
+2026-10-16T16:59:21.1014425Z             "has_wiki": true,
+2026-10-16T16:59:21.1014672Z             "homepage": null,
+2026-10-16T16:59:21.1015021Z             "hooks_url": "https://api.github.com/repos/wotchin/pg_db4ai/hooks",
+2026-10-16T16:59:21.1015475Z             "html_url": "https://github.com/wotchin/pg_db4ai",
+2026-10-16T16:59:21.1015794Z             "id": 1421317902,
+2026-10-16T16:59:21.1016035Z             "is_template": false,
+2026-10-16T16:59:21.1016491Z             "issue_comment_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues/comments{/number}",
+2026-10-16T16:59:21.1017160Z             "issue_events_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues/events{/number}",
+2026-10-16T16:59:21.1017756Z             "issues_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues{/number}",
+2026-10-16T16:59:21.1018300Z             "keys_url": "https://api.github.com/repos/wotchin/pg_db4ai/keys{/key_id}",
+2026-10-16T16:59:21.1019236Z             "labels_url": "https://api.github.com/repos/wotchin/pg_db4ai/labels{/name}",
+2026-10-16T16:59:21.1019670Z             "language": "C",
+2026-10-16T16:59:21.1020038Z             "languages_url": "https://api.github.com/repos/wotchin/pg_db4ai/languages",
+2026-10-16T16:59:21.1020434Z             "license": {
+2026-10-16T16:59:21.1020676Z               "key": "mulanpsl-2.0",
+2026-10-16T16:59:21.1021027Z               "name": "Mulan Permissive Software License, Version 2",
+2026-10-16T16:59:21.1021391Z               "node_id": "L_kgCsbXVsYW5wc2wtMi4w",
+2026-10-16T16:59:21.1021735Z               "spdx_id": "MulanPSL-2.0",
+2026-10-16T16:59:21.1022082Z               "url": "https://api.github.com/licenses/mulanpsl-2.0"
+2026-10-16T16:59:21.1022435Z             },
+2026-10-16T16:59:21.1022685Z             "master_branch": "main",
+2026-10-16T16:59:21.1023032Z             "merges_url": "https://api.github.com/repos/wotchin/pg_db4ai/merges",
+2026-10-16T16:59:21.1023558Z             "milestones_url": "https://api.github.com/repos/wotchin/pg_db4ai/milestones{/number}",
+2026-10-16T16:59:21.1024008Z             "mirror_url": null,
+2026-10-16T16:59:21.1024240Z             "name": "pg_db4ai",
+2026-10-16T16:59:21.1024493Z             "node_id": "R_kgDOVLeXDg",
+2026-10-16T16:59:21.1024990Z             "notifications_url": "https://api.github.com/repos/wotchin/pg_db4ai/notifications{?since,all,participating}",
+2026-10-16T16:59:21.1025515Z             "open_issues": 0,
+2026-10-16T16:59:21.1025749Z             "open_issues_count": 0,
+2026-10-16T16:59:21.1026072Z             "owner": {
+2026-10-16T16:59:21.1026654Z               "avatar_url": "https://avatars.githubusercontent.com/u/15714979?v=4",
+2026-10-16T16:59:21.1027418Z               "email": "wotchin95@gmail.com",
+2026-10-16T16:59:21.1027846Z               "events_url": "https://api.github.com/users/wotchin/events{/privacy}",
+2026-10-16T16:59:21.1028380Z               "followers_url": "https://api.github.com/users/wotchin/followers",
+2026-10-16T16:59:21.1029121Z               "following_url": "https://api.github.com/users/wotchin/following{/other_user}",
+2026-10-16T16:59:21.1029641Z               "gists_url": "https://api.github.com/users/wotchin/gists{/gist_id}",
+2026-10-16T16:59:21.1030001Z               "gravatar_id": "",
+2026-10-16T16:59:21.1030269Z               "html_url": "https://github.com/wotchin",
+2026-10-16T16:59:21.1030551Z               "id": 15714979,
+2026-10-16T16:59:21.1030779Z               "login": "wotchin",
+2026-10-16T16:59:21.1031011Z               "name": "wotchin",
+2026-10-16T16:59:21.1031260Z               "node_id": "MDQ6VXNlcjE1NzE0OTc5",
+2026-10-16T16:59:21.1031630Z               "organizations_url": "https://api.github.com/users/wotchin/orgs",
+2026-10-16T16:59:21.1032122Z               "received_events_url": "https://api.github.com/users/wotchin/received_events",
+2026-10-16T16:59:21.1032584Z               "repos_url": "https://api.github.com/users/wotchin/repos",
+2026-10-16T16:59:21.1033091Z               "site_admin": false,
+2026-10-16T16:59:21.1033460Z               "starred_url": "https://api.github.com/users/wotchin/starred{/owner}{/repo}",
+2026-10-16T16:59:21.1033966Z               "subscriptions_url": "https://api.github.com/users/wotchin/subscriptions",
+2026-10-16T16:59:21.1034354Z               "type": "User",
+2026-10-16T16:59:21.1034621Z               "url": "https://api.github.com/users/wotchin",
+2026-10-16T16:59:21.1034922Z               "user_view_type": "public"
+2026-10-16T16:59:21.1035163Z             },
+2026-10-16T16:59:21.1035352Z             "private": false,
+2026-10-16T16:59:21.1035598Z             "pull_request_creation_policy": "all",
+2026-10-16T16:59:21.1036026Z             "pulls_url": "https://api.github.com/repos/wotchin/pg_db4ai/pulls{/number}",
+2026-10-16T16:59:21.1036408Z             "pushed_at": 1792169569,
+2026-10-16T16:59:21.1036776Z             "releases_url": "https://api.github.com/repos/wotchin/pg_db4ai/releases{/id}",
+2026-10-16T16:59:21.1037166Z             "size": 3440,
+2026-10-16T16:59:21.1037418Z             "ssh_url": "git@github.com:wotchin/pg_db4ai.git",
+2026-10-16T16:59:21.1037834Z             "stargazers": 0,
+2026-10-16T16:59:21.1038059Z             "stargazers_count": 0,
+2026-10-16T16:59:21.1038425Z             "stargazers_url": "https://api.github.com/repos/wotchin/pg_db4ai/stargazers",
+2026-10-16T16:59:21.1039164Z             "statuses_url": "https://api.github.com/repos/wotchin/pg_db4ai/statuses/{sha}",
+2026-10-16T16:59:21.1039690Z             "subscribers_url": "https://api.github.com/repos/wotchin/pg_db4ai/subscribers",
+2026-10-16T16:59:21.1040222Z             "subscription_url": "https://api.github.com/repos/wotchin/pg_db4ai/subscription",
+2026-10-16T16:59:21.1040669Z             "svn_url": "https://github.com/wotchin/pg_db4ai",
+2026-10-16T16:59:21.1041055Z             "tags_url": "https://api.github.com/repos/wotchin/pg_db4ai/tags",
+2026-10-16T16:59:21.1041489Z             "teams_url": "https://api.github.com/repos/wotchin/pg_db4ai/teams",
+2026-10-16T16:59:21.1041851Z             "topics": [],
+2026-10-16T16:59:21.1042193Z             "trees_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/trees{/sha}",
+2026-10-16T16:59:21.1042588Z             "updated_at": "2026-10-16T16:25:18Z",
+2026-10-16T16:59:21.1042914Z             "url": "https://api.github.com/repos/wotchin/pg_db4ai",
+2026-10-16T16:59:21.1043244Z             "visibility": "public",
+2026-10-16T16:59:21.1043742Z             "watchers": 0,
+2026-10-16T16:59:21.1044122Z             "watchers_count": 0,
+2026-10-16T16:59:21.1044386Z             "web_commit_signoff_required": false
+2026-10-16T16:59:21.1044643Z           },
+2026-10-16T16:59:21.1044843Z           "sender": {
+2026-10-16T16:59:21.1045160Z             "avatar_url": "https://avatars.githubusercontent.com/u/15714979?v=4",
+2026-10-16T16:59:21.1045633Z             "events_url": "https://api.github.com/users/wotchin/events{/privacy}",
+2026-10-16T16:59:21.1046086Z             "followers_url": "https://api.github.com/users/wotchin/followers",
+2026-10-16T16:59:21.1046569Z             "following_url": "https://api.github.com/users/wotchin/following{/other_user}",
+2026-10-16T16:59:21.1047057Z             "gists_url": "https://api.github.com/users/wotchin/gists{/gist_id}",
+2026-10-16T16:59:21.1047406Z             "gravatar_id": "",
+2026-10-16T16:59:21.1047669Z             "html_url": "https://github.com/wotchin",
+2026-10-16T16:59:21.1047941Z             "id": 15714979,
+2026-10-16T16:59:21.1048157Z             "login": "wotchin",
+2026-10-16T16:59:21.1048405Z             "node_id": "MDQ6VXNlcjE1NzE0OTc5",
+2026-10-16T16:59:21.1048977Z             "organizations_url": "https://api.github.com/users/wotchin/orgs",
+2026-10-16T16:59:21.1049553Z             "received_events_url": "https://api.github.com/users/wotchin/received_events",
+2026-10-16T16:59:21.1050010Z             "repos_url": "https://api.github.com/users/wotchin/repos",
+2026-10-16T16:59:21.1050335Z             "site_admin": false,
+2026-10-16T16:59:21.1050862Z             "starred_url": "https://api.github.com/users/wotchin/starred{/owner}{/repo}",
+2026-10-16T16:59:21.1051372Z             "subscriptions_url": "https://api.github.com/users/wotchin/subscriptions",
+2026-10-16T16:59:21.1051748Z             "type": "User",
+2026-10-16T16:59:21.1052005Z             "url": "https://api.github.com/users/wotchin",
+2026-10-16T16:59:21.1052303Z             "user_view_type": "public"
+2026-10-16T16:59:21.1052538Z           }
+2026-10-16T16:59:21.1052708Z         },
+2026-10-16T16:59:21.1052894Z         "github_job": "benchmark",
+2026-10-16T16:59:21.1053184Z         "github_ref": "refs/heads/benchmark-public-tabular",
+2026-10-16T16:59:21.1053524Z         "github_ref_name": "benchmark-public-tabular",
+2026-10-16T16:59:21.1053821Z         "github_ref_protected": "false",
+2026-10-16T16:59:21.1054088Z         "github_ref_type": "branch",
+2026-10-16T16:59:21.1054356Z         "github_repository": "wotchin/pg_db4ai",
+2026-10-16T16:59:21.1054640Z         "github_repository_id": "1421317902",
+2026-10-16T16:59:21.1054921Z         "github_repository_owner": "wotchin",
+2026-10-16T16:59:21.1055550Z         "github_repository_owner_id": "15714979",
+2026-10-16T16:59:21.1055840Z         "github_run_attempt": "1",
+2026-10-16T16:59:21.1056092Z         "github_run_id": "38935367352",
+2026-10-16T16:59:21.1056344Z         "github_run_number": "2",
+2026-10-16T16:59:21.1056630Z         "github_runner_arch": "X64",
+2026-10-16T16:59:21.1056925Z         "github_runner_environment": "github-hosted",
+2026-10-16T16:59:21.1057229Z         "github_runner_image_os": "ubuntu24",
+2026-10-16T16:59:21.1057559Z         "github_runner_image_version": "20261012.334.1",
+2026-10-16T16:59:21.1057885Z         "github_runner_name": "GitHub Actions 1000000169",
+2026-10-16T16:59:21.1058178Z         "github_runner_os": "Linux",
+2026-10-16T16:59:21.1058534Z         "github_runner_tracking_id": "github_2bc1d0cb-bbe1-426e-9280-925873d3af02",
+2026-10-16T16:59:21.1059182Z         "github_server_url": "https://github.com",
+2026-10-16T16:59:21.1059495Z         "github_triggering_actor": "wotchin",
+2026-10-16T16:59:21.1059819Z         "github_workflow": "Public tabular Docker benchmark",
+2026-10-16T16:59:21.1060437Z         "github_workflow_ref": "wotchin/pg_db4ai/.github/workflows/public-tabular-benchmark.yml@refs/heads/benchmark-public-tabular",
+2026-10-16T16:59:21.1061088Z         "github_workflow_sha": "a5f74aa8ab98112aa036666006697118adad072f",
+2026-10-16T16:59:21.1061436Z         "platform": "linux/amd64"
+2026-10-16T16:59:21.1061666Z       }
+2026-10-16T16:59:21.1061833Z     }
+2026-10-16T16:59:21.1061996Z   },
+2026-10-16T16:59:21.1062519Z   "buildx.build.ref": "builder-e7d83728-5459-41f3-82c2-d95b1f0ef16e/builder-e7d83728-5459-41f3-82c2-d95b1f0ef16e0/smlg8krfj80tbjf4wbqhv87dq",
+2026-10-16T16:59:21.1063353Z   "containerimage.config.digest": "sha256:e965305bad7e0890f6ec610964c748965634e55a6bf5022c968ce67744a580c4",
+2026-10-16T16:59:21.1063887Z   "containerimage.descriptor": {
+2026-10-16T16:59:21.1064210Z     "mediaType": "application/vnd.oci.image.manifest.v1+json",
+2026-10-16T16:59:21.1064691Z     "digest": "sha256:ef4d6545080a5b08f8182bd50bfaf05dee8b8a3e94eb78a12ca330f07e61f919",
+2026-10-16T16:59:21.1065098Z     "size": 1439,
+2026-10-16T16:59:21.1065293Z     "annotations": {
+2026-10-16T16:59:21.1065569Z       "org.opencontainers.image.created": "2026-10-16T16:58:55Z"
+2026-10-16T16:59:21.1065978Z     },
+2026-10-16T16:59:21.1066281Z     "platform": {
+2026-10-16T16:59:21.1066634Z       "architecture": "amd64",
+2026-10-16T16:59:21.1067010Z       "os": "linux"
+2026-10-16T16:59:21.1067318Z     }
+2026-10-16T16:59:21.1067551Z   },
+2026-10-16T16:59:21.1067959Z   "containerimage.digest": "sha256:ef4d6545080a5b08f8182bd50bfaf05dee8b8a3e94eb78a12ca330f07e61f919",
+2026-10-16T16:59:21.1068552Z   "image.name": "docker.io/library/opengauss-db4ai-benchmark:local"
+2026-10-16T16:59:21.1069236Z }
+2026-10-16T16:59:21.1069654Z ##[endgroup]
+2026-10-16T16:59:21.1069989Z ##[group]Reference
+2026-10-16T16:59:21.1070467Z builder-e7d83728-5459-41f3-82c2-d95b1f0ef16e/builder-e7d83728-5459-41f3-82c2-d95b1f0ef16e0/smlg8krfj80tbjf4wbqhv87dq
+2026-10-16T16:59:21.1071354Z ##[endgroup]
+2026-10-16T16:59:21.1071811Z ##[group]Check build summary support
+2026-10-16T16:59:21.1072480Z Build summary supported!
+2026-10-16T16:59:21.1073044Z ##[endgroup]

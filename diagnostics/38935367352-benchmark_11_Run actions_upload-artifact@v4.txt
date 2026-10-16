@@ -1,0 +1,33 @@
+﻿2026-10-16T17:23:12.5006903Z ##[group]Run actions/upload-artifact@v4
+2026-10-16T17:23:12.5007409Z with:
+2026-10-16T17:23:12.5007767Z   name: public-tabular-benchmark-full
+2026-10-16T17:23:12.5008254Z   path: /tmp/db4ai-benchmark
+2026-10-16T17:23:12.5008657Z   retention-days: 30
+2026-10-16T17:23:12.5009334Z   if-no-files-found: warn
+2026-10-16T17:23:12.5009733Z   compression-level: 6
+2026-10-16T17:23:12.5010115Z   overwrite: false
+2026-10-16T17:23:12.5010491Z   include-hidden-files: false
+2026-10-16T17:23:12.5010905Z ##[endgroup]
+2026-10-16T17:23:12.6727805Z (node:22591) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-16T17:23:12.6729197Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-16T17:23:12.9184635Z With the provided path, there will be 1494 files uploaded
+2026-10-16T17:23:12.9190896Z Artifact name is valid!
+2026-10-16T17:23:12.9191550Z Root directory input is valid!
+2026-10-16T17:23:13.3389530Z Beginning upload of artifact content to blob storage
+2026-10-16T17:23:13.4898306Z ##[error]An error has occurred while creating the zip file for upload
+2026-10-16T17:23:13.4900578Z Error: EACCES: permission denied, open '/tmp/db4ai-benchmark/results/banknote-2024/og_logistic_gd-predictions.csv'
+2026-10-16T17:23:13.4987898Z /home/runner/work/_actions/actions/upload-artifact/v4/dist/upload/index.js:3811
+2026-10-16T17:23:13.4989155Z     throw new Error('An error has occurred during zip creation for the artifact');
+2026-10-16T17:23:13.4989847Z     ^
+2026-10-16T17:23:13.4990066Z 
+2026-10-16T17:23:13.4990335Z Error: An error has occurred during zip creation for the artifact
+2026-10-16T17:23:13.4991534Z     at Archiver.zipErrorCallback (/home/runner/work/_actions/actions/upload-artifact/v4/dist/upload/index.js:3811:11)
+2026-10-16T17:23:13.4992626Z     at Archiver.emit (node:events:521:24)
+2026-10-16T17:23:13.4993509Z     at Archiver.<anonymous> (/home/runner/work/_actions/actions/upload-artifact/v4/dist/upload/index.js:57606:12)
+2026-10-16T17:23:13.4994860Z     at __webpack_modules__.86454.module.exports.handleStuff (/home/runner/work/_actions/actions/upload-artifact/v4/dist/upload/index.js:69663:5)
+2026-10-16T17:23:13.4995899Z     at Object.onceWrapper (node:events:630:28)
+2026-10-16T17:23:13.4996408Z     at DeflateCRC32Stream.emit (node:events:521:24)
+2026-10-16T17:23:13.4996998Z     at endReadableNT (node:internal/streams/readable:1736:12)
+2026-10-16T17:23:13.4997745Z     at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+2026-10-16T17:23:13.4998283Z 
+2026-10-16T17:23:13.4998422Z Node.js v24.19.0

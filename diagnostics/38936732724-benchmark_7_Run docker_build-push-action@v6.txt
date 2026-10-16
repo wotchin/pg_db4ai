@@ -1,0 +1,601 @@
+﻿2026-10-16T17:05:08.0381466Z ##[group]Run docker/build-push-action@v6
+2026-10-16T17:05:08.0381720Z with:
+2026-10-16T17:05:08.0381908Z   context: /tmp/db4ai-before
+2026-10-16T17:05:08.0382162Z   file: /tmp/db4ai-before/benchmarks/tabular/Dockerfile
+2026-10-16T17:05:08.0382422Z   load: true
+2026-10-16T17:05:08.0382605Z   tags: pg-db4ai-before:local
+2026-10-16T17:05:08.0382987Z   build-args: PG_IMAGE=postgres@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c
+2026-10-16T17:05:08.0383414Z   cache-from: type=gha,scope=db4ai-tabular
+2026-10-16T17:05:08.0383661Z   no-cache: false
+2026-10-16T17:05:08.0383844Z   pull: false
+2026-10-16T17:05:08.0384024Z   push: false
+2026-10-16T17:05:08.0385792Z   github-token: ***
+2026-10-16T17:05:08.0385974Z ##[endgroup]
+2026-10-16T17:05:08.2288169Z (node:3331) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-16T17:05:08.2289269Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-16T17:05:08.2303158Z ##[group]GitHub Actions runtime token ACs
+2026-10-16T17:05:08.2309535Z refs/heads/benchmark-public-tabular: read/write
+2026-10-16T17:05:08.2309928Z refs/heads/main: read
+2026-10-16T17:05:08.2310389Z ##[endgroup]
+2026-10-16T17:05:08.2310799Z ##[group]Docker info
+2026-10-16T17:05:08.2339334Z [command]/usr/bin/docker version
+2026-10-16T17:05:08.2514992Z Client: Docker Engine - Community
+2026-10-16T17:05:08.2516958Z  Version:           28.0.4
+2026-10-16T17:05:08.2517399Z  API version:       1.48
+2026-10-16T17:05:08.2517865Z  Go version:        go1.23.7
+2026-10-16T17:05:08.2518406Z  Git commit:        b8034c0
+2026-10-16T17:05:08.2519180Z  Built:             Tue Mar 25 15:07:16 2025
+2026-10-16T17:05:08.2519601Z  OS/Arch:           linux/amd64
+2026-10-16T17:05:08.2519947Z  Context:           default
+2026-10-16T17:05:08.2520159Z 
+2026-10-16T17:05:08.2520328Z Server: Docker Engine - Community
+2026-10-16T17:05:08.2520678Z  Engine:
+2026-10-16T17:05:08.2520949Z   Version:          28.0.4
+2026-10-16T17:05:08.2521331Z   API version:      1.48 (minimum version 1.24)
+2026-10-16T17:05:08.2521686Z   Go version:       go1.23.7
+2026-10-16T17:05:08.2521962Z   Git commit:       6430e49
+2026-10-16T17:05:08.2522295Z   Built:            Tue Mar 25 15:07:16 2025
+2026-10-16T17:05:08.2522567Z   OS/Arch:          linux/amd64
+2026-10-16T17:05:08.2522780Z   Experimental:     false
+2026-10-16T17:05:08.2522972Z  containerd:
+2026-10-16T17:05:08.2523154Z   Version:          v2.4.1
+2026-10-16T17:05:08.2523391Z   GitCommit:        f2551031d7276a770f65f98c9b52e57e7dad07e8
+2026-10-16T17:05:08.2523655Z  runc:
+2026-10-16T17:05:08.2523822Z   Version:          1.5.2
+2026-10-16T17:05:08.2524024Z   GitCommit:        v1.5.2-0-g29dd3dc2
+2026-10-16T17:05:08.2524241Z  docker-init:
+2026-10-16T17:05:08.2524414Z   Version:          0.19.0
+2026-10-16T17:05:08.2524609Z   GitCommit:        de40ad0
+2026-10-16T17:05:08.2565555Z [command]/usr/bin/docker info
+2026-10-16T17:05:08.2999573Z Client: Docker Engine - Community
+2026-10-16T17:05:08.2999887Z  Version:    28.0.4
+2026-10-16T17:05:08.3000110Z  Context:    default
+2026-10-16T17:05:08.3000298Z  Debug Mode: false
+2026-10-16T17:05:08.3000476Z  Plugins:
+2026-10-16T17:05:08.3000664Z   buildx: Docker Buildx (Docker Inc.)
+2026-10-16T17:05:08.3000890Z     Version:  v0.38.0
+2026-10-16T17:05:08.3001133Z     Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+2026-10-16T17:05:08.3001422Z   compose: Docker Compose (Docker Inc.)
+2026-10-16T17:05:08.3001643Z     Version:  v2.38.2
+2026-10-16T17:05:08.3001877Z     Path:     /usr/libexec/docker/cli-plugins/docker-compose
+2026-10-16T17:05:08.3002074Z 
+2026-10-16T17:05:08.3002143Z Server:
+2026-10-16T17:05:08.3002324Z  Containers: 1
+2026-10-16T17:05:08.3002500Z   Running: 1
+2026-10-16T17:05:08.3002827Z   Paused: 0
+2026-10-16T17:05:08.3003159Z   Stopped: 0
+2026-10-16T17:05:08.3003463Z  Images: 10
+2026-10-16T17:05:08.3003885Z  Server Version: 28.0.4
+2026-10-16T17:05:08.3004221Z  Storage Driver: overlay2
+2026-10-16T17:05:08.3004569Z   Backing Filesystem: extfs
+2026-10-16T17:05:08.3005247Z   Supports d_type: true
+2026-10-16T17:05:08.3005570Z   Using metacopy: false
+2026-10-16T17:05:08.3006138Z   Native Overlay Diff: false
+2026-10-16T17:05:08.3006589Z   userxattr: false
+2026-10-16T17:05:08.3006989Z  Logging Driver: json-file
+2026-10-16T17:05:08.3007410Z  Cgroup Driver: systemd
+2026-10-16T17:05:08.3007820Z  Cgroup Version: 2
+2026-10-16T17:05:08.3008140Z  Plugins:
+2026-10-16T17:05:08.3008575Z   Volume: local
+2026-10-16T17:05:08.3008916Z   Network: bridge host ipvlan macvlan null overlay
+2026-10-16T17:05:08.3009715Z   Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+2026-10-16T17:05:08.3010258Z  Swarm: inactive
+2026-10-16T17:05:08.3010625Z  Runtimes: io.containerd.runc.v2 runc
+2026-10-16T17:05:08.3010957Z  Default Runtime: runc
+2026-10-16T17:05:08.3011230Z  Init Binary: docker-init
+2026-10-16T17:05:08.3011603Z  containerd version: f2551031d7276a770f65f98c9b52e57e7dad07e8
+2026-10-16T17:05:08.3012004Z  runc version: v1.5.2-0-g29dd3dc2
+2026-10-16T17:05:08.3012276Z  init version: de40ad0
+2026-10-16T17:05:08.3012537Z  Security Options:
+2026-10-16T17:05:08.3012779Z   apparmor
+2026-10-16T17:05:08.3012999Z   seccomp
+2026-10-16T17:05:08.3013213Z    Profile: builtin
+2026-10-16T17:05:08.3013453Z   cgroupns
+2026-10-16T17:05:08.3013685Z  Kernel Version: 6.17.0-1022-azure
+2026-10-16T17:05:08.3014044Z  Operating System: Ubuntu 24.04.5 LTS
+2026-10-16T17:05:08.3014359Z  OSType: linux
+2026-10-16T17:05:08.3014596Z  Architecture: x86_64
+2026-10-16T17:05:08.3014843Z  CPUs: 4
+2026-10-16T17:05:08.3015066Z  Total Memory: 15.61GiB
+2026-10-16T17:05:08.3015327Z  Name: runnervm8k3b6
+2026-10-16T17:05:08.3015601Z  ID: 6134b6ae-8eb1-4f62-889e-a360c80bcfbf
+2026-10-16T17:05:08.3016130Z  Docker Root Dir: /var/lib/docker
+2026-10-16T17:05:08.3016342Z  Debug Mode: false
+2026-10-16T17:05:08.3016529Z  Username: githubactions
+2026-10-16T17:05:08.3016724Z  Experimental: false
+2026-10-16T17:05:08.3016915Z  Insecure Registries:
+2026-10-16T17:05:08.3017123Z   ::1/128
+2026-10-16T17:05:08.3017283Z   127.0.0.0/8
+2026-10-16T17:05:08.3017465Z  Live Restore Enabled: false
+2026-10-16T17:05:08.3017601Z 
+2026-10-16T17:05:08.3017876Z ##[endgroup]
+2026-10-16T17:05:08.3018189Z ##[group]Proxy configuration
+2026-10-16T17:05:08.3018415Z No proxy configuration found
+2026-10-16T17:05:08.3018776Z ##[endgroup]
+2026-10-16T17:05:08.3498251Z ##[group]Buildx version
+2026-10-16T17:05:08.3515529Z [command]/usr/bin/docker buildx version
+2026-10-16T17:05:08.3884986Z github.com/docker/buildx v0.38.0 0dbe87f36ed472fe36b6796c3f70b4210a731fc5
+2026-10-16T17:05:08.3906958Z ##[endgroup]
+2026-10-16T17:05:08.3907459Z ##[group]Builder info
+2026-10-16T17:05:08.4602922Z {
+2026-10-16T17:05:08.4603293Z   "nodes": [
+2026-10-16T17:05:08.4603582Z     {
+2026-10-16T17:05:08.4603910Z       "name": "builder-cb52af65-fc92-482c-9ada-90e469fdb0140",
+2026-10-16T17:05:08.4604362Z       "endpoint": "unix:///var/run/docker.sock",
+2026-10-16T17:05:08.4604724Z       "status": "running",
+2026-10-16T17:05:08.4605343Z       "buildkitd-flags": "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host",
+2026-10-16T17:05:08.4606017Z       "buildkit": "v0.33.1",
+2026-10-16T17:05:08.4606471Z       "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/amd64/v4,linux/386",
+2026-10-16T17:05:08.4607007Z       "features": {
+2026-10-16T17:05:08.4607400Z         "Automatically load images to the Docker Engine image store": true,
+2026-10-16T17:05:08.4607867Z         "Cache export": true,
+2026-10-16T17:05:08.4608173Z         "Direct push": true,
+2026-10-16T17:05:08.4608461Z         "Docker exporter": true,
+2026-10-16T17:05:08.4608775Z         "Multi-platform build": true,
+2026-10-16T17:05:08.4609276Z         "OCI exporter": true
+2026-10-16T17:05:08.4609525Z       },
+2026-10-16T17:05:08.4609687Z       "labels": {
+2026-10-16T17:05:08.4609986Z         "org.mobyproject.buildkit.worker.executor": "oci",
+2026-10-16T17:05:08.4610582Z         "org.mobyproject.buildkit.worker.hostname": "ada0c3a5c810",
+2026-10-16T17:05:08.4611022Z         "org.mobyproject.buildkit.worker.network": "host",
+2026-10-16T17:05:08.4611805Z         "org.mobyproject.buildkit.worker.oci.process-mode": "sandbox",
+2026-10-16T17:05:08.4612453Z         "org.mobyproject.buildkit.worker.selinux.enabled": "false",
+2026-10-16T17:05:08.4612866Z         "org.mobyproject.buildkit.worker.snapshotter": "overlayfs"
+2026-10-16T17:05:08.4613384Z       },
+2026-10-16T17:05:08.4613609Z       "gcPolicy": [
+2026-10-16T17:05:08.4613918Z         {
+2026-10-16T17:05:08.4614245Z           "all": false,
+2026-10-16T17:05:08.4614438Z           "filter": [
+2026-10-16T17:05:08.4614800Z             "type==source.local type==exec.cachemount type==source.git.checkout"
+2026-10-16T17:05:08.4615131Z           ],
+2026-10-16T17:05:08.4615308Z           "keepDuration": "48h0m0s",
+2026-10-16T17:05:08.4615532Z           "maxUsedSpace": "488.3MiB"
+2026-10-16T17:05:08.4615742Z         },
+2026-10-16T17:05:08.4615898Z         {
+2026-10-16T17:05:08.4616057Z           "all": false,
+2026-10-16T17:05:08.4616281Z           "keepDuration": "1440h0m0s",
+2026-10-16T17:05:08.4616520Z           "reservedSpace": "9.313GiB",
+2026-10-16T17:05:08.4616741Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T17:05:08.4616958Z           "minFreeSpace": "27.01GiB"
+2026-10-16T17:05:08.4617160Z         },
+2026-10-16T17:05:08.4617317Z         {
+2026-10-16T17:05:08.4617476Z           "all": false,
+2026-10-16T17:05:08.4617667Z           "reservedSpace": "9.313GiB",
+2026-10-16T17:05:08.4617883Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T17:05:08.4618096Z           "minFreeSpace": "27.01GiB"
+2026-10-16T17:05:08.4618297Z         },
+2026-10-16T17:05:08.4618452Z         {
+2026-10-16T17:05:08.4618908Z           "all": true,
+2026-10-16T17:05:08.4619363Z           "reservedSpace": "9.313GiB",
+2026-10-16T17:05:08.4619648Z           "maxUsedSpace": "93.13GiB",
+2026-10-16T17:05:08.4619920Z           "minFreeSpace": "27.01GiB"
+2026-10-16T17:05:08.4620199Z         }
+2026-10-16T17:05:08.4620395Z       ]
+2026-10-16T17:05:08.4620689Z     }
+2026-10-16T17:05:08.4620848Z   ],
+2026-10-16T17:05:08.4621259Z   "name": "builder-cb52af65-fc92-482c-9ada-90e469fdb014",
+2026-10-16T17:05:08.4621554Z   "driver": "docker-container",
+2026-10-16T17:05:08.4621783Z   "lastActivity": "2026-10-16T17:04:05.000Z"
+2026-10-16T17:05:08.4622037Z }
+2026-10-16T17:05:08.4622424Z ##[endgroup]
+2026-10-16T17:05:08.5792115Z [command]/usr/bin/docker buildx build --build-arg PG_IMAGE=postgres@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c --cache-from type=gha,scope=db4ai-tabular --file /tmp/db4ai-before/benchmarks/tabular/Dockerfile --iidfile /home/runner/work/_temp/docker-actions-toolkit-ZDY8Lm/build-iidfile-b458cfcdfa.txt --tag pg-db4ai-before:local --load --metadata-file /home/runner/work/_temp/docker-actions-toolkit-ZDY8Lm/build-metadata-5d7aeeb8d0.json /tmp/db4ai-before
+2026-10-16T17:05:08.6547335Z #0 building with "builder-cb52af65-fc92-482c-9ada-90e469fdb014" instance using docker-container driver
+2026-10-16T17:05:08.6547775Z 
+2026-10-16T17:05:08.6547921Z #1 [internal] load build definition from Dockerfile
+2026-10-16T17:05:08.7745870Z #1 transferring dockerfile: 1.50kB done
+2026-10-16T17:05:08.7746337Z #1 DONE 0.0s
+2026-10-16T17:05:08.7746516Z 
+2026-10-16T17:05:08.7747044Z #2 [internal] load metadata for docker.io/library/postgres@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c
+2026-10-16T17:05:08.7747713Z #2 DONE 0.0s
+2026-10-16T17:05:08.7747884Z 
+2026-10-16T17:05:08.7748016Z #3 [internal] load .dockerignore
+2026-10-16T17:05:08.7748358Z #3 transferring context: 2B done
+2026-10-16T17:05:08.7748738Z #3 DONE 0.0s
+2026-10-16T17:05:08.7748918Z 
+2026-10-16T17:05:08.7749227Z #4 [internal] load build context
+2026-10-16T17:05:08.7749578Z #4 DONE 0.0s
+2026-10-16T17:05:08.7749689Z 
+2026-10-16T17:05:08.7750196Z #5 [ 1/12] FROM docker.io/library/postgres@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c
+2026-10-16T17:05:08.7751050Z #5 resolve docker.io/library/postgres@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c done
+2026-10-16T17:05:08.7751932Z #5 DONE 0.0s
+2026-10-16T17:05:08.7752042Z 
+2026-10-16T17:05:08.7752172Z #6 importing cache manifest from gha:18250658582971902727
+2026-10-16T17:05:08.7752636Z #6 DONE 0.1s
+2026-10-16T17:05:08.8793638Z 
+2026-10-16T17:05:08.8794107Z #4 [internal] load build context
+2026-10-16T17:05:09.1134350Z #4 transferring context: 12.55MB 0.2s done
+2026-10-16T17:05:09.1134666Z #4 DONE 0.2s
+2026-10-16T17:05:09.1136936Z 
+2026-10-16T17:05:09.1137374Z #7 [ 5/12] COPY third_party /src/third_party
+2026-10-16T17:05:09.1137853Z #7 CACHED
+2026-10-16T17:05:09.1137991Z 
+2026-10-16T17:05:09.1138103Z #8 [ 6/12] WORKDIR /src
+2026-10-16T17:05:09.1138330Z #8 CACHED
+2026-10-16T17:05:09.1138444Z 
+2026-10-16T17:05:09.1139332Z #9 [ 2/12] RUN apt-get update && apt-get install -y --no-install-recommends     postgresql-server-dev-18 build-essential cmake python3 python3-venv libgomp1     && rm -rf /var/lib/apt/lists/*
+2026-10-16T17:05:09.1140181Z #9 CACHED
+2026-10-16T17:05:09.1140305Z 
+2026-10-16T17:05:09.1140854Z #10 [ 3/12] RUN python3 -m venv /opt/bench && /opt/bench/bin/pip install --no-cache-dir     numpy==2.3.3 scipy==1.16.2 pandas==2.3.3 scikit-learn==1.7.2     lightgbm==4.6.0 xlrd==2.0.2 threadpoolctl==3.6.0
+2026-10-16T17:05:09.1141550Z #10 CACHED
+2026-10-16T17:05:09.1141653Z 
+2026-10-16T17:05:09.1141766Z #11 [ 4/12] COPY Makefile /src/Makefile
+2026-10-16T17:05:09.1142021Z #11 CACHED
+2026-10-16T17:05:09.1142114Z 
+2026-10-16T17:05:09.1142388Z #12 [ 7/12] RUN make PG_CONFIG=/usr/lib/postgresql/18/bin/pg_config WITH_XGBOOST=1 XGB_JOBS=2 build/xgboost.stamp
+2026-10-16T17:05:09.1299592Z #12 CACHED
+2026-10-16T17:05:09.2780751Z 
+2026-10-16T17:05:09.2782324Z #13 [ 8/12] COPY src /src/src
+2026-10-16T17:05:09.2782971Z #13 DONE 0.1s
+2026-10-16T17:05:09.4922172Z 
+2026-10-16T17:05:09.4924454Z #14 [ 9/12] COPY sql /src/sql
+2026-10-16T17:05:09.4924772Z #14 DONE 0.0s
+2026-10-16T17:05:09.4924919Z 
+2026-10-16T17:05:09.4925061Z #15 [10/12] COPY pg_db4ai.control /src/pg_db4ai.control
+2026-10-16T17:05:09.4925317Z #15 DONE 0.0s
+2026-10-16T17:05:09.4925433Z 
+2026-10-16T17:05:09.4926896Z #16 [11/12] RUN make PG_CONFIG=/usr/lib/postgresql/18/bin/pg_config WITH_XGBOOST=1 XGB_JOBS=2     && make PG_CONFIG=/usr/lib/postgresql/18/bin/pg_config WITH_XGBOOST=1 install     && mkdir -p third_party/xgboost/python-package/xgboost/lib     && c++ -shared -o third_party/xgboost/python-package/xgboost/lib/libxgboost.so        -Wl,--whole-archive build/libxgboost.a build/libdmlc.a -Wl,--no-whole-archive -pthread     && PYTHONPATH=/src/third_party/xgboost/python-package /opt/bench/bin/python -c        'import xgboost; print(xgboost.__version__); print(xgboost.build_info())'
+2026-10-16T17:05:09.4930519Z #16 0.047 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/pg_db4ai.o src/pg_db4ai.c
+2026-10-16T17:05:09.5335007Z #16 0.239 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/options.o src/options.c
+2026-10-16T17:05:09.7414067Z #16 0.447 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/data.o src/data.c
+2026-10-16T17:05:09.9877546Z #16 0.693 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/models.o src/models.c
+2026-10-16T17:05:10.1033896Z #16 0.809 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/native.o src/native.c
+2026-10-16T17:05:10.4614934Z #16 1.167 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/xgboost.o src/xgboost.c
+2026-10-16T17:05:10.6076413Z #16 1.313 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/categories.o src/categories.c
+2026-10-16T17:05:10.7641686Z #16 1.470 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/shuffle.o src/shuffle.c
+2026-10-16T17:05:10.8693948Z #16 1.575 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/kernel.o src/kernel.c
+2026-10-16T17:05:10.9812483Z #16 1.687 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/gradient.o src/gradient.c
+2026-10-16T17:05:11.2546542Z #16 1.960 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/bayes.o src/bayes.c
+2026-10-16T17:05:11.6110382Z #16 2.316 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2     -c -o src/shufflescan.o src/shufflescan.c
+2026-10-16T17:05:11.8162753Z #16 2.522 gcc -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Werror=vla -Wendif-labels -Wmissing-format-attribute -Wimplicit-fallthrough=3 -Wcast-function-type -Wshadow=compatible-local -Wformat-security -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-format-truncation -Wno-stringop-truncation -g -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -fno-omit-frame-pointer -std=c11 -Werror=implicit-function-declaration -fPIC -fvisibility=hidden -shared -o pg_db4ai.so src/pg_db4ai.o src/options.o src/data.o src/models.o src/native.o src/xgboost.o src/categories.o src/shuffle.o src/kernel.o src/gradient.o src/bayes.o src/shufflescan.o -L/usr/lib/x86_64-linux-gnu  -Wl,-z,relro -Wl,-z,now  -Wl,--as-needed -fvisibility=hidden -lm /src/build/libxgboost.a /src/build/libdmlc.a -lstdc++ -pthread -Wl,--exclude-libs,ALL 
+2026-10-16T17:05:12.0151209Z #16 2.721 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/pg_db4ai.bc src/pg_db4ai.c
+2026-10-16T17:05:12.1268333Z #16 2.832 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/options.bc src/options.c
+2026-10-16T17:05:12.3551437Z #16 2.927 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/data.bc src/data.c
+2026-10-16T17:05:12.3554793Z #16 3.061 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/models.bc src/models.c
+2026-10-16T17:05:12.4651956Z #16 3.171 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/native.bc src/native.c
+2026-10-16T17:05:12.6349446Z #16 3.340 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/xgboost.bc src/xgboost.c
+2026-10-16T17:05:12.8412559Z #16 3.435 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/categories.bc src/categories.c
+2026-10-16T17:05:12.8417488Z #16 3.546 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/shuffle.bc src/shuffle.c
+2026-10-16T17:05:12.9998546Z #16 3.628 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/kernel.bc src/kernel.c
+2026-10-16T17:05:13.0002233Z #16 3.705 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/gradient.bc src/gradient.c
+2026-10-16T17:05:13.1062573Z #16 3.812 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/bayes.bc src/bayes.c
+2026-10-16T17:05:13.2474462Z #16 3.953 /usr/bin/clang-19 -Wno-ignored-attributes -fno-strict-aliasing -fwrapv -fexcess-precision=standard -Wno-unused-command-line-argument -Wno-compound-token-split-by-macro -Wno-format-truncation -O2  -I.//src -DDB4AI_WITH_XGBOOST -I.//third_party/xgboost/include -I. -I./ -I/usr/include/postgresql/18/server -I/usr/include/postgresql/internal -Wdate-time -D_FORTIFY_SOURCE=2 -D_GNU_SOURCE  -I/usr/include/libxml2    -flto=thin -emit-llvm -c -o src/shufflescan.bc src/shufflescan.c
+2026-10-16T17:05:13.3950871Z #16 4.100 /bin/mkdir -p '/usr/lib/postgresql/18/lib'
+2026-10-16T17:05:13.5687974Z #16 4.101 /bin/mkdir -p '/usr/share/postgresql/18/extension'
+2026-10-16T17:05:13.5688365Z #16 4.102 /bin/mkdir -p '/usr/share/postgresql/18/extension'
+2026-10-16T17:05:13.5688950Z #16 4.103 /usr/bin/install -c -m 755  pg_db4ai.so '/usr/lib/postgresql/18/lib/pg_db4ai.so'
+2026-10-16T17:05:13.5689770Z #16 4.108 /usr/bin/install -c -m 644 .//pg_db4ai.control '/usr/share/postgresql/18/extension/'
+2026-10-16T17:05:13.5690704Z #16 4.110 /usr/bin/install -c -m 644 .//sql/pg_db4ai--0.1.0.sql .//sql/pg_db4ai--0.2.0.sql .//sql/pg_db4ai--0.1.0--0.2.0.sql  '/usr/share/postgresql/18/extension/'
+2026-10-16T17:05:13.5691544Z #16 4.111 /bin/mkdir -p '/usr/lib/postgresql/18/lib/bitcode/pg_db4ai'
+2026-10-16T17:05:13.5692085Z #16 4.113 /bin/mkdir -p '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5692515Z #16 4.113 /usr/bin/install -c -m 644 src/pg_db4ai.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5693010Z #16 4.114 /usr/bin/install -c -m 644 src/options.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5693478Z #16 4.115 /usr/bin/install -c -m 644 src/data.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5693943Z #16 4.116 /usr/bin/install -c -m 644 src/models.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5694627Z #16 4.117 /usr/bin/install -c -m 644 src/native.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5695096Z #16 4.118 /usr/bin/install -c -m 644 src/xgboost.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5695588Z #16 4.119 /usr/bin/install -c -m 644 src/categories.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5696070Z #16 4.120 /usr/bin/install -c -m 644 src/shuffle.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5696545Z #16 4.120 /usr/bin/install -c -m 644 src/kernel.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5697024Z #16 4.121 /usr/bin/install -c -m 644 src/gradient.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5697496Z #16 4.122 /usr/bin/install -c -m 644 src/bayes.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5698010Z #16 4.123 /usr/bin/install -c -m 644 src/shufflescan.bc '/usr/lib/postgresql/18/lib/bitcode'/pg_db4ai/src/
+2026-10-16T17:05:13.5699396Z #16 4.124 cd '/usr/lib/postgresql/18/lib/bitcode' && /usr/lib/llvm-19/bin/llvm-lto -thinlto -thinlto-action=thinlink -o pg_db4ai.index.bc pg_db4ai/src/pg_db4ai.bc pg_db4ai/src/options.bc pg_db4ai/src/data.bc pg_db4ai/src/models.bc pg_db4ai/src/native.bc pg_db4ai/src/xgboost.bc pg_db4ai/src/categories.bc pg_db4ai/src/shuffle.bc pg_db4ai/src/kernel.bc pg_db4ai/src/gradient.bc pg_db4ai/src/bayes.bc pg_db4ai/src/shufflescan.bc
+2026-10-16T17:05:14.3310097Z #16 5.036 3.4.2
+2026-10-16T17:05:14.3311903Z #16 5.036 {'BUILTIN_PREFETCH_PRESENT': True, 'DEBUG': False, 'GCC_VERSION': [12, 2, 0], 'GLIBC_VERSION': [2, 36], 'MM_PREFETCH_PRESENT': True, 'USE_CUDA': False, 'USE_DLOPEN_NCCL': False, 'USE_FEDERATED': False, 'USE_NCCL': False, 'USE_OPENMP': False, 'USE_RMM': False, 'libxgboost': '/src/third_party/xgboost/python-package/xgboost/lib/libxgboost.so'}
+2026-10-16T17:05:14.6165217Z #16 DONE 5.3s
+2026-10-16T17:05:14.7769843Z 
+2026-10-16T17:05:14.7770412Z #17 [12/12] COPY benchmarks/tabular /src/benchmarks/tabular
+2026-10-16T17:05:14.7770797Z #17 DONE 0.0s
+2026-10-16T17:05:14.7770910Z 
+2026-10-16T17:05:14.7771002Z #18 exporting to docker image format
+2026-10-16T17:05:14.7771230Z #18 exporting layers
+2026-10-16T17:05:15.7808820Z #18 exporting layers 1.2s done
+2026-10-16T17:05:15.9377517Z #18 exporting manifest sha256:54e2478c4df2b9a0cbd54b0da5efe964cb59fa75a33655521821186ca382356c done
+2026-10-16T17:05:15.9381556Z #18 exporting config sha256:e05f6790cf3529d986577d37a448ab43582439b0ccc7e1595d52f7fa2330f624 done
+2026-10-16T17:05:15.9390153Z #18 sending tarball
+2026-10-16T17:05:21.9150490Z #18 sending tarball 6.1s done
+2026-10-16T17:05:21.9150858Z #18 DONE 7.3s
+2026-10-16T17:05:21.9151001Z 
+2026-10-16T17:05:21.9151148Z #19 importing to docker
+2026-10-16T17:05:21.9151526Z #19 loading layer 31633d249aa0 43.73kB / 43.73kB 3.4s done
+2026-10-16T17:05:21.9151834Z #19 loading layer 67073be45044 2.16kB / 2.16kB 0.4s done
+2026-10-16T17:05:21.9152115Z #19 loading layer 2bf55c785288 285B / 285B 0.4s done
+2026-10-16T17:05:21.9152565Z #19 loading layer b9d792f3df8f 14.73MB / 14.73MB 0.4s done
+2026-10-16T17:05:21.9152869Z #19 loading layer b56bf77843b0 12.37kB / 12.37kB 0.0s done
+2026-10-16T17:05:21.9153116Z #19 DONE 3.4s
+2026-10-16T17:05:21.9153221Z 
+2026-10-16T17:05:21.9153318Z #20 resolving provenance for metadata file
+2026-10-16T17:05:21.9153551Z #20 DONE 0.0s
+2026-10-16T17:05:21.9220222Z ##[group]ImageID
+2026-10-16T17:05:21.9221131Z sha256:e05f6790cf3529d986577d37a448ab43582439b0ccc7e1595d52f7fa2330f624
+2026-10-16T17:05:21.9222097Z ##[endgroup]
+2026-10-16T17:05:21.9222772Z ##[group]Digest
+2026-10-16T17:05:21.9223460Z sha256:54e2478c4df2b9a0cbd54b0da5efe964cb59fa75a33655521821186ca382356c
+2026-10-16T17:05:21.9224295Z ##[endgroup]
+2026-10-16T17:05:21.9224819Z ##[group]Metadata
+2026-10-16T17:05:21.9225288Z {
+2026-10-16T17:05:21.9226100Z   "buildx.build.provenance": {
+2026-10-16T17:05:21.9226422Z     "builder": {
+2026-10-16T17:05:21.9226683Z       "id": ""
+2026-10-16T17:05:21.9226888Z     },
+2026-10-16T17:05:21.9227609Z     "buildType": "https://mobyproject.org/buildkit@v1",
+2026-10-16T17:05:21.9228067Z     "materials": [
+2026-10-16T17:05:21.9228507Z       {
+2026-10-16T17:05:21.9228969Z         "uri": "pkg:docker/postgres?digest=sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c&platform=linux%2Famd64",
+2026-10-16T17:05:21.9230018Z         "digest": {
+2026-10-16T17:05:21.9230364Z           "sha256": "afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c"
+2026-10-16T17:05:21.9230706Z         }
+2026-10-16T17:05:21.9230893Z       }
+2026-10-16T17:05:21.9231068Z     ],
+2026-10-16T17:05:21.9231319Z     "invocation": {
+2026-10-16T17:05:21.9231691Z       "configSource": {
+2026-10-16T17:05:21.9231904Z         "entryPoint": "Dockerfile"
+2026-10-16T17:05:21.9232145Z       },
+2026-10-16T17:05:21.9232397Z       "parameters": {
+2026-10-16T17:05:21.9232697Z         "frontend": "dockerfile.v0",
+2026-10-16T17:05:21.9233003Z         "args": {
+2026-10-16T17:05:21.9233524Z           "build-arg:PG_IMAGE": "postgres@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c"
+2026-10-16T17:05:21.9233931Z         },
+2026-10-16T17:05:21.9234094Z         "locals": [
+2026-10-16T17:05:21.9234264Z           {
+2026-10-16T17:05:21.9234431Z             "name": "context"
+2026-10-16T17:05:21.9234622Z           },
+2026-10-16T17:05:21.9234780Z           {
+2026-10-16T17:05:21.9234950Z             "name": "dockerfile"
+2026-10-16T17:05:21.9235146Z           }
+2026-10-16T17:05:21.9235299Z         ],
+2026-10-16T17:05:21.9235456Z         "root": {
+2026-10-16T17:05:21.9235641Z           "configSource": {
+2026-10-16T17:05:21.9235983Z             "path": "Dockerfile"
+2026-10-16T17:05:21.9236231Z           },
+2026-10-16T17:05:21.9236405Z           "request": {
+2026-10-16T17:05:21.9236587Z             "args": {
+2026-10-16T17:05:21.9236974Z               "build-arg:PG_IMAGE": "postgres@sha256:afc7e2d441324c0388fa80c3d24f733b4194a4eb7f47dd8ee2b08eb1a24a647c"
+2026-10-16T17:05:21.9237392Z             }
+2026-10-16T17:05:21.9237565Z           }
+2026-10-16T17:05:21.9237721Z         },
+2026-10-16T17:05:21.9237899Z         "compatibilityVersion": 30
+2026-10-16T17:05:21.9238111Z       },
+2026-10-16T17:05:21.9238283Z       "environment": {
+2026-10-16T17:05:21.9238480Z         "dockerfileVersion": "1.27.0",
+2026-10-16T17:05:21.9238704Z         "github_actor": "wotchin",
+2026-10-16T17:05:21.9238976Z         "github_actor_id": "15714979",
+2026-10-16T17:05:21.9239456Z         "github_event_name": "push",
+2026-10-16T17:05:21.9239756Z         "github_event_payload": {
+2026-10-16T17:05:21.9240068Z           "after": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:21.9240347Z           "base_ref": null,
+2026-10-16T17:05:21.9240597Z           "before": "24236447e89103675fe38c1e559c514a7cb40769",
+2026-10-16T17:05:21.9240864Z           "commits": [
+2026-10-16T17:05:21.9241046Z             {
+2026-10-16T17:05:21.9241282Z               "author": {
+2026-10-16T17:05:21.9241554Z                 "email": "wotchin95@gmail.com",
+2026-10-16T17:05:21.9241882Z                 "name": "Jack W.",
+2026-10-16T17:05:21.9242153Z                 "username": "wotchin"
+2026-10-16T17:05:21.9242418Z               },
+2026-10-16T17:05:21.9242633Z               "committer": {
+2026-10-16T17:05:21.9242911Z                 "email": "wotchin95@gmail.com",
+2026-10-16T17:05:21.9243188Z                 "name": "Jack W.",
+2026-10-16T17:05:21.9243449Z                 "username": "wotchin"
+2026-10-16T17:05:21.9243725Z               },
+2026-10-16T17:05:21.9243954Z               "distinct": true,
+2026-10-16T17:05:21.9244259Z               "id": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:21.9244778Z               "message": "Run optimized three-way Docker benchmark plus paired identical-model pre/post prediction comparison",
+2026-10-16T17:05:21.9245257Z               "timestamp": "2026-10-16T13:03:27-04:00",
+2026-10-16T17:05:21.9245548Z               "tree_id": "18c9673b44bce969a4ab58391a7ca3518828dd60",
+2026-10-16T17:05:21.9246072Z               "url": "https://github.com/wotchin/pg_db4ai/commit/f0ee5df72924aa6537821e95c217d88b00232db1"
+2026-10-16T17:05:21.9246735Z             }
+2026-10-16T17:05:21.9246991Z           ],
+2026-10-16T17:05:21.9247379Z           "compare": "https://github.com/wotchin/pg_db4ai/compare/24236447e891...f0ee5df72924",
+2026-10-16T17:05:21.9247834Z           "created": false,
+2026-10-16T17:05:21.9248100Z           "deleted": false,
+2026-10-16T17:05:21.9248363Z           "forced": false,
+2026-10-16T17:05:21.9248618Z           "head_commit": {
+2026-10-16T17:05:21.9248875Z             "author": {
+2026-10-16T17:05:21.9249646Z               "email": "wotchin95@gmail.com",
+2026-10-16T17:05:21.9250008Z               "name": "Jack W.",
+2026-10-16T17:05:21.9250292Z               "username": "wotchin"
+2026-10-16T17:05:21.9250557Z             },
+2026-10-16T17:05:21.9250801Z             "committer": {
+2026-10-16T17:05:21.9251082Z               "email": "wotchin95@gmail.com",
+2026-10-16T17:05:21.9251385Z               "name": "Jack W.",
+2026-10-16T17:05:21.9251674Z               "username": "wotchin"
+2026-10-16T17:05:21.9251949Z             },
+2026-10-16T17:05:21.9252197Z             "distinct": true,
+2026-10-16T17:05:21.9252507Z             "id": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:21.9253081Z             "message": "Run optimized three-way Docker benchmark plus paired identical-model pre/post prediction comparison",
+2026-10-16T17:05:21.9253611Z             "timestamp": "2026-10-16T13:03:27-04:00",
+2026-10-16T17:05:21.9253957Z             "tree_id": "18c9673b44bce969a4ab58391a7ca3518828dd60",
+2026-10-16T17:05:21.9254448Z             "url": "https://github.com/wotchin/pg_db4ai/commit/f0ee5df72924aa6537821e95c217d88b00232db1"
+2026-10-16T17:05:21.9254978Z           },
+2026-10-16T17:05:21.9255196Z           "pusher": {
+2026-10-16T17:05:21.9255466Z             "email": "wotchin95@gmail.com",
+2026-10-16T17:05:21.9255761Z             "name": "wotchin"
+2026-10-16T17:05:21.9256005Z           },
+2026-10-16T17:05:21.9256322Z           "ref": "refs/heads/benchmark-public-tabular",
+2026-10-16T17:05:21.9256651Z           "repository": {
+2026-10-16T17:05:21.9256901Z             "allow_forking": true,
+2026-10-16T17:05:21.9257335Z             "archive_url": "https://api.github.com/repos/wotchin/pg_db4ai/{archive_format}{/ref}",
+2026-10-16T17:05:21.9257802Z             "archived": false,
+2026-10-16T17:05:21.9258197Z             "assignees_url": "https://api.github.com/repos/wotchin/pg_db4ai/assignees{/user}",
+2026-10-16T17:05:21.9258752Z             "blobs_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/blobs{/sha}",
+2026-10-16T17:05:21.9259361Z             "branches_url": "https://api.github.com/repos/wotchin/pg_db4ai/branches{/branch}",
+2026-10-16T17:05:21.9259802Z             "clone_url": "https://github.com/wotchin/pg_db4ai.git",
+2026-10-16T17:05:21.9260338Z             "collaborators_url": "https://api.github.com/repos/wotchin/pg_db4ai/collaborators{/collaborator}",
+2026-10-16T17:05:21.9260956Z             "comments_url": "https://api.github.com/repos/wotchin/pg_db4ai/comments{/number}",
+2026-10-16T17:05:21.9261479Z             "commits_url": "https://api.github.com/repos/wotchin/pg_db4ai/commits{/sha}",
+2026-10-16T17:05:21.9262002Z             "compare_url": "https://api.github.com/repos/wotchin/pg_db4ai/compare/{base}...{head}",
+2026-10-16T17:05:21.9262671Z             "contents_url": "https://api.github.com/repos/wotchin/pg_db4ai/contents/{+path}",
+2026-10-16T17:05:21.9263125Z             "contributors_url": "https://api.github.com/repos/wotchin/pg_db4ai/contributors",
+2026-10-16T17:05:21.9263502Z             "created_at": 1792097928,
+2026-10-16T17:05:21.9263744Z             "default_branch": "main",
+2026-10-16T17:05:21.9264101Z             "deployments_url": "https://api.github.com/repos/wotchin/pg_db4ai/deployments",
+2026-10-16T17:05:21.9264474Z             "description": "A database for AI extension",
+2026-10-16T17:05:21.9264730Z             "disabled": false,
+2026-10-16T17:05:21.9265068Z             "downloads_url": "https://api.github.com/repos/wotchin/pg_db4ai/downloads",
+2026-10-16T17:05:21.9265653Z             "events_url": "https://api.github.com/repos/wotchin/pg_db4ai/events",
+2026-10-16T17:05:21.9266190Z             "fork": false,
+2026-10-16T17:05:21.9278508Z             "forks": 0,
+2026-10-16T17:05:21.9278898Z             "forks_count": 0,
+2026-10-16T17:05:21.9279463Z             "forks_url": "https://api.github.com/repos/wotchin/pg_db4ai/forks",
+2026-10-16T17:05:21.9279914Z             "full_name": "wotchin/pg_db4ai",
+2026-10-16T17:05:21.9280331Z             "git_commits_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/commits{/sha}",
+2026-10-16T17:05:21.9280820Z             "git_refs_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/refs{/sha}",
+2026-10-16T17:05:21.9281251Z             "git_tags_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/tags{/sha}",
+2026-10-16T17:05:21.9281620Z             "git_url": "git://github.com/wotchin/pg_db4ai.git",
+2026-10-16T17:05:21.9281898Z             "has_discussions": false,
+2026-10-16T17:05:21.9282147Z             "has_downloads": true,
+2026-10-16T17:05:21.9282369Z             "has_issues": true,
+2026-10-16T17:05:21.9282576Z             "has_pages": false,
+2026-10-16T17:05:21.9282787Z             "has_projects": true,
+2026-10-16T17:05:21.9283014Z             "has_pull_requests": true,
+2026-10-16T17:05:21.9283237Z             "has_wiki": true,
+2026-10-16T17:05:21.9283441Z             "homepage": null,
+2026-10-16T17:05:21.9283722Z             "hooks_url": "https://api.github.com/repos/wotchin/pg_db4ai/hooks",
+2026-10-16T17:05:21.9284070Z             "html_url": "https://github.com/wotchin/pg_db4ai",
+2026-10-16T17:05:21.9284491Z             "id": 1421317902,
+2026-10-16T17:05:21.9284708Z             "is_template": false,
+2026-10-16T17:05:21.9285072Z             "issue_comment_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues/comments{/number}",
+2026-10-16T17:05:21.9285575Z             "issue_events_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues/events{/number}",
+2026-10-16T17:05:21.9286040Z             "issues_url": "https://api.github.com/repos/wotchin/pg_db4ai/issues{/number}",
+2026-10-16T17:05:21.9286693Z             "keys_url": "https://api.github.com/repos/wotchin/pg_db4ai/keys{/key_id}",
+2026-10-16T17:05:21.9287343Z             "labels_url": "https://api.github.com/repos/wotchin/pg_db4ai/labels{/name}",
+2026-10-16T17:05:21.9287823Z             "language": "C",
+2026-10-16T17:05:21.9288245Z             "languages_url": "https://api.github.com/repos/wotchin/pg_db4ai/languages",
+2026-10-16T17:05:21.9288707Z             "license": {
+2026-10-16T17:05:21.9289266Z               "key": "mulanpsl-2.0",
+2026-10-16T17:05:21.9289677Z               "name": "Mulan Permissive Software License, Version 2",
+2026-10-16T17:05:21.9290106Z               "node_id": "L_kgCsbXVsYW5wc2wtMi4w",
+2026-10-16T17:05:21.9290475Z               "spdx_id": "MulanPSL-2.0",
+2026-10-16T17:05:21.9290891Z               "url": "https://api.github.com/licenses/mulanpsl-2.0"
+2026-10-16T17:05:21.9291293Z             },
+2026-10-16T17:05:21.9291547Z             "master_branch": "main",
+2026-10-16T17:05:21.9291989Z             "merges_url": "https://api.github.com/repos/wotchin/pg_db4ai/merges",
+2026-10-16T17:05:21.9292648Z             "milestones_url": "https://api.github.com/repos/wotchin/pg_db4ai/milestones{/number}",
+2026-10-16T17:05:21.9293191Z             "mirror_url": null,
+2026-10-16T17:05:21.9293483Z             "name": "pg_db4ai",
+2026-10-16T17:05:21.9293789Z             "node_id": "R_kgDOVLeXDg",
+2026-10-16T17:05:21.9294444Z             "notifications_url": "https://api.github.com/repos/wotchin/pg_db4ai/notifications{?since,all,participating}",
+2026-10-16T17:05:21.9295135Z             "open_issues": 1,
+2026-10-16T17:05:21.9295440Z             "open_issues_count": 1,
+2026-10-16T17:05:21.9295730Z             "owner": {
+2026-10-16T17:05:21.9296111Z               "avatar_url": "https://avatars.githubusercontent.com/u/15714979?v=4",
+2026-10-16T17:05:21.9296560Z               "email": "wotchin95@gmail.com",
+2026-10-16T17:05:21.9297239Z               "events_url": "https://api.github.com/users/wotchin/events{/privacy}",
+2026-10-16T17:05:21.9297785Z               "followers_url": "https://api.github.com/users/wotchin/followers",
+2026-10-16T17:05:21.9298357Z               "following_url": "https://api.github.com/users/wotchin/following{/other_user}",
+2026-10-16T17:05:21.9298931Z               "gists_url": "https://api.github.com/users/wotchin/gists{/gist_id}",
+2026-10-16T17:05:21.9299463Z               "gravatar_id": "",
+2026-10-16T17:05:21.9299788Z               "html_url": "https://github.com/wotchin",
+2026-10-16T17:05:21.9300131Z               "id": 15714979,
+2026-10-16T17:05:21.9300397Z               "login": "wotchin",
+2026-10-16T17:05:21.9300684Z               "name": "wotchin",
+2026-10-16T17:05:21.9301051Z               "node_id": "MDQ6VXNlcjE1NzE0OTc5",
+2026-10-16T17:05:21.9301532Z               "organizations_url": "https://api.github.com/users/wotchin/orgs",
+2026-10-16T17:05:21.9302166Z               "received_events_url": "https://api.github.com/users/wotchin/received_events",
+2026-10-16T17:05:21.9302763Z               "repos_url": "https://api.github.com/users/wotchin/repos",
+2026-10-16T17:05:21.9303193Z               "site_admin": false,
+2026-10-16T17:05:21.9303663Z               "starred_url": "https://api.github.com/users/wotchin/starred{/owner}{/repo}",
+2026-10-16T17:05:21.9304321Z               "subscriptions_url": "https://api.github.com/users/wotchin/subscriptions",
+2026-10-16T17:05:21.9304811Z               "type": "User",
+2026-10-16T17:05:21.9305145Z               "url": "https://api.github.com/users/wotchin",
+2026-10-16T17:05:21.9305595Z               "user_view_type": "public"
+2026-10-16T17:05:21.9305902Z             },
+2026-10-16T17:05:21.9306167Z             "private": false,
+2026-10-16T17:05:21.9306467Z             "pull_request_creation_policy": "all",
+2026-10-16T17:05:21.9306975Z             "pulls_url": "https://api.github.com/repos/wotchin/pg_db4ai/pulls{/number}",
+2026-10-16T17:05:21.9307443Z             "pushed_at": 1792170207,
+2026-10-16T17:05:21.9307992Z             "releases_url": "https://api.github.com/repos/wotchin/pg_db4ai/releases{/id}",
+2026-10-16T17:05:21.9308414Z             "size": 3440,
+2026-10-16T17:05:21.9308810Z             "ssh_url": "git@github.com:wotchin/pg_db4ai.git",
+2026-10-16T17:05:21.9309224Z             "stargazers": 0,
+2026-10-16T17:05:21.9309559Z             "stargazers_count": 0,
+2026-10-16T17:05:21.9309883Z             "stargazers_url": "https://api.github.com/repos/wotchin/pg_db4ai/stargazers",
+2026-10-16T17:05:21.9310314Z             "statuses_url": "https://api.github.com/repos/wotchin/pg_db4ai/statuses/{sha}",
+2026-10-16T17:05:21.9310745Z             "subscribers_url": "https://api.github.com/repos/wotchin/pg_db4ai/subscribers",
+2026-10-16T17:05:21.9311196Z             "subscription_url": "https://api.github.com/repos/wotchin/pg_db4ai/subscription",
+2026-10-16T17:05:21.9311591Z             "svn_url": "https://github.com/wotchin/pg_db4ai",
+2026-10-16T17:05:21.9311926Z             "tags_url": "https://api.github.com/repos/wotchin/pg_db4ai/tags",
+2026-10-16T17:05:21.9312285Z             "teams_url": "https://api.github.com/repos/wotchin/pg_db4ai/teams",
+2026-10-16T17:05:21.9312592Z             "topics": [],
+2026-10-16T17:05:21.9312886Z             "trees_url": "https://api.github.com/repos/wotchin/pg_db4ai/git/trees{/sha}",
+2026-10-16T17:05:21.9313228Z             "updated_at": "2026-10-16T16:25:18Z",
+2026-10-16T17:05:21.9313513Z             "url": "https://api.github.com/repos/wotchin/pg_db4ai",
+2026-10-16T17:05:21.9313792Z             "visibility": "public",
+2026-10-16T17:05:21.9314013Z             "watchers": 0,
+2026-10-16T17:05:21.9314225Z             "watchers_count": 0,
+2026-10-16T17:05:21.9314454Z             "web_commit_signoff_required": false
+2026-10-16T17:05:21.9314686Z           },
+2026-10-16T17:05:21.9314856Z           "sender": {
+2026-10-16T17:05:21.9315131Z             "avatar_url": "https://avatars.githubusercontent.com/u/15714979?v=4",
+2026-10-16T17:05:21.9315629Z             "events_url": "https://api.github.com/users/wotchin/events{/privacy}",
+2026-10-16T17:05:21.9316016Z             "followers_url": "https://api.github.com/users/wotchin/followers",
+2026-10-16T17:05:21.9316423Z             "following_url": "https://api.github.com/users/wotchin/following{/other_user}",
+2026-10-16T17:05:21.9316836Z             "gists_url": "https://api.github.com/users/wotchin/gists{/gist_id}",
+2026-10-16T17:05:21.9317158Z             "gravatar_id": "",
+2026-10-16T17:05:21.9317395Z             "html_url": "https://github.com/wotchin",
+2026-10-16T17:05:21.9317645Z             "id": 15714979,
+2026-10-16T17:05:21.9317845Z             "login": "wotchin",
+2026-10-16T17:05:21.9318073Z             "node_id": "MDQ6VXNlcjE1NzE0OTc5",
+2026-10-16T17:05:21.9318395Z             "organizations_url": "https://api.github.com/users/wotchin/orgs",
+2026-10-16T17:05:21.9318800Z             "received_events_url": "https://api.github.com/users/wotchin/received_events",
+2026-10-16T17:05:21.9319408Z             "repos_url": "https://api.github.com/users/wotchin/repos",
+2026-10-16T17:05:21.9319708Z             "site_admin": false,
+2026-10-16T17:05:21.9320015Z             "starred_url": "https://api.github.com/users/wotchin/starred{/owner}{/repo}",
+2026-10-16T17:05:21.9320445Z             "subscriptions_url": "https://api.github.com/users/wotchin/subscriptions",
+2026-10-16T17:05:21.9320770Z             "type": "User",
+2026-10-16T17:05:21.9321008Z             "url": "https://api.github.com/users/wotchin",
+2026-10-16T17:05:21.9321270Z             "user_view_type": "public"
+2026-10-16T17:05:21.9321563Z           }
+2026-10-16T17:05:21.9321734Z         },
+2026-10-16T17:05:21.9321914Z         "github_job": "benchmark",
+2026-10-16T17:05:21.9322175Z         "github_ref": "refs/heads/benchmark-public-tabular",
+2026-10-16T17:05:21.9322472Z         "github_ref_name": "benchmark-public-tabular",
+2026-10-16T17:05:21.9322741Z         "github_ref_protected": "false",
+2026-10-16T17:05:21.9322979Z         "github_ref_type": "branch",
+2026-10-16T17:05:21.9323304Z         "github_repository": "wotchin/pg_db4ai",
+2026-10-16T17:05:21.9323559Z         "github_repository_id": "1421317902",
+2026-10-16T17:05:21.9323808Z         "github_repository_owner": "wotchin",
+2026-10-16T17:05:21.9324053Z         "github_repository_owner_id": "15714979",
+2026-10-16T17:05:21.9324295Z         "github_run_attempt": "1",
+2026-10-16T17:05:21.9324513Z         "github_run_id": "38936732724",
+2026-10-16T17:05:21.9324739Z         "github_run_number": "3",
+2026-10-16T17:05:21.9324960Z         "github_runner_arch": "X64",
+2026-10-16T17:05:21.9325227Z         "github_runner_environment": "github-hosted",
+2026-10-16T17:05:21.9325489Z         "github_runner_image_os": "ubuntu24",
+2026-10-16T17:05:21.9325751Z         "github_runner_image_version": "20261012.334.1",
+2026-10-16T17:05:21.9326035Z         "github_runner_name": "GitHub Actions 1000000174",
+2026-10-16T17:05:21.9326290Z         "github_runner_os": "Linux",
+2026-10-16T17:05:21.9326605Z         "github_runner_tracking_id": "github_1290c6d8-aa13-4d02-96fd-2dfa2d46ad28",
+2026-10-16T17:05:21.9326953Z         "github_server_url": "https://github.com",
+2026-10-16T17:05:21.9327209Z         "github_triggering_actor": "wotchin",
+2026-10-16T17:05:21.9327485Z         "github_workflow": "Public tabular Docker benchmark",
+2026-10-16T17:05:21.9328007Z         "github_workflow_ref": "wotchin/pg_db4ai/.github/workflows/public-tabular-benchmark.yml@refs/heads/benchmark-public-tabular",
+2026-10-16T17:05:21.9328553Z         "github_workflow_sha": "f0ee5df72924aa6537821e95c217d88b00232db1",
+2026-10-16T17:05:21.9328857Z         "platform": "linux/amd64"
+2026-10-16T17:05:21.9329207Z       }
+2026-10-16T17:05:21.9329408Z     }
+2026-10-16T17:05:21.9329571Z   },
+2026-10-16T17:05:21.9330024Z   "buildx.build.ref": "builder-cb52af65-fc92-482c-9ada-90e469fdb014/builder-cb52af65-fc92-482c-9ada-90e469fdb0140/jy2hvq914xoez3w79e0ckrxjh",
+2026-10-16T17:05:21.9330729Z   "containerimage.config.digest": "sha256:e05f6790cf3529d986577d37a448ab43582439b0ccc7e1595d52f7fa2330f624",
+2026-10-16T17:05:21.9331229Z   "containerimage.descriptor": {
+2026-10-16T17:05:21.9331521Z     "mediaType": "application/vnd.oci.image.manifest.v1+json",
+2026-10-16T17:05:21.9331921Z     "digest": "sha256:54e2478c4df2b9a0cbd54b0da5efe964cb59fa75a33655521821186ca382356c",
+2026-10-16T17:05:21.9332265Z     "size": 4865,
+2026-10-16T17:05:21.9332449Z     "annotations": {
+2026-10-16T17:05:21.9332699Z       "org.opencontainers.image.created": "2026-10-16T17:05:15Z"
+2026-10-16T17:05:21.9332980Z     },
+2026-10-16T17:05:21.9333148Z     "platform": {
+2026-10-16T17:05:21.9333342Z       "architecture": "amd64",
+2026-10-16T17:05:21.9333540Z       "os": "linux"
+2026-10-16T17:05:21.9333713Z     }
+2026-10-16T17:05:21.9333872Z   },
+2026-10-16T17:05:21.9334210Z   "containerimage.digest": "sha256:54e2478c4df2b9a0cbd54b0da5efe964cb59fa75a33655521821186ca382356c",
+2026-10-16T17:05:21.9334647Z   "image.name": "docker.io/library/pg-db4ai-before:local"
+2026-10-16T17:05:21.9334910Z }
+2026-10-16T17:05:21.9335390Z ##[endgroup]
+2026-10-16T17:05:21.9335710Z ##[group]Reference
+2026-10-16T17:05:21.9336129Z builder-cb52af65-fc92-482c-9ada-90e469fdb014/builder-cb52af65-fc92-482c-9ada-90e469fdb0140/jy2hvq914xoez3w79e0ckrxjh
+2026-10-16T17:05:21.9336701Z ##[endgroup]
+2026-10-16T17:05:21.9336987Z ##[group]Check build summary support
+2026-10-16T17:05:21.9337331Z Build summary supported!
+2026-10-16T17:05:21.9337626Z ##[endgroup]

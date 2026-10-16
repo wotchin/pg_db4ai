@@ -1,0 +1,622 @@
+_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.09148859418514114'}, 'model_bytes': 306137, 'rmse': 58.72493175847092, 'mae': 47.838655940683985, 'r2': 0.41949464978135365}
+2026-10-16T17:02:44.0370179Z Traceback (most recent call last):
+2026-10-16T17:02:44.0372075Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:02:44.0373116Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:02:44.0373825Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.0374724Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:02:44.0375714Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:02:44.0376380Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.0377232Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:02:44.0378172Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:02:44.0378776Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.0379832Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:02:44.0380775Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:02:44.0381408Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.0382229Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:02:44.0383062Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:02:44.0383562Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.0384504Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-2024/og_xgboost-predictions.csv'
+2026-10-16T17:02:44.0386690Z DB og diabetes-2024 xgboost wall 5.17 {'engine': 'og', 'method': 'xgboost', 'dataset': 'diabetes', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-2024/og_xgboost-predictions.csv'"}
+2026-10-16T17:02:44.1520220Z Traceback (most recent call last):
+2026-10-16T17:02:44.1522014Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:02:44.1523039Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:02:44.1524026Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.1525074Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:02:44.1526189Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:02:44.1526951Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.1527885Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:02:44.1529236Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:02:44.1529964Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.1530896Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:02:44.1531923Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:02:44.1532636Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.1533552Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:02:44.1534395Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:02:44.1534901Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:44.1535847Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-2024/og_linear_gd-predictions.csv'
+2026-10-16T17:02:44.1537909Z DB og diabetes-2024 linear_gd wall 0.1 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'diabetes', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-2024/og_linear_gd-predictions.csv'"}
+2026-10-16T17:02:44.4454090Z DB pg diabetes-2024 linear_gd wall 0.28 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'diabetes', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 6.971, 'predict_ms': 0.258, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 353, 'n_test': 89, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 2024, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 353, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.24963824713142369, 'discarded_rows': 0, 'elapsed_seconds': 0.006573, 'shuffle_full_cache': True, 'shuffle_cache_units': 3}, 'model_bytes': 383, 'rmse': 50.77038262375547, 'mae': 41.650183827617155, 'r2': 0.5661075851272684}
+2026-10-16T17:02:45.9270863Z COMPLETE CASE diabetes-2024
+2026-10-16T17:02:51.4480406Z Traceback (most recent call last):
+2026-10-16T17:02:51.4482292Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:02:51.4482890Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:02:51.4483272Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:51.4483864Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:02:51.4484557Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:02:51.4484951Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:51.4485700Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:02:51.4486223Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:02:51.4486565Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:51.4487031Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:02:51.4487565Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:02:51.4488065Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:51.4488506Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:02:51.4489334Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:02:51.4489627Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:51.4490140Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-7/og_xgboost-predictions.csv'
+2026-10-16T17:02:51.4491237Z DB og diabetes-7 xgboost wall 5.37 {'engine': 'og', 'method': 'xgboost', 'dataset': 'diabetes', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-7/og_xgboost-predictions.csv'"}
+2026-10-16T17:02:51.7400731Z DB pg diabetes-7 linear_ngd wall 0.28 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'diabetes', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 6.928, 'predict_ms': 0.251, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 353, 'n_test': 89, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 7, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 353, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.24282532101280527, 'discarded_rows': 0, 'elapsed_seconds': 0.006541, 'shuffle_full_cache': True, 'shuffle_cache_units': 3}, 'model_bytes': 384, 'rmse': 55.24547777388496, 'mae': 43.38043669432108, 'r2': 0.495754592118117}
+2026-10-16T17:02:52.0357036Z DB pg diabetes-7 linear_gd wall 0.28 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'diabetes', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 6.848, 'predict_ms': 0.258, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 353, 'n_test': 89, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 7, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 353, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.2419164374798697, 'discarded_rows': 0, 'elapsed_seconds': 0.0065, 'shuffle_full_cache': True, 'shuffle_cache_units': 3}, 'model_bytes': 382, 'rmse': 55.396852693772544, 'mae': 43.561266209065536, 'r2': 0.49298749931174246}
+2026-10-16T17:02:52.6602196Z DB pg diabetes-7 xgboost wall 0.61 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'diabetes', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 61.632, 'predict_ms': 5.699, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 353, 'n_test': 89, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 7, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 353, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.052628, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.07843179974889163'}, 'model_bytes': 317554, 'rmse': 64.38744704427985, 'mae': 52.29500831520364, 'r2': 0.31506257670349025}
+2026-10-16T17:02:52.7773469Z Traceback (most recent call last):
+2026-10-16T17:02:52.7775175Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:02:52.7776481Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:02:52.7777191Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.7778059Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:02:52.7779370Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:02:52.7780084Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.7780950Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:02:52.7781866Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:02:52.7782487Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.7783298Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:02:52.7784235Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:02:52.7784858Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.7785654Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:02:52.7786477Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:02:52.7786970Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.7787912Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-7/og_linear_gd-predictions.csv'
+2026-10-16T17:02:52.7790158Z DB og diabetes-7 linear_gd wall 0.11 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'diabetes', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-7/og_linear_gd-predictions.csv'"}
+2026-10-16T17:02:52.8953917Z Traceback (most recent call last):
+2026-10-16T17:02:52.8956137Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:02:52.8956817Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:02:52.8957212Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.8957857Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:02:52.8958475Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:02:52.8959114Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.8959587Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:02:52.8960106Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:02:52.8960440Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.8960881Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:02:52.8961404Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:02:52.8961749Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.8962184Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:02:52.8962640Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:02:52.8962919Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:52.8963667Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-7/og_linear_ngd-predictions.csv'
+2026-10-16T17:02:52.8964798Z DB og diabetes-7 linear_ngd wall 0.11 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'diabetes', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/diabetes-7/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:02:54.4088528Z COMPLETE CASE diabetes-7
+2026-10-16T17:02:54.7096657Z Traceback (most recent call last):
+2026-10-16T17:02:54.7098735Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:02:54.7100013Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:02:54.7100731Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:54.7101632Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:02:54.7102664Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:02:54.7103345Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:54.7104232Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:02:54.7105181Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:02:54.7105794Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:54.7106629Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:02:54.7107595Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:02:54.7108258Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:54.7109303Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:02:54.7110184Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:02:54.7110706Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:02:54.7111658Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-42/og_linear_ngd-predictions.csv'
+2026-10-16T17:02:54.7113703Z DB og wine_red-42 linear_ngd wall 0.13 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'wine_red', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-42/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:02:55.0885066Z DB pg wine_red-42 linear_ngd wall 0.37 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'wine_red', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 28.12, 'predict_ms': 0.368, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1279, 'n_test': 320, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 42, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 1279, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.3143575151267268, 'discarded_rows': 0, 'elapsed_seconds': 0.027674, 'shuffle_full_cache': True, 'shuffle_cache_units': 10}, 'model_bytes': 403, 'rmse': 0.7185865736780034, 'mae': 0.5593178307496682, 'r2': 0.2751158919127282}
+2026-10-16T17:03:14.4576852Z Traceback (most recent call last):
+2026-10-16T17:03:14.4578735Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:03:14.4580052Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:03:14.4580659Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:14.4581313Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:03:14.4582172Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:03:14.4582559Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:14.4583084Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:03:14.4583608Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:03:14.4583951Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:14.4584557Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:03:14.4585087Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:03:14.4585453Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:14.4585918Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:03:14.4586399Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:03:14.4586686Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:14.4587204Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-42/og_xgboost-predictions.csv'
+2026-10-16T17:03:14.4588292Z DB og wine_red-42 xgboost wall 19.36 {'engine': 'og', 'method': 'xgboost', 'dataset': 'wine_red', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-42/og_xgboost-predictions.csv'"}
+2026-10-16T17:03:15.2204879Z DB pg wine_red-42 xgboost wall 0.75 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'wine_red', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 82.609, 'predict_ms': 16.687, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1279, 'n_test': 320, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 42, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 1279, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.071569, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.25444024290266665'}, 'model_bytes': 345325, 'rmse': 0.7271948931631957, 'mae': 0.5577296083419104, 'r2': 0.25764434285745963}
+2026-10-16T17:03:15.3628402Z Traceback (most recent call last):
+2026-10-16T17:03:15.3630689Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:03:15.3631678Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:03:15.3632271Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:15.3632866Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:03:15.3633464Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:03:15.3633850Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:15.3634324Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:03:15.3634842Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:03:15.3635194Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:15.3635637Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:03:15.3636160Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:03:15.3636513Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:15.3636955Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:03:15.3637861Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:03:15.3638151Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:15.3638670Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-42/og_linear_gd-predictions.csv'
+2026-10-16T17:03:15.3640147Z DB og wine_red-42 linear_gd wall 0.13 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'wine_red', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-42/og_linear_gd-predictions.csv'"}
+2026-10-16T17:03:15.7419029Z DB pg wine_red-42 linear_gd wall 0.37 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'wine_red', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 25.707, 'predict_ms': 0.366, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1279, 'n_test': 320, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 42, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 1279, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.31135147697879106, 'discarded_rows': 0, 'elapsed_seconds': 0.025126, 'shuffle_full_cache': True, 'shuffle_cache_units': 10}, 'model_bytes': 402, 'rmse': 0.7173705228096315, 'mae': 0.5553785836888506, 'r2': 0.2775672321176905}
+2026-10-16T17:03:17.4582843Z COMPLETE CASE wine_red-42
+2026-10-16T17:03:17.9886362Z DB pg wine_red-2024 linear_ngd wall 0.36 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'wine_red', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 25.235, 'predict_ms': 0.367, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1272, 'n_test': 327, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 2024, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 1272, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.32738408880309255, 'discarded_rows': 0, 'elapsed_seconds': 0.024853, 'shuffle_full_cache': True, 'shuffle_cache_units': 10}, 'model_bytes': 404, 'rmse': 0.672470462011661, 'mae': 0.5302168234941945, 'r2': 0.3771567248353448}
+2026-10-16T17:03:18.1267824Z Traceback (most recent call last):
+2026-10-16T17:03:18.1269988Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:03:18.1270715Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:03:18.1271144Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:18.1271658Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:03:18.1272217Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:03:18.1272596Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:18.1273064Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:03:18.1273587Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:03:18.1273925Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:18.1274365Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:03:18.1274878Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:03:18.1275223Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:18.1275905Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:03:18.1276370Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:03:18.1276654Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:18.1280246Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-2024/og_linear_ngd-predictions.csv'
+2026-10-16T17:03:18.1281454Z DB og wine_red-2024 linear_ngd wall 0.13 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'wine_red', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-2024/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:03:18.9214506Z DB pg wine_red-2024 xgboost wall 0.78 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'wine_red', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 85.614, 'predict_ms': 17.801, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1272, 'n_test': 327, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 2024, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 1272, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.075405, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.25041779857315949'}, 'model_bytes': 351844, 'rmse': 0.6885959482426942, 'mae': 0.534725209508474, 'r2': 0.34692767553449644}
+2026-10-16T17:03:42.4257826Z Traceback (most recent call last):
+2026-10-16T17:03:42.4259685Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:03:42.4260476Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:03:42.4260904Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.4261412Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:03:42.4261984Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:03:42.4262358Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.4262834Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:03:42.4263363Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:03:42.4263710Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.4264151Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:03:42.4264666Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:03:42.4265020Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.4265460Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:03:42.4265917Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:03:42.4266200Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.4270091Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-2024/og_xgboost-predictions.csv'
+2026-10-16T17:03:42.4271263Z DB og wine_red-2024 xgboost wall 23.49 {'engine': 'og', 'method': 'xgboost', 'dataset': 'wine_red', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-2024/og_xgboost-predictions.csv'"}
+2026-10-16T17:03:42.5612953Z Traceback (most recent call last):
+2026-10-16T17:03:42.5614368Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:03:42.5615383Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:03:42.5616397Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.5617289Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:03:42.5618286Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:03:42.5619400Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.5620545Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:03:42.5621476Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:03:42.5622083Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.5622883Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:03:42.5623817Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:03:42.5624441Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.5625238Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:03:42.5626066Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:03:42.5626564Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:03:42.5627495Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-2024/og_linear_gd-predictions.csv'
+2026-10-16T17:03:42.5630839Z DB og wine_red-2024 linear_gd wall 0.12 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'wine_red', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-2024/og_linear_gd-predictions.csv'"}
+2026-10-16T17:03:42.9363347Z DB pg wine_red-2024 linear_gd wall 0.36 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'wine_red', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 26.21, 'predict_ms': 0.358, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1272, 'n_test': 327, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 2024, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 1272, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.3221415254439436, 'discarded_rows': 0, 'elapsed_seconds': 0.024807, 'shuffle_full_cache': True, 'shuffle_cache_units': 10}, 'model_bytes': 404, 'rmse': 0.6868237886862215, 'mae': 0.5386367399025476, 'r2': 0.35028482306686914}
+2026-10-16T17:03:44.6235427Z COMPLETE CASE wine_red-2024
+2026-10-16T17:04:04.2350537Z Traceback (most recent call last):
+2026-10-16T17:04:04.2352368Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:04.2353243Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:04.2353850Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:04.2354706Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:04.2355483Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:04.2356082Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:04.2356960Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:04.2357683Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:04.2358238Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:04.2359252Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:04.2360326Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:04.2360916Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:04.2361703Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:04.2362351Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:04.2362866Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:04.2363919Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-7/og_xgboost-predictions.csv'
+2026-10-16T17:04:04.2365169Z DB og wine_red-7 xgboost wall 19.44 {'engine': 'og', 'method': 'xgboost', 'dataset': 'wine_red', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-7/og_xgboost-predictions.csv'"}
+2026-10-16T17:04:04.6052932Z DB pg wine_red-7 linear_ngd wall 0.36 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'wine_red', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 24.9, 'predict_ms': 0.349, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1267, 'n_test': 332, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 7, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 1267, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.3150770084632251, 'discarded_rows': 0, 'elapsed_seconds': 0.024519, 'shuffle_full_cache': True, 'shuffle_cache_units': 10}, 'model_bytes': 404, 'rmse': 0.6285809067302545, 'mae': 0.5082673703947658, 'r2': 0.26208440129697763}
+2026-10-16T17:04:05.0059038Z DB pg wine_red-7 linear_gd wall 0.39 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'wine_red', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 24.898, 'predict_ms': 0.35, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1267, 'n_test': 332, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 7, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 1267, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.31181321734290524, 'discarded_rows': 0, 'elapsed_seconds': 0.024527, 'shuffle_full_cache': True, 'shuffle_cache_units': 10}, 'model_bytes': 399, 'rmse': 0.6230102577242904, 'mae': 0.49736571994840756, 'r2': 0.27510564912551905}
+2026-10-16T17:04:05.7480982Z DB pg wine_red-7 xgboost wall 0.73 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'wine_red', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 75.546, 'predict_ms': 17.056, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 1267, 'n_test': 332, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 7, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 1267, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.066564, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.28813789764159531'}, 'model_bytes': 318250, 'rmse': 0.6119579224583992, 'mae': 0.48651907964345675, 'r2': 0.3005970756146229}
+2026-10-16T17:04:05.8851447Z Traceback (most recent call last):
+2026-10-16T17:04:05.8853018Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:05.8853814Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:05.8854371Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:05.8855236Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:05.8856147Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:05.8856552Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:05.8857033Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:05.8857559Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:05.8857904Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:05.8858361Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:05.8859156Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:05.8859529Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:05.8859985Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:05.8860464Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:05.8860764Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:05.8861282Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-7/og_linear_gd-predictions.csv'
+2026-10-16T17:04:05.8862403Z DB og wine_red-7 linear_gd wall 0.13 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'wine_red', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-7/og_linear_gd-predictions.csv'"}
+2026-10-16T17:04:06.0247598Z Traceback (most recent call last):
+2026-10-16T17:04:06.0249662Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:06.0250244Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:06.0250636Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:06.0251130Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:06.0251701Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:06.0252072Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:06.0252534Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:06.0253057Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:06.0253399Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:06.0255603Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:06.0256616Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:06.0257265Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:06.0258098Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:06.0259261Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:06.0259624Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:06.0260174Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-7/og_linear_ngd-predictions.csv'
+2026-10-16T17:04:06.0261296Z DB og wine_red-7 linear_ngd wall 0.13 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'wine_red', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/wine_red-7/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:04:07.6844223Z COMPLETE CASE wine_red-7
+2026-10-16T17:04:07.9604988Z Traceback (most recent call last):
+2026-10-16T17:04:07.9606642Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:07.9607526Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:07.9608139Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:07.9609171Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:07.9610493Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:07.9611145Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:07.9611973Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:07.9612805Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:07.9613162Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:07.9613610Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:07.9614173Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:07.9614523Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:07.9614990Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:07.9615465Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:07.9615758Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:07.9616286Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-42/og_linear_ngd-predictions.csv'
+2026-10-16T17:04:07.9620402Z DB og concrete-42 linear_ngd wall 0.12 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'concrete', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-42/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:04:08.2910196Z DB pg concrete-42 linear_ngd wall 0.32 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'concrete', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 13.898, 'predict_ms': 0.279, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 824, 'n_test': 206, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 42, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 824, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.19670568442688507, 'discarded_rows': 0, 'elapsed_seconds': 0.013532, 'shuffle_full_cache': True, 'shuffle_cache_units': 7}, 'model_bytes': 338, 'rmse': 10.903365024881749, 'mae': 8.860606722532523, 'r2': 0.5956605882928325}
+2026-10-16T17:04:22.7893002Z Traceback (most recent call last):
+2026-10-16T17:04:22.7894488Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:22.7895273Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:22.7895675Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:22.7896229Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:22.7896795Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:22.7897166Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:22.7897637Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:22.7898149Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:22.7898734Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:22.7899540Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:22.7900059Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:22.7900401Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:22.7900836Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:22.7901449Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:22.7901733Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:22.7910259Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-42/og_xgboost-predictions.csv'
+2026-10-16T17:04:22.7911378Z DB og concrete-42 xgboost wall 14.49 {'engine': 'og', 'method': 'xgboost', 'dataset': 'concrete', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-42/og_xgboost-predictions.csv'"}
+2026-10-16T17:04:23.5544185Z DB pg concrete-42 xgboost wall 0.75 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'concrete', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 85.252, 'predict_ms': 11.404, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 824, 'n_test': 206, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 42, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 824, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.075137, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.09510902835171495'}, 'model_bytes': 357059, 'rmse': 4.43498495213881, 'mae': 3.1842614007506924, 'r2': 0.9331025948188625}
+2026-10-16T17:04:23.6807453Z Traceback (most recent call last):
+2026-10-16T17:04:23.6809249Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:23.6810303Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:23.6811001Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:23.6811903Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:23.6812920Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:23.6813585Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:23.6814460Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:23.6815412Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:23.6816017Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:23.6816825Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:23.6817762Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:23.6818385Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:23.6819508Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:23.6820363Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:23.6820875Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:23.6821814Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-42/og_linear_gd-predictions.csv'
+2026-10-16T17:04:23.6823823Z DB og concrete-42 linear_gd wall 0.12 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'concrete', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-42/og_linear_gd-predictions.csv'"}
+2026-10-16T17:04:24.0097421Z DB pg concrete-42 linear_gd wall 0.32 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'concrete', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 14.129, 'predict_ms': 0.296, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 824, 'n_test': 206, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 42, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 824, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.19289158271995985, 'discarded_rows': 0, 'elapsed_seconds': 0.013647, 'shuffle_full_cache': True, 'shuffle_cache_units': 7}, 'model_bytes': 334, 'rmse': 10.677617494807247, 'mae': 8.556611936164082, 'r2': 0.6122304617500609}
+2026-10-16T17:04:25.7427452Z COMPLETE CASE concrete-42
+2026-10-16T17:04:26.2210294Z DB pg concrete-2024 linear_ngd wall 0.32 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'concrete', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 14.234, 'predict_ms': 0.313, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 825, 'n_test': 205, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 2024, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 825, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.20078622271329363, 'discarded_rows': 0, 'elapsed_seconds': 0.013805, 'shuffle_full_cache': True, 'shuffle_cache_units': 7}, 'model_bytes': 339, 'rmse': 10.060400852827637, 'mae': 8.020217242568066, 'r2': 0.6329770099785802}
+2026-10-16T17:04:26.3455211Z Traceback (most recent call last):
+2026-10-16T17:04:26.3456911Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:26.3458578Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:26.3459576Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:26.3460487Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:26.3461524Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:26.3462195Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:26.3463059Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:26.3463994Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:26.3464604Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:26.3465410Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:26.3466806Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:26.3467462Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:26.3468515Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:26.3469659Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:26.3470194Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:26.3471168Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-2024/og_linear_ngd-predictions.csv'
+2026-10-16T17:04:26.3473606Z DB og concrete-2024 linear_ngd wall 0.11 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'concrete', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-2024/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:04:27.0964495Z DB pg concrete-2024 xgboost wall 0.74 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'concrete', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 81.897, 'predict_ms': 11.527, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 825, 'n_test': 205, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 2024, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 825, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.072061, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.10937449813001177'}, 'model_bytes': 344074, 'rmse': 3.9435173689444363, 'mae': 2.837819486680083, 'r2': 0.9436063487529387}
+2026-10-16T17:04:41.2640320Z Traceback (most recent call last):
+2026-10-16T17:04:41.2641732Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:41.2642738Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:41.2643417Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.2644252Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:41.2645195Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:41.2645838Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.2646657Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:41.2647555Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:41.2648133Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.2648663Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:41.2649595Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:41.2649976Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.2650444Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:41.2650925Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:41.2651216Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.2651751Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-2024/og_xgboost-predictions.csv'
+2026-10-16T17:04:41.2652904Z DB og concrete-2024 xgboost wall 14.16 {'engine': 'og', 'method': 'xgboost', 'dataset': 'concrete', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-2024/og_xgboost-predictions.csv'"}
+2026-10-16T17:04:41.3875608Z Traceback (most recent call last):
+2026-10-16T17:04:41.3877220Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:41.3878296Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:41.3879249Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.3880156Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:41.3881162Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:41.3881848Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.3883005Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:41.3883923Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:41.3884527Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.3885342Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:41.3886519Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:41.3887162Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.3887975Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:41.3889025Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:41.3889557Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:41.3890509Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-2024/og_linear_gd-predictions.csv'
+2026-10-16T17:04:41.3892596Z DB og concrete-2024 linear_gd wall 0.11 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'concrete', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-2024/og_linear_gd-predictions.csv'"}
+2026-10-16T17:04:41.7140636Z DB pg concrete-2024 linear_gd wall 0.31 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'concrete', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 14.083, 'predict_ms': 0.272, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 825, 'n_test': 205, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 2024, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 825, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.19568294355512827, 'discarded_rows': 0, 'elapsed_seconds': 0.013682, 'shuffle_full_cache': True, 'shuffle_cache_units': 7}, 'model_bytes': 332, 'rmse': 10.041207645613545, 'mae': 7.954231531677642, 'r2': 0.634376085185993}
+2026-10-16T17:04:43.3796537Z COMPLETE CASE concrete-2024
+2026-10-16T17:04:57.5528386Z Traceback (most recent call last):
+2026-10-16T17:04:57.5530782Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:57.5531782Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:57.5532480Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:57.5533346Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:57.5534358Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:57.5535016Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:57.5535862Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:57.5536764Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:57.5537368Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:57.5538198Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:57.5539386Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:57.5540012Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:57.5540832Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:57.5541661Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:57.5542468Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:57.5543401Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-7/og_xgboost-predictions.csv'
+2026-10-16T17:04:57.5545379Z DB og concrete-7 xgboost wall 14.01 {'engine': 'og', 'method': 'xgboost', 'dataset': 'concrete', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-7/og_xgboost-predictions.csv'"}
+2026-10-16T17:04:57.8769854Z DB pg concrete-7 linear_ngd wall 0.31 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'concrete', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 13.946, 'predict_ms': 0.275, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 829, 'n_test': 201, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 7, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 829, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.19422777369031358, 'discarded_rows': 0, 'elapsed_seconds': 0.013498, 'shuffle_full_cache': True, 'shuffle_cache_units': 7}, 'model_bytes': 335, 'rmse': 10.47101497393168, 'mae': 8.269902464767258, 'r2': 0.5619420873253309}
+2026-10-16T17:04:58.1984150Z DB pg concrete-7 linear_gd wall 0.31 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'concrete', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 14.042, 'predict_ms': 0.282, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 829, 'n_test': 201, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 7, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 829, 'iterations': 200, 'input_passes': 201, 'input_spilled': False, 'training_loss': 0.18979746992655933, 'discarded_rows': 0, 'elapsed_seconds': 0.013666, 'shuffle_full_cache': True, 'shuffle_cache_units': 7}, 'model_bytes': 335, 'rmse': 10.285276471380344, 'mae': 8.005507672001883, 'r2': 0.5773450998355779}
+2026-10-16T17:04:58.9239148Z DB pg concrete-7 xgboost wall 0.71 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'concrete', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 79.293, 'predict_ms': 10.865, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 829, 'n_test': 201, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 7, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 829, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.069619, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.09841322439018975'}, 'model_bytes': 338016, 'rmse': 4.667600574727028, 'mae': 3.201236870306146, 'r2': 0.912955499504522}
+2026-10-16T17:04:59.0488988Z Traceback (most recent call last):
+2026-10-16T17:04:59.0490677Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:59.0491308Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:59.0491703Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.0492212Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:59.0493055Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:59.0493447Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.0493920Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:59.0494437Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:59.0494790Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.0495396Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:59.0495912Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:59.0496265Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.0496706Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:59.0497177Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:59.0497463Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.0510196Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-7/og_linear_gd-predictions.csv'
+2026-10-16T17:04:59.0511487Z DB og concrete-7 linear_gd wall 0.11 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'concrete', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-7/og_linear_gd-predictions.csv'"}
+2026-10-16T17:04:59.1762178Z Traceback (most recent call last):
+2026-10-16T17:04:59.1763642Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:04:59.1764704Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:04:59.1765427Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.1766344Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:04:59.1767405Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:04:59.1768097Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.1769175Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:04:59.1770156Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:04:59.1770779Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.1771828Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:04:59.1772899Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:04:59.1773634Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.1774548Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:04:59.1775484Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:04:59.1776080Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:04:59.1777110Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-7/og_linear_ngd-predictions.csv'
+2026-10-16T17:04:59.1779329Z DB og concrete-7 linear_ngd wall 0.11 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'concrete', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/concrete-7/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:05:00.8933139Z COMPLETE CASE concrete-7
+2026-10-16T17:05:01.6749999Z Traceback (most recent call last):
+2026-10-16T17:05:01.6751632Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:05:01.6752701Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:05:01.6753398Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:05:01.6754804Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:05:01.6755919Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:05:01.6756675Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:05:01.6757611Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:05:01.6758630Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:05:01.6759894Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:05:01.6760830Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:05:01.6761874Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:05:01.6762592Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:05:01.6763505Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:05:01.6764456Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:05:01.6765051Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:05:01.6766107Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-42/og_linear_ngd-predictions.csv'
+2026-10-16T17:05:01.6768461Z DB og california-42 linear_ngd wall 0.4 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'california', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-42/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:05:03.6335632Z DB pg california-42 linear_ngd wall 1.94 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'california', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 421.796, 'predict_ms': 1.488, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 42, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 16512, 'iterations': 200, 'input_passes': 400, 'input_spilled': False, 'training_loss': 0.20746180181510154, 'discarded_rows': 0, 'elapsed_seconds': 0.421201, 'shuffle_full_cache': False, 'shuffle_cache_units': 128}, 'model_bytes': 346, 'rmse': 0.7535834461384076, 'mae': 0.5521536881953741, 'r2': 0.5852531525167973}
+2026-10-16T17:10:53.4975542Z Traceback (most recent call last):
+2026-10-16T17:10:53.4977331Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:10:53.4977901Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:10:53.4978326Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:53.4979107Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:10:53.4979837Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:10:53.4980239Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:53.4980730Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:10:53.4981272Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:10:53.4981619Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:53.4982076Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:10:53.4982599Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:10:53.4982951Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:53.4983633Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:10:53.4984105Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:10:53.4984397Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:53.4984927Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-42/og_xgboost-predictions.csv'
+2026-10-16T17:10:53.4986068Z DB og california-42 xgboost wall 349.85 {'engine': 'og', 'method': 'xgboost', 'dataset': 'california', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-42/og_xgboost-predictions.csv'"}
+2026-10-16T17:10:55.7802797Z DB pg california-42 xgboost wall 2.27 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'california', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 231.337, 'predict_ms': 197.923, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 42, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 16512, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.220051, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.32067709177037867'}, 'model_bytes': 466462, 'rmse': 0.4720834966647704, 'mae': 0.31055951822013844, 'r2': 0.8372361212326832}
+2026-10-16T17:10:56.1889194Z Traceback (most recent call last):
+2026-10-16T17:10:56.1891120Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:10:56.1892069Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:10:56.1892788Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:56.1893674Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:10:56.1894411Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:10:56.1894796Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:56.1895274Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:10:56.1895813Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:10:56.1896155Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:56.1896596Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:10:56.1897122Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:10:56.1897485Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:56.1897930Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:10:56.1898402Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:10:56.1898685Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:10:56.1899489Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-42/og_linear_gd-predictions.csv'
+2026-10-16T17:10:56.1910391Z DB og california-42 linear_gd wall 0.4 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'california', 'seed': 42, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-42/og_linear_gd-predictions.csv'"}
+2026-10-16T17:10:58.1352819Z DB pg california-42 linear_gd wall 1.93 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'california', 'seed': 42, 'repeat': 2, 'status': 'ok', 'fit_ms': 417.747, 'predict_ms': 1.472, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 42, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 16512, 'iterations': 200, 'input_passes': 400, 'input_spilled': False, 'training_loss': 0.19856301356510592, 'discarded_rows': 0, 'elapsed_seconds': 0.417201, 'shuffle_full_cache': False, 'shuffle_cache_units': 128}, 'model_bytes': 336, 'rmse': 0.7296065513270454, 'mae': 0.5335562898669626, 'r2': 0.611225435131333}
+2026-10-16T17:11:00.9778692Z COMPLETE CASE california-42
+2026-10-16T17:11:03.2829860Z DB pg california-2024 linear_ngd wall 1.93 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'california', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 418.022, 'predict_ms': 1.471, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 2024, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 16512, 'iterations': 200, 'input_passes': 400, 'input_spilled': False, 'training_loss': 0.20716973320219356, 'discarded_rows': 0, 'elapsed_seconds': 0.417415, 'shuffle_full_cache': False, 'shuffle_cache_units': 128}, 'model_bytes': 345, 'rmse': 0.7374298042321915, 'mae': 0.5558797814512668, 'r2': 0.5887957110226925}
+2026-10-16T17:11:03.7066596Z Traceback (most recent call last):
+2026-10-16T17:11:03.7067978Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:11:03.7069121Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:11:03.7069711Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:11:03.7070276Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:11:03.7070854Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:11:03.7071259Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:11:03.7071741Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:11:03.7072263Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:11:03.7072606Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:11:03.7073050Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:11:03.7073585Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:11:03.7073936Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:11:03.7074381Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:11:03.7074843Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:11:03.7075128Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:11:03.7075681Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-2024/og_linear_ngd-predictions.csv'
+2026-10-16T17:11:03.7076887Z DB og california-2024 linear_ngd wall 0.41 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'california', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-2024/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:11:06.0587195Z DB pg california-2024 xgboost wall 2.34 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'california', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 234.183, 'predict_ms': 227.481, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 2024, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 16512, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.222864, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.32149836102215418'}, 'model_bytes': 467895, 'rmse': 0.46501538443718377, 'mae': 0.3193784528021566, 'r2': 0.8364875199153072}
+2026-10-16T17:17:03.6397161Z Traceback (most recent call last):
+2026-10-16T17:17:03.6398722Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:17:03.6399769Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:17:03.6400175Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:03.6400686Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:17:03.6401291Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:17:03.6401664Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:03.6402143Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:17:03.6402691Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:17:03.6403031Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:03.6403504Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:17:03.6404032Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:17:03.6404383Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:03.6404824Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:17:03.6405284Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:17:03.6405572Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:03.6410670Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-2024/og_xgboost-predictions.csv'
+2026-10-16T17:17:03.6411977Z DB og california-2024 xgboost wall 357.57 {'engine': 'og', 'method': 'xgboost', 'dataset': 'california', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-2024/og_xgboost-predictions.csv'"}
+2026-10-16T17:17:04.0548662Z Traceback (most recent call last):
+2026-10-16T17:17:04.0550802Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:17:04.0551376Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:17:04.0551976Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:04.0552825Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:17:04.0553624Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:17:04.0554207Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:04.0555024Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:17:04.0555747Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:17:04.0556297Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:04.0557339Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:17:04.0558067Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:17:04.0558626Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:04.0559768Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:17:04.0560430Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:17:04.0561147Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:17:04.0562047Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-2024/og_linear_gd-predictions.csv'
+2026-10-16T17:17:04.0563425Z DB og california-2024 linear_gd wall 0.4 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'california', 'seed': 2024, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-2024/og_linear_gd-predictions.csv'"}
+2026-10-16T17:17:06.0180930Z DB pg california-2024 linear_gd wall 1.95 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'california', 'seed': 2024, 'repeat': 2, 'status': 'ok', 'fit_ms': 414.998, 'predict_ms': 1.539, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 2024, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 16512, 'iterations': 200, 'input_passes': 400, 'input_spilled': False, 'training_loss': 0.20143373270107115, 'discarded_rows': 0, 'elapsed_seconds': 0.414361, 'shuffle_full_cache': False, 'shuffle_cache_units': 128}, 'model_bytes': 338, 'rmse': 0.7278381288892232, 'mae': 0.5462724052642133, 'r2': 0.5994231294250811}
+2026-10-16T17:17:08.9613081Z COMPLETE CASE california-2024
+2026-10-16T17:22:59.2931505Z Traceback (most recent call last):
+2026-10-16T17:22:59.2933211Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:22:59.2934233Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:22:59.2934937Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:22:59.2936008Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:22:59.2937114Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:22:59.2937880Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:22:59.2939084Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:22:59.2940144Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:22:59.2940852Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:22:59.2941735Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:22:59.2942756Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:22:59.2943481Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:22:59.2944392Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:22:59.2945311Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:22:59.2945895Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:22:59.2946908Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-7/og_xgboost-predictions.csv'
+2026-10-16T17:22:59.2949224Z DB og california-7 xgboost wall 349.95 {'engine': 'og', 'method': 'xgboost', 'dataset': 'california', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-7/og_xgboost-predictions.csv'"}
+2026-10-16T17:23:01.2817846Z DB pg california-7 linear_ngd wall 1.97 {'engine': 'pg', 'method': 'linear_ngd', 'dataset': 'california', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 409.964, 'predict_ms': 1.47, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'ngd', 'learning_rate': 0.8, 'decay': 1, 'tolerance': 1e-30, 'seed': 7, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 16512, 'iterations': 200, 'input_passes': 400, 'input_spilled': False, 'training_loss': 0.20755430666478647, 'discarded_rows': 0, 'elapsed_seconds': 0.409241, 'shuffle_full_cache': False, 'shuffle_cache_units': 128}, 'model_bytes': 343, 'rmse': 0.7407694207486478, 'mae': 0.5456766338161736, 'r2': 0.5892174973239286}
+2026-10-16T17:23:03.2100472Z DB pg california-7 linear_gd wall 1.91 {'engine': 'pg', 'method': 'linear_gd', 'dataset': 'california', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 408.718, 'predict_ms': 1.465, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'profile': 'opengauss', 'max_iterations': 200, 'batch_size': 128, 'optimizer': 'gd', 'learning_rate': 0.05, 'decay': 1, 'tolerance': 1e-30, 'seed': 7, 'max_seconds': 0, 'shuffle': 'batch', 'shuffle_buffer_size': 128, 'null_policy': 'error'}, 'training_metrics': {'rows': 16512, 'iterations': 200, 'input_passes': 400, 'input_spilled': False, 'training_loss': 0.20203815706132913, 'discarded_rows': 0, 'elapsed_seconds': 0.408078, 'shuffle_full_cache': False, 'shuffle_cache_units': 128}, 'model_bytes': 337, 'rmse': 0.7340435026584443, 'mae': 0.5374832678323688, 'r2': 0.5966431452271244}
+2026-10-16T17:23:05.5200212Z DB pg california-7 xgboost wall 2.29 {'engine': 'pg', 'method': 'xgboost', 'dataset': 'california', 'seed': 7, 'repeat': 2, 'status': 'ok', 'fit_ms': 235.021, 'predict_ms': 196.827, 'fit_scope': 'server-local client statement wall time including model persistence; excludes client/container startup', 'predict_scope': 'one SQL statement: model lookup/load + full holdout scan + aggregate', 'n_train': 16512, 'n_test': 4128, 'parameters': {'max_iterations': 100, 'learning_rate': 0.1, 'max_depth': 6, 'l2': 1, 'gamma': 0, 'min_child_weight': 1, 'seed': 7, 'tree_method': 'hist', 'nthread': 1, 'eval_metric': 'rmse'}, 'training_metrics': {'rows': 16512, 'iterations': 100, 'input_passes': 1, 'input_spilled': False, 'discarded_rows': 0, 'elapsed_seconds': 0.223964, 'library_version': '3.4.2', 'shuffle_full_cache': False, 'shuffle_cache_units': 0, 'training_evaluation': '[99]\ttrain-rmse:0.31810174672513836'}, 'model_bytes': 470679, 'rmse': 0.474456885203726, 'mae': 0.31203161078644415, 'r2': 0.8314846949478578}
+2026-10-16T17:23:05.9343302Z Traceback (most recent call last):
+2026-10-16T17:23:05.9345097Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:23:05.9345733Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:23:05.9346155Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:05.9346797Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:23:05.9347451Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:23:05.9347826Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:05.9348527Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:23:05.9349445Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:23:05.9349793Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:05.9350244Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:23:05.9350767Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:23:05.9351277Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:05.9351718Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:23:05.9352182Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:23:05.9352477Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:05.9353040Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-7/og_linear_gd-predictions.csv'
+2026-10-16T17:23:05.9354269Z DB og california-7 linear_gd wall 0.4 {'engine': 'og', 'method': 'linear_gd', 'dataset': 'california', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-7/og_linear_gd-predictions.csv'"}
+2026-10-16T17:23:06.3577802Z Traceback (most recent call last):
+2026-10-16T17:23:06.3579838Z   File "/home/runner/work/pg_db4ai/pg_db4ai/benchmarks/tabular/run.py", line 136, in benchmark_db
+2026-10-16T17:23:06.3580408Z     a=np.loadtxt(case/(prefix+'-predictions.csv'),delimiter=',',ndmin=2)
+2026-10-16T17:23:06.3580828Z       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:06.3581334Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1397, in loadtxt
+2026-10-16T17:23:06.3582110Z     arr = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+2026-10-16T17:23:06.3582483Z           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:06.3582957Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_npyio_impl.py", line 1024, in _read
+2026-10-16T17:23:06.3583471Z     fh = np.lib._datasource.open(fname, 'rt', encoding=encoding)
+2026-10-16T17:23:06.3583805Z          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:06.3584261Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 192, in open
+2026-10-16T17:23:06.3584777Z     return ds.open(path, mode, encoding=encoding, newline=newline)
+2026-10-16T17:23:06.3585127Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:06.3585570Z   File "/tmp/bench-host/lib/python3.12/site-packages/numpy/lib/_datasource.py", line 526, in open
+2026-10-16T17:23:06.3586026Z     return _file_openers[ext](found, mode=mode,
+2026-10-16T17:23:06.3586308Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-10-16T17:23:06.3586842Z PermissionError: [Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-7/og_linear_ngd-predictions.csv'
+2026-10-16T17:23:06.3587990Z DB og california-7 linear_ngd wall 0.41 {'engine': 'og', 'method': 'linear_ngd', 'dataset': 'california', 'seed': 7, 'status': 'error', 'error': "[Errno 13] Permission denied: '/tmp/db4ai-benchmark/results/california-7/og_linear_ngd-predictions.csv'"}
+2026-10-16T17:23:09.3375625Z COMPLETE CASE california-7
+2026-10-16T17:23:09.3789320Z BENCHMARK FINISHED /tmp/db4ai-benchmark/results 588 records
+2026-10-16T17:23:09.3795670Z 78 engine/method cases failed; raw errors retained in results.json
+2026-10-16T17:23:09.4977758Z ##[error]Process completed with exit code 1.

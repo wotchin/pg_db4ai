@@ -1,0 +1,6 @@
+﻿2026-10-16T17:23:09.5032199Z ##[group]Run git archive --format=tar.gz HEAD > /tmp/db4ai-benchmark/benchmark-source.tar.gz
+2026-10-16T17:23:09.5032889Z [36;1mgit archive --format=tar.gz HEAD > /tmp/db4ai-benchmark/benchmark-source.tar.gz[0m
+2026-10-16T17:23:09.5033519Z [36;1mdocker image inspect pg-db4ai-benchmark:local > /tmp/db4ai-benchmark/pg-image.json || true[0m
+2026-10-16T17:23:09.5034344Z [36;1mdocker stats --no-stream > /tmp/db4ai-benchmark/final-container-stats.txt || true[0m
+2026-10-16T17:23:09.5097327Z shell: /usr/bin/bash -e {0}
+2026-10-16T17:23:09.5097595Z ##[endgroup]
