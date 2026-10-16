@@ -14,7 +14,7 @@ jobs:
         run: |
           mkdir -p /tmp/runtime-metadata
           docker pull enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5
-          cat > /tmp/runtime-metadata/inspect.py <<'PY'
+          cat > /tmp/runtime-metadata/identify_runtime.py <<'PY'
           import ctypes, hashlib, json
           from pathlib import Path
           p=Path('/usr/local/opengauss/lib/libxgboost.so')
@@ -33,7 +33,7 @@ jobs:
           PY
           docker run --rm --entrypoint /bin/bash -v /tmp/runtime-metadata:/out \
             enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5 \
-            -lc 'apt-get update -qq && apt-get install -y --no-install-recommends libgomp1 python3-minimal && ldd /usr/local/opengauss/lib/libxgboost.so > /out/ldd.txt && python3 /out/inspect.py'
+            -lc 'apt-get update -qq && apt-get install -y --no-install-recommends libgomp1 python3 && ldd /usr/local/opengauss/lib/libxgboost.so > /out/ldd.txt && python3 /out/identify_runtime.py'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
