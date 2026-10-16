@@ -74,7 +74,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
     Tuplestorestate *input;
     TupleTableSlot *slot;
     TupleDesc desc;
-    Datum *values; bool *nulls;
+    double *values;
     int *width;
     int source_cols, first_feature=db4ai_supervised(algorithm)?1:0;
     int i, nf=0;
@@ -168,9 +168,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
     }
     else if(first_feature && !numeric_type(getBaseType(TupleDescAttr(desc,0)->atttypid)))
         ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("regression label must be numeric")));
-    data->desc=CreateTemplateTupleDesc(data->ncolumns);
     data->feature_names=palloc0(sizeof(char *)*nf);
-    for(i=0;i<data->ncolumns;i++) TupleDescInitEntry(data->desc,i+1,NULL,FLOAT8OID,-1,0);
     nf=0;
     for(i=first_feature;i<source_cols;i++)
     {
@@ -179,10 +177,9 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
             data->feature_names[nf++]=width[i]==1?pstrdup(NameStr(TupleDescAttr(desc,i)->attname)):
                 psprintf("%s[%d]",NameStr(TupleDescAttr(desc,i)->attname),j+1);
     }
-    data->store=tuplestore_begin_heap(true,false,db4ai_work_mem);
-    data->slot=MakeSingleTupleTableSlot(data->desc,&TTSOpsMinimalTuple);
+    data->dense=db4ai_rows_create(data->ncolumns,(Size)db4ai_work_mem*1024);
     slot=MakeSingleTupleTableSlot(desc,&TTSOpsMinimalTuple);
-    values=palloc0(sizeof(Datum)*data->ncolumns); nulls=palloc0(sizeof(bool)*data->ncolumns);
+    values=palloc0(sizeof(double)*data->ncolumns);
     rowcontext=AllocSetContextCreate(context,"DB4AI normalize row",ALLOCSET_SMALL_SIZES);
     tuplestore_rescan(input);
     while(tuplestore_gettupleslot(input,true,false,slot))
@@ -208,7 +205,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
                 if(!isnull && (type==FLOAT4OID || type==FLOAT8OID)) (void)as_double(v,type);
                 if(!isnull && type==NUMERICOID && (numeric_is_nan(DatumGetNumeric(v)) || numeric_is_inf(DatumGetNumeric(v))))
                     ereport(ERROR,(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),errmsg("non-finite Bayes numeric category")));
-                values[column++]=Float8GetDatum((double)db4ai_dictionary_index(data->domains[i],v,isnull,true));
+                values[column++]=(double)db4ai_dictionary_index(data->domains[i],v,isnull,true);
             }
             else if(categorical && i==0)
             {
@@ -216,7 +213,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
                 if(type==FLOAT4OID || type==FLOAT8OID) (void)as_double(v,type);
                 if(type==NUMERICOID && (numeric_is_nan(DatumGetNumeric(v)) || numeric_is_inf(DatumGetNumeric(v))))
                     ereport(ERROR,(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),errmsg("non-finite classification label")));
-                values[column++]=Float8GetDatum((double)db4ai_dictionary_index(data->labels,v,false,true));
+                values[column++]=(double)db4ai_dictionary_index(data->labels,v,false,true);
             }
             else if(type==FLOAT8ARRAYOID || type==FLOAT4ARRAYOID)
             {
@@ -232,13 +229,13 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
                 for(j=0;j<n;j++)
                 {
                     if(missing[j]) ereport(ERROR,(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),errmsg("feature arrays must not contain NULL elements")));
-                    values[column++]=Float8GetDatum(as_double(items[j],elem));
+                    values[column++]=as_double(items[j],elem);
                 }
             }
             else
             {
                 if(isnull && !options->null_policy) ereport(ERROR,(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),errmsg("NULL training value in column %d",i+1)));
-                values[column++]=Float8GetDatum(isnull?0.0:as_double(v,type));
+                values[column++]=isnull?0.0:as_double(v,type);
             }
         }
         MemoryContextSwitchTo(context);
@@ -250,64 +247,62 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
                 ereport(ERROR,(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),errmsg("combined Bayes dictionaries exceed db4ai.max_model_mb")));
         }
         if(discard) data->discarded++;
-        else { tuplestore_putvalues(data->store,data->desc,values,nulls); data->nrows++; }
+        else { db4ai_rows_append(data->dense,values); data->nrows++; }
         ExecClearTuple(slot); MemoryContextReset(rowcontext);
     }
-    data->spilled=!tuplestore_in_memory(data->store);
+    db4ai_rows_seal(data->dense);
+    data->spilled=db4ai_rows_spilled(data->dense);
     ExecDropSingleTupleTableSlot(slot); tuplestore_end(input); FreeTupleDesc(desc); MemoryContextDelete(rowcontext);
-    pfree(values); pfree(nulls); pfree(width);
+    pfree(values); pfree(width);
     if(!data->nrows) ereport(ERROR,(errcode(ERRCODE_NO_DATA_FOUND),errmsg("training input has no usable rows")));
     if(categorical && data->labels->count<2) ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("classification requires at least two distinct labels")));
     if(categorical && algorithm!=DB4AI_MULTICLASS && one_then_zero(data->labels))
     {
         Db4aiDictionary *old=data->labels;
-        Tuplestorestate *ordered=tuplestore_begin_heap(true,false,db4ai_work_mem);
+        Db4aiRowStore *ordered=db4ai_rows_create(data->ncolumns,(Size)db4ai_work_mem*1024);
+        double *row=palloc(data->ncolumns*sizeof(double));
         data->labels=db4ai_dictionary_new(old->type,old->typmod,old->collation,old->limit);
         db4ai_dictionary_index(data->labels,old->values[1],false,true);
         db4ai_dictionary_index(data->labels,old->values[0],false,true);
         data->labels->frequency[0]=old->frequency[1]; data->labels->frequency[1]=old->frequency[0];
-        tuplestore_rescan(data->store);
-        while(tuplestore_gettupleslot(data->store,true,false,data->slot))
+        data->position=0;
+        while(db4ai_data_next(data,row))
         {
-            CHECK_FOR_INTERRUPTS(); slot_getallattrs(data->slot);
-            data->slot->tts_values[0]=Float8GetDatum(1.0-DatumGetFloat8(data->slot->tts_values[0]));
-            tuplestore_putvalues(ordered,data->desc,data->slot->tts_values,data->slot->tts_isnull);
-            ExecClearTuple(data->slot);
+            CHECK_FOR_INTERRUPTS();
+            row[0]=1.0-row[0];
+            db4ai_rows_append(ordered,row);
         }
-        tuplestore_end(data->store); data->store=ordered;
-        data->spilled=data->spilled || !tuplestore_in_memory(ordered);
+        db4ai_rows_seal(ordered);
+        db4ai_rows_free(data->dense); data->dense=ordered;
+        data->spilled=data->spilled || db4ai_rows_spilled(ordered);
+        pfree(row);
     }
-    tuplestore_rescan(data->store);
+    data->position=0;
     return data;
 }
 
 bool
 db4ai_data_next(Db4aiData *data, double *row)
 {
-    int i;
-    if (!tuplestore_gettupleslot(data->store, true, false, data->slot))
+    const double *source;
+    if (!db4ai_rows_slice(data->dense,data->position,1,&source))
         return false;
-    slot_getallattrs(data->slot);
-    for (i = 0; i < data->ncolumns; i++)
-        row[i] = DatumGetFloat8(data->slot->tts_values[i]);
-    ExecClearTuple(data->slot);
+    memcpy(row,source,(Size)data->ncolumns*sizeof(double));
+    data->position++;
     return true;
 }
 
 void
 db4ai_data_rewind(Db4aiData *data)
 {
-    ExecClearTuple(data->slot);
-    tuplestore_rescan(data->store);
+    data->position=0;
     data->passes++;
 }
 
 void
 db4ai_data_close(Db4aiData *data)
 {
-    ExecDropSingleTupleTableSlot(data->slot);
-    tuplestore_end(data->store);
-    FreeTupleDesc(data->desc);
+    db4ai_rows_free(data->dense);
 }
 
 double *

@@ -1,5 +1,4 @@
-FILES['test/corgipile_ddl.sql'] = {'old': None, 'new': '1259b0072c8ba1b41ccd200fbed465b2cda427b6', 'base': 'test/corgipile_ddl.sql', 'mode': '100644','edits':[
-(0,0,r'''\set ON_ERROR_STOP 1
+\set ON_ERROR_STOP 1
 -- Functional audit additions: explicit DDL, diagnostics, dense replay and CorgiPile.
 SELECT public.assert_true((SELECT extversion='0.3.0' FROM pg_extension WHERE extname='pg_db4ai'),'0.3 installed');
 SELECT db4ai.execute_ddl($ddl$
@@ -122,72 +121,3 @@ SELECT public.assert_true(
  'three full shuffle/loss passes read exactly normalized bytes without chunk amplification');
 RESET db4ai.work_mem;
 SELECT 'CorgiPile, dense replay, DDL, functional diagnostics tests passed' result;
-''')
-]}
-FILES['test/partial_batch_reference.py'] = {'old': None, 'new': 'f276478684177ceb1f1d273bfafe6453df2b8efe', 'base': 'test/partial_batch_reference.py', 'mode': '100644','edits':[
-(0,0,r'''#!/usr/bin/env python3
-"""Independent scalar update oracle for partial shuffle units.
-Only tests the CURRENT extension on 33 synthetic rows; no baseline engine runs.
-"""
-import json, os, subprocess
-from pathlib import Path
-pg_config=os.environ.get('PG_CONFIG','pg_config')
-binpath=Path(subprocess.check_output([pg_config,'--bindir'],text=True).strip())
-def sql(text):
-    return subprocess.check_output([str(binpath/'psql'),'-X','-A','-t','-v','ON_ERROR_STOP=1','-c',text],text=True).strip()
-for mode in ['batch','row','corgipile']:
-    options={'profile':'opengauss','max_iterations':5,'batch_size':8,'learning_rate':.05,'decay':1,'tolerance':0,'seed':42,'shuffle':mode}
-    if mode=='corgipile':options.update(shuffle_block_rows=7,shuffle_window_blocks=3)
-    else:options['shuffle_buffer_size']=64
-    spec=json.dumps(options)
-    name='partial_oracle_'+mode
-    sql(f"SELECT db4ai.drop_model('{name}'); SELECT db4ai.train('{name}','linear_regression','SELECT 1+2*((i-16)::float8/10), (i-16)::float8/10 FROM generate_series(0,32)i','{spec}')")
-    actual=json.loads(sql(f"SELECT convert_from(db4ai.export_model('{name}'),'UTF8')"))['weights']
-    w=[0.,0.]
-    for epoch in range(5):
-        order=json.loads(sql(f"SELECT to_json(db4ai.shuffle_indices(33,'{spec}',{epoch}))"))
-        assert sorted(order)==list(range(33))
-        for off in range(0,len(order),8):
-            batch=order[off:off+8];grad=[0.,0.]
-            for i in batch:
-                x=(i-16)/10.;y=1+2*x;err=w[0]+w[1]*x-y
-                grad[0]+=err;grad[1]+=err*x
-            for j in range(2):w[j]-=.05*grad[j]/len(batch)
-    assert max(abs(a-b) for a,b in zip(actual,w))<1e-13,(mode,actual,w)
-    print('PASS independent partial-minibatch reassembly oracle:',mode)
-''')
-]}
-FILES['test/run.sh'] = {'old': '2abb255ce4f4f7ca83d91d76b6fa3fd9eedd3144', 'new': '6ddc1d4f48aefd1f73d08a83590fd1db9a3e7799', 'base': 'test/run.sh', 'mode': '100755','edits':[
-(22,22,r'''"$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/corgipile_ddl.sql"
-'''),
-(23,23,r'''python3 "$ROOT/test/partial_batch_reference.py"
-''')
-]}
-FILES['test/upgrade.sql'] = {'old': '9a1ce2bef11690f1006c9821cd2cb63a290a699a', 'new': 'ac1f460e0f46800c8a189e440f0e0d1e9e6b0c39', 'base': 'test/upgrade.sql', 'mode': '100644','edits':[
-(30,30,r'''ALTER EXTENSION pg_db4ai UPDATE TO '0.3.0';
-DO $$ BEGIN
-  IF EXISTS(SELECT FROM original_payload p JOIN db4ai.pg_db4ai_models m USING(model_name) WHERE p.checksum<>md5(m.model_data)) THEN RAISE EXCEPTION '0.3 upgrade rewrote model'; END IF;
-  IF db4ai.predict_float8('v01_linear',ARRAY[3.0])<>7 THEN RAISE EXCEPTION '0.3 legacy model load'; END IF;
-  IF array_length(db4ai.shuffle_indices(200,'{"shuffle":"corgipile","shuffle_block_rows":7,"shuffle_window_blocks":3}',1),1)<>200 THEN RAISE EXCEPTION '0.3 shuffle upgrade'; END IF;
-END $$;
-SELECT db4ai.execute_ddl('CREATE MODEL after_v03 USING linear_regression FEATURES x TARGET y FROM (SELECT 2.0 AS y,1.0 AS x)t WITH max_iterations=2');
-SELECT '0.2 to 0.3 upgrade passed' result;
-''')
-]}
-FILES['test/xgboost.sql'] = {'old': 'fd5beeda1eebb537701e6eadb522a689130adbeb', 'new': 'dbcb06e9852af3319d454c90ecba400dd0e98a30', 'base': 'test/xgboost.sql', 'mode': '100644','edits':[
-(54,54,r'''-- nthread is a real training capability only in explicitly enabled builds.
-DO $$ BEGIN
- IF (db4ai.build_info()->>'openmp')::boolean THEN
-   PERFORM db4ai.train('xgb_threads','xgboost_regression_squarederror',
-     'SELECT y,x,x2 FROM public.regression','{"nthread":2,"max_iterations":15}');
-   IF (db4ai.explain_model('xgb_threads')->'hyperparameters'->>'nthread')::int<>2
-     THEN RAISE EXCEPTION 'requested training threads not preserved'; END IF;
- ELSE
-   PERFORM public.expect_error($q$SELECT db4ai.train('xgb_threads','xgboost_regression_squarederror',
-       'SELECT y,x,x2 FROM public.regression','{"nthread":2}')$q$,'0A000');
- END IF;
-END $$;
-SELECT public.assert_true((db4ai.build_info()->>'native_create_model_grammar')::boolean=false,
-                          'explicit DDL must not claim native grammar');
-''')
-]}

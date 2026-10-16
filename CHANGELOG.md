@@ -1,3 +1,17 @@
+# 0.3.0
+
+- CorgiPile randomized logical blocks and row mixing within bounded windows.
+- Dense numeric replay and spillable one-time prepared feature caching.
+- Preserve minibatch assembly when a shuffled short unit occurs mid-epoch.
+- Exact-range spill reads, phase timers and logical I/O counters.
+- Explicit model-DDL scanner/interpreter, DEFAULT support, dry parsing.
+- KMeans cluster distance diagnostics and PCA selected-component diagnostics.
+- Fractional max_seconds; optional WITH_OPENMP training nthread support.
+- Build/header/configuration invalidation; 0.2->0.3 upgrade and mathematical,
+  security/RLS, spill, cancellation and partial-minibatch regressions.
+- ABO excluded; numerical implementation differences accepted as design choices.
+- External baselines are frozen: only current extension measurements/ablations.
+
 # Changelog
 
 ## 0.2.0 — 2026-10-16

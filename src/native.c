@@ -352,6 +352,7 @@ train_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
         ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
                         errmsg("PCA eigensolver did not converge"), errhint("Increase max_iterations.")));
     m->iterations = sweep;
+    m->eigenvalues=palloc0(m->noutputs*sizeof(double));
     for (p = 0; p < m->noutputs; p++)
     {
         int best = 0;
@@ -367,6 +368,7 @@ train_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
             sign = -1;
         for (i = 0; i < n; i++)
             m->weights[p * n + i] = sign * v[i * n + best];
+        m->eigenvalues[p]=Max(0.0,a[best*n+best]);
         a[best * n + best] = -DBL_MAX;
     }
     m->loss = 0; /* Residual sample variance after the selected components. */
@@ -374,6 +376,76 @@ train_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
         if (a[i * n + i] != -DBL_MAX)
             m->loss += Max(0.0, a[i * n + i]);
     pfree(a); pfree(v); pfree(row); pfree(delta);
+}
+
+/* User-visible model diagnostics are DB4AI functionality, unlike ABO's use of
+ * Bayes estimates inside an optimizer. Store these once with the model. */
+static void
+native_diagnostics(Db4aiNative *m, Db4aiData *data)
+{
+    StringInfoData json;
+    int c;
+    initStringInfo(&json);
+    if(m->algorithm==DB4AI_KMEANS)
+    {
+        int k=m->noutputs;
+        int64 *count=palloc0(k*sizeof(int64));
+        double *mean=palloc0(k*sizeof(double)), *m2=palloc0(k*sizeof(double));
+        double *min=palloc(k*sizeof(double)), *max=palloc0(k*sizeof(double));
+        double *row=palloc(data->ncolumns*sizeof(double));
+        for(c=0;c<k;c++) min[c]=DBL_MAX;
+        db4ai_data_rewind(data);
+        while(db4ai_data_next(data,row))
+        {
+            double distance,delta;
+            CHECK_FOR_INTERRUPTS();
+            c=closest(m,row,&distance);
+            delta=distance-mean[c];
+            mean[c]+=delta/(++count[c]);
+            m2[c]+=delta*(distance-mean[c]);
+            min[c]=Min(min[c],distance); max[c]=Max(max[c],distance);
+        }
+        appendStringInfo(&json,"{\"centroids\":[");
+        for(c=0;c<k;c++)
+        {
+            if(c) appendStringInfoChar(&json,',');
+            appendStringInfo(&json,"{\"id\":%d,\"size\":" INT64_FORMAT ",\"coordinates\":",c,count[c]);
+            db4ai_write_array(&json,m->weights+(Size)c*m->nfeatures,m->nfeatures);
+            if(count[c])
+            {
+                double stats[]={mean[c]*count[c],min[c],max[c],mean[c],sqrt(Max(0.0,m2[c]/count[c]))};
+                appendStringInfoString(&json,",\"distance_stats\":");
+                db4ai_write_array(&json,stats,5);
+            }
+            else appendStringInfoString(&json,",\"distance_stats\":null");
+            appendStringInfoChar(&json,'}');
+        }
+        appendStringInfoString(&json,"],\"distance_stat_order\":[\"sum\",\"min\",\"max\",\"mean\",\"population_stddev\"]}");
+        pfree(row); pfree(count); pfree(mean); pfree(m2); pfree(min); pfree(max);
+    }
+    else if(m->algorithm==DB4AI_PCA)
+    {
+        double total=0;
+        for(c=0;c<m->noutputs;c++) total+=m->eigenvalues[c];
+        appendStringInfoString(&json,"{\"principal_components\":[");
+        for(c=0;c<m->noutputs;c++)
+        {
+            double stats[]={m->eigenvalues[c],total>0?m->eigenvalues[c]/total:0};
+            if(c) appendStringInfoChar(&json,',');
+            appendStringInfo(&json,"{\"id\":%d,\"coordinates\":",c);
+            db4ai_write_array(&json,m->weights+(Size)c*m->nfeatures,m->nfeatures);
+            appendStringInfoString(&json,",\"eigenvalue_and_selected_fraction\":");
+            db4ai_write_array(&json,stats,2);
+            appendStringInfoString(&json,",\"proportion_stddev_estimate\":");
+            if(m->eigen_stddev) db4ai_write_array(&json,m->eigen_stddev+c,1);
+            else appendStringInfoString(&json,"null");
+            appendStringInfoChar(&json,'}');
+        }
+        appendStringInfoString(&json,"]}");
+    }
+    else { pfree(json.data); return; }
+    m->diagnostics=DatumGetJsonbP(DirectFunctionCall1(jsonb_in,CStringGetDatum(json.data)));
+    pfree(json.data);
 }
 
 Db4aiNative *
@@ -392,6 +464,7 @@ db4ai_native_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions
     }
     else
         db4ai_gradient_train(model, data, options);
+    native_diagnostics(model,data);
     return model;
 }
 

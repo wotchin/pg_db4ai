@@ -22,7 +22,8 @@ linear_score(const double *w, const double *x, int n)
 {
     double value=0; int i;
     for(i=0;i<n;i++) value+=w[i]*x[i];
-    db4ai_check_finite(value); return value;
+    if (unlikely(!isfinite(value))) db4ai_check_finite(value);
+    return value;
 }
 
 void
@@ -58,7 +59,7 @@ db4ai_native_class(const Db4aiNative *m, const double *x)
 }
 
 static void
-update_batch(Db4aiNative *m, const Db4aiOptions *o, const double *features, const double *labels,
+update_batch(Db4aiNative *m, const Db4aiOptions *o, const double *features,
              int rows, int epoch, double rate, double *scales, double *scale_rate, double *grad)
 {
     int models=m->algorithm==DB4AI_MULTICLASS?m->nclasses:1;
@@ -73,15 +74,16 @@ update_batch(Db4aiNative *m, const Db4aiOptions *o, const double *features, cons
         if(o->optimizer==1 && epoch==0)
             for(r=0;r<rows;r++) for(j=0;j<n;j++)
             {
-                double v=features[(Size)r*n+j], q=v*v;
+                double v=features[(Size)r*(n+1)+1+j], q=v*v;
                 db4ai_check_finite(q);
                 if(q>s[j]) { w[j]*=s[j]/q; s[j]=q; }
                 if(s[j]>0) scale_rate[c]+=q/s[j];
             }
         for(r=0;r<rows;r++)
         {
-            const double *x=features+(Size)r*n;
-            double y=classifier?(m->algorithm==DB4AI_MULTICLASS?(labels[r]==c?1.0:0.0):labels[r]):labels[r];
+            const double *x=features+(Size)r*(n+1)+1;
+            double label=features[(Size)r*(n+1)];
+            double y=classifier?(m->algorithm==DB4AI_MULTICLASS?(label==c?1.0:0.0):label):label;
             double z=linear_score(w,x,n);
             double error;
             CHECK_FOR_INTERRUPTS();
@@ -91,7 +93,7 @@ update_batch(Db4aiNative *m, const Db4aiOptions *o, const double *features, cons
                 error=target*z<1?(-target*2*o->svm_lambda):0;
             }
             else error=classifier?logistic(z)-y:z-y;
-            for(j=0;j<n;j++) grad[j]+=error*x[j];
+            if (error!=0.0) for(j=0;j<n;j++) grad[j]+=error*x[j];
         }
         for(j=0;j<n;j++)
         {
@@ -99,71 +101,173 @@ update_batch(Db4aiNative *m, const Db4aiOptions *o, const double *features, cons
             if(o->optimizer==1) g=s[j]>0 && scale_rate[c]>0 ? g/s[j]/scale_rate[c] : 0;
             else g/=rows;
             if(j) g+=o->l2*w[j];
-            w[j]-=rate*g; db4ai_check_finite(w[j]);
+            w[j]-=rate*g; if (unlikely(!isfinite(w[j]))) db4ai_check_finite(w[j]);
         }
     }
+}
+
+/* Precompute once, including bias and random maps. The cached representation
+ * is still spillable and temporary; serialized models contain maps, not rows.
+ * Disabling the cache is an explicit ablation/debug path, not a new model. */
+static void
+prepare_rows(Db4aiNative *m, Db4aiData *source, Db4aiData *prepared)
+{
+    double *row=palloc((m->ncoefficients+1)*sizeof(double));
+    int64 cursor=0;
+    *prepared=*source;
+    prepared->ncolumns=m->ncoefficients+1;
+    prepared->nfeatures=m->ncoefficients;
+    prepared->position=0; prepared->passes=0;
+    prepared->dense=db4ai_rows_create(prepared->ncolumns,(Size)db4ai_work_mem*1024);
+    while(cursor<source->nrows)
+    {
+        const double *rows;
+        int i, count=db4ai_rows_slice(source->dense,cursor,4096,&rows);
+        for(i=0;i<count;i++)
+        {
+            const double *raw=rows+(Size)i*source->ncolumns;
+            CHECK_FOR_INTERRUPTS();
+            row[0]=raw[0];
+            db4ai_kernel_transform(m,raw+1,row+1);
+            db4ai_rows_append(prepared->dense,row);
+        }
+        cursor+=count;
+    }
+    db4ai_rows_seal(prepared->dense);
+    prepared->spilled=db4ai_rows_spilled(prepared->dense);
+    pfree(row);
 }
 
 void
 db4ai_gradient_train(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
 {
     Db4aiShuffle *shuffle;
-    double *batch, *labels, *scales, *scale_rate, *gradient, *row, *v;
+    Db4aiData prepared;
+    Db4aiData *train=data;
+    double *batch=NULL, *assembly=NULL, *scales, *scale_rate, *gradient, *v;
     int n, epoch, models;
     double rate=o->learning_rate, previous=DBL_MAX;
     TimestampTz started=GetCurrentTimestamp();
+    TimestampTz stage;
     m->labels=data->labels; m->nclasses=data->labels?data->labels->count:0;
     m->noutputs=m->algorithm==DB4AI_MULTICLASS?m->nclasses:1;
     m->classifier=o->classifier?DB4AI_SVM:DB4AI_LOGISTIC;
+    stage=GetCurrentTimestamp();
     db4ai_kernel_prepare(m,o); n=m->ncoefficients;
     models=m->algorithm==DB4AI_MULTICLASS?m->nclasses:1;
     if((Size)o->batch_size*(n+1)*sizeof(double)>(Size)db4ai_work_mem*1024)
         ereport(ERROR,(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),errmsg("transformed gradient batch exceeds db4ai.work_mem")));
     m->weights=palloc0((Size)models*n*sizeof(double)); scales=palloc0((Size)models*n*sizeof(double));
     scale_rate=palloc0(models*sizeof(double)); gradient=palloc0(n*sizeof(double));
-    batch=palloc((Size)o->batch_size*n*sizeof(double)); labels=palloc(o->batch_size*sizeof(double));
-    row=palloc(data->ncolumns*sizeof(double)); v=palloc(n*sizeof(double));
-    shuffle=db4ai_shuffle_create(data,o);
+    v=palloc(n*sizeof(double));
+    if(o->kernel_cache)
+    {
+        prepare_rows(m,data,&prepared);
+        train=&prepared;
+        data->kernel_cached=true;
+        data->kernel_spilled=prepared.spilled;
+        data->kernel_rows=m->kernel?data->nrows:0;
+    }
+    else batch=palloc((Size)o->batch_size*(n+1)*sizeof(double));
+    data->feature_seconds=(GetCurrentTimestamp()-stage)/1000000.0;
+    shuffle=db4ai_shuffle_create(train,o);
     for(epoch=0;epoch<o->iterations;epoch++)
     {
         const double *rows;
         int count, r, fill=0;
+        int64 cursor=0;
         double loss=0;
+        stage=GetCurrentTimestamp();
         db4ai_shuffle_start(shuffle,epoch);
         while((count=db4ai_shuffle_next(shuffle,&rows))>0)
-            for(r=0;r<count;r++)
+        {
+            const double *features=rows;
+            if(!o->kernel_cache)
             {
-                const double *raw=rows+(Size)r*data->ncolumns;
-                db4ai_kernel_transform(m,raw+1,batch+(Size)fill*n); labels[fill]=raw[0];
-                if(++fill==o->batch_size)
+                for(r=0;r<count;r++)
                 {
-                    update_batch(m,o,batch,labels,fill,epoch,rate,scales,scale_rate,gradient); fill=0;
+                    const double *raw=rows+(Size)r*data->ncolumns;
+                    double *target=batch+(Size)r*(n+1);
+                    target[0]=raw[0];
+                    db4ai_kernel_transform(m,raw+1,target+1);
+                }
+                features=batch;
+                if(m->kernel) data->kernel_rows+=count;
+            }
+            /* A shuffled short unit can occur in the middle of an epoch.
+             * Reassemble minibatches across such unit boundaries, exactly as
+             * the original row-fed trainer did; do not change update sizes. */
+            if(fill==0 && count==o->batch_size)
+                update_batch(m,o,features,count,epoch,rate,scales,scale_rate,gradient);
+            else
+            {
+                int used=0;
+                if(assembly==NULL) assembly=palloc((Size)o->batch_size*(n+1)*sizeof(double));
+                while(used<count)
+                {
+                    int take=Min(count-used,o->batch_size-fill);
+                    memcpy(assembly+(Size)fill*(n+1),features+(Size)used*(n+1),(Size)take*(n+1)*sizeof(double));
+                    fill+=take; used+=take;
+                    if(fill==o->batch_size)
+                    {
+                        update_batch(m,o,assembly,fill,epoch,rate,scales,scale_rate,gradient);
+                        fill=0;
+                    }
                 }
             }
-        if(fill) update_batch(m,o,batch,labels,fill,epoch,rate,scales,scale_rate,gradient);
-        db4ai_data_rewind(data);
-        while(db4ai_data_next(data,row))
-        {
-            int c;
-            CHECK_FOR_INTERRUPTS(); db4ai_kernel_transform(m,row+1,v);
-            for(c=0;c<models;c++)
-            {
-                double z=linear_score(m->weights+(Size)c*n,v,n);
-                double y=m->algorithm==DB4AI_MULTICLASS?(row[0]==c?1:0):row[0];
-                if(m->algorithm==DB4AI_SVM || (m->algorithm==DB4AI_MULTICLASS && m->classifier==DB4AI_SVM))
-                    loss+=Max(0,1-(2*y-1)*z);
-                else if(db4ai_classifier(m->algorithm)) loss+=Max(z,0)-y*z+log1p(exp(-fabs(z)));
-                else loss+=(z-y)*(z-y)*(o->legacy_profile?0.5:1.0);
-            }
         }
+        if(fill) update_batch(m,o,assembly,fill,epoch,rate,scales,scale_rate,gradient);
+        data->optimize_seconds+=(GetCurrentTimestamp()-stage)/1000000.0;
+        stage=GetCurrentTimestamp();
+        train->passes++;
+        while(cursor<train->nrows)
+        {
+            count=db4ai_rows_slice(train->dense,cursor,4096,&rows);
+            for(r=0;r<count;r++)
+            {
+                const double *raw=rows+(Size)r*train->ncolumns;
+                const double *x=raw+1;
+                int c;
+                CHECK_FOR_INTERRUPTS();
+                if(!o->kernel_cache)
+                {
+                    db4ai_kernel_transform(m,raw+1,v); x=v;
+                    if(m->kernel) data->kernel_rows++;
+                }
+                for(c=0;c<models;c++)
+                {
+                    double z=linear_score(m->weights+(Size)c*n,x,n);
+                    double y=m->algorithm==DB4AI_MULTICLASS?(raw[0]==c?1:0):raw[0];
+                    if(m->algorithm==DB4AI_SVM || (m->algorithm==DB4AI_MULTICLASS && m->classifier==DB4AI_SVM))
+                        loss+=Max(0,1-(2*y-1)*z);
+                    else if(db4ai_classifier(m->algorithm)) loss+=Max(z,0)-y*z+log1p(exp(-fabs(z)));
+                    else loss+=(z-y)*(z-y)*(o->legacy_profile?0.5:1.0);
+                }
+            }
+            cursor+=count;
+        }
+        data->evaluation_seconds+=(GetCurrentTimestamp()-stage)/1000000.0;
         m->loss=loss/data->nrows; m->iterations=epoch+1; db4ai_check_finite(m->loss);
         if(o->verbose) ereport(NOTICE,(errmsg("DB4AI epoch %d loss %.12g",m->iterations,m->loss)));
         if(epoch && fabs(previous-m->loss)<=o->tolerance*(o->legacy_profile?1:Max(1,fabs(previous)))) break;
         previous=m->loss; rate*=o->decay; db4ai_check_finite(rate);
         if(o->max_seconds && TimestampDifferenceExceeds(started,GetCurrentTimestamp(),o->max_seconds*1000)) break;
     }
+    data->shuffle_capacity=train->shuffle_capacity;
+    data->shuffle_full_cache=train->shuffle_full_cache;
+    data->shuffle_blocks=train->shuffle_blocks;
+    data->shuffle_window_rows=train->shuffle_window_rows;
     db4ai_shuffle_free(shuffle);
-    pfree(batch); pfree(labels); pfree(scales); pfree(scale_rate); pfree(gradient); pfree(row); pfree(v);
+    if(o->kernel_cache)
+    {
+        data->passes+=prepared.passes;
+        db4ai_rows_stats(prepared.dense, &data->prepared_bytes_read,
+                        &data->prepared_bytes_written, &data->prepared_seeks);
+        db4ai_rows_free(prepared.dense);
+    }
+    if(batch) pfree(batch);
+    if(assembly) pfree(assembly);
+    pfree(scales); pfree(scale_rate); pfree(gradient); pfree(v);
 }
 
 /* Reorthogonalized modified Gram-Schmidt; protects nearly dependent columns. */

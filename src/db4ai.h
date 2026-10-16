@@ -47,6 +47,9 @@ typedef struct Db4aiOptions
     int shuffle_mode;
     bool shuffle_first;
     int shuffle_buffer;
+    int shuffle_block_rows;
+    int shuffle_window_blocks;
+    bool kernel_cache;
     int seeding;               /* 0: Random++, 1: KMeans||, 2: reservoir */
     int distance;              /* 0: L1, 1: L2, 2: L2 squared, 3: Linf */
     int seeding_rounds;
@@ -54,7 +57,7 @@ typedef struct Db4aiOptions
     int pca_solver;            /* 0: covariance/Jacobi, 1: stochastic */
     bool center;
     int null_policy;           /* 0: error, 1: skip label / zero features */
-    int max_seconds;
+    double max_seconds;
     bool verbose;
     bool legacy_profile;
     int num_features;
@@ -74,9 +77,8 @@ typedef struct Db4aiOptions
 
 typedef struct Db4aiData
 {
-    Tuplestorestate *store;
-    TupleTableSlot *slot;
-    TupleDesc desc;
+    struct Db4aiRowStore *dense;
+    int64 position;
     int ncolumns;
     int nfeatures;
     int64 nrows;
@@ -88,6 +90,18 @@ typedef struct Db4aiData
     bool spilled;
     int shuffle_capacity;
     bool shuffle_full_cache;
+    int64 shuffle_blocks;
+    int shuffle_window_rows;
+    bool kernel_cached;
+    bool kernel_spilled;
+    int64 kernel_rows;
+    double input_seconds;
+    double feature_seconds;
+    double optimize_seconds;
+    double evaluation_seconds;
+    uint64 prepared_bytes_read;
+    uint64 prepared_bytes_written;
+    uint64 prepared_seeks;
 
 } Db4aiData;
 
@@ -114,6 +128,7 @@ typedef struct Db4aiNative
     double *kernel_coefs;
     double *eigenvalues;
     double *eigen_stddev;
+    Jsonb *diagnostics;
 
 } Db4aiNative;
 
@@ -137,7 +152,8 @@ extern Db4aiAlgorithm db4ai_algorithm(const char *name);
 extern const char *db4ai_algorithm_name(Db4aiAlgorithm algorithm);
 extern bool db4ai_supervised(Db4aiAlgorithm algorithm);
 extern bool db4ai_is_xgboost(Db4aiAlgorithm algorithm);
-extern void db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *out);
+extern void db4ai_validate_option_name(const char *name, Db4aiAlgorithm algorithm);
+void db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *out);
 extern Jsonb *db4ai_options_json(const Db4aiOptions *options, Db4aiAlgorithm algorithm);
 extern JsonbValue *db4ai_json_field(Jsonb *json, const char *key, bool required);
 extern double db4ai_json_number(Jsonb *json, const char *key, double def);

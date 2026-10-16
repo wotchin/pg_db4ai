@@ -1,5 +1,4 @@
-FILES['src/model_ddl.c'] = {'old': None, 'new': 'a144a95a2499fe9aac9699205ae3f70eeba39082', 'base': 'src/model_ddl.c', 'mode': '100644','edits':[
-(0,0,r'''/* SPDX-License-Identifier: MulanPSL-2.0
+/* SPDX-License-Identifier: MulanPSL-2.0
  * Explicit model-DDL compatibility entry point, not a PostgreSQL raw-parser
  * hook. Stock PostgreSQL rejects bare CREATE MODEL before utility hooks run.
  * Reuse PG's lexer (comments, quoted identifiers, escape/dollar strings), and
@@ -358,5 +357,3 @@ pg_db4ai_execute_ddl(PG_FUNCTION_ARGS)
     SPI_finish();
     PG_RETURN_JSONB_P(copy);
 }
-''')
-]}
