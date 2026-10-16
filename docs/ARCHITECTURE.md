@@ -1,41 +1,94 @@
-# PostgreSQL-only architecture
+# PostgreSQL-only architecture (0.2)
 
-```
-SQL functions (SECURITY INVOKER)
-  |-- train
-  |    |-- parse/check one SELECT
-  |    |-- SPI cursor under caller identity and RLS
-  |    |-- numeric tuple conversion -> tuplestore (memory + spill)
-  |    |-- repeated passes -> native C algorithms / XGBoost C API
-  |    `-- durable artifact -> parameterized protected registry INSERT
-  |-- predict_float8 / predict_bool / predict_cluster / transform
-  |    `-- owner-visible model -> statement/command/role/name cache -> predictor
-  `-- explain_model / export_model / drop_model
+## Components
 
-db4ai.pg_db4ai_models
-  identity + regrole owner + metadata + effective options + metrics + bytea artifact
-```
+| File | Responsibility |
+|---|---|
+| `src/pg_db4ai.c` | PG function entry points, training lifecycle, dispatch, metrics and keyed predictor cache |
+| `src/models.c` | `db4ai.pg_db4ai_models` access, fixed parameterized privileged writes |
+| `src/options.c` | 11 algorithm registry entries, per-algorithm options, aliases/profiles and JSON helpers |
+| `src/data.c` | One caller-identity source execution, typed inspection, normalized spillable input |
+| `src/categories.c` | PG typed dictionaries, collision-safe hash/equality, canonical persistent IO |
+| `src/shuffle.c` | Seeded epoch batch/row shuffle, full-cache and bounded replacement paths |
+| `src/gradient.c` | GD, normalized GD, OVA and matrix-free stochastic PCA |
+| `src/kernel.c` | Gaussian Fourier / polynomial Maclaurin random feature maps |
+| `src/native.c` | KMeans, Jacobi PCA, native serialization and prediction |
+| `src/bayes.c` | Typed marginal/conditional statistics and original-family joint-selectivity propagation |
+| `src/shufflescan.c` | Explicit SQL CustomPath/CustomScan plus FunctionScan fallback |
+| `src/xgboost.c` | C API handles, full-DMatrix CPU training and JSON/UBJSON model IO |
 
-## Ownership and transactions
+No database-independent allocator/type/error wrapper is intended. Headers and
+algorithms use PG types directly. First-party sources compile as C11. Upstream
+vendored XGBoost is C++ behind a C ABI and does not call PG from worker threads.
 
-The model table is owned by the extension installer. Regular users have SELECT through an owner-filtering RLS policy, not arbitrary artifact-write privileges. Training remains invoker-security; only fixed registry INSERT/DELETE statements run with the extension owner's identity. Every such operation saves and restores identity in both normal and PG_CATCH paths and always filters/specifies the original caller's role. No input training SQL is passed to these privileged blocks. The fixed extension schema is not writable by PUBLIC.
+## Training
 
-Training publishes only after a complete model has been produced. Publication uses ordinary transactional table writes; there are no sidecar model files or custom WAL. Names are unique per role. Replacement is an explicit transaction containing drop plus train. Cross-role sharing and model ACL grants are not currently provided.
+`db4ai.train` validates algorithm/options, creates a dedicated memory context,
+and consumes exactly one read-only SELECT under the caller's identity. SPI
+fetches batches; raw tuples are materialized for reliable array-shape/label
+inspection. Accepted data is normalized into another spillable tuplestore.
+GD/NGD/OVA/PCA read it through the shuffle runtime; KMeans/Bayes perform their
+required passes. No epoch reruns source SQL. The two stores and shuffle cache
+have separate budgets, not a shared RSS cap.
 
-The RLS policy uses current_user, not session_user. SECURITY DEFINER callers intentionally inherit their definer's data/model identity. Administrators must handle dropped-role orphan models; regrole values alone do not implement a new native PostgreSQL object-dependency class.
+The first epoch is sequential by default. When every batch fits, later epochs
+uniformly permute batches. Under a bounded cache, input replaces a random cache
+unit or is emitted directly, followed by random drain. Every row is emitted once;
+partial final batches carry their actual row count. Row mode reassembles output
+rows into numerical batches. The source order, seed, batch size and cache
+capacity are all part of reproducibility.
 
-## Memory and errors
+Typed classification labels retain PG hash/equality semantics; normalized rows
+contain dictionary indices. Bayes maintains one dictionary per variable,
+including an explicit NULL category. Exported JSON contains type namespace/name,
+typmod, collation and typed text, never backend-local OIDs/pointers. Dictionary IO
+uses canonical date/time settings. Consumers must still provide compatible type
+implementations/collations when restoring across installations.
 
-Training gets a child memory context. Normalized input uses tuplestore and PG-managed temporary files. Tuples are copied/converted before each SPI batch is released. Predictor contexts hold prepared models and have backend-local lifetimes. XGBoost Booster/DMatrix resources register MemoryContext callbacks, plus explicit cleanup on success and failed prediction paths. Cleanup callbacks do not raise new PostgreSQL errors.
+Only after a model is successfully encoded is it written to the model table.
+PG errors/cancellation unwind PG contexts. XGBoost DMatrix/Booster handles have
+explicit cleanup and reset callbacks. No PG longjmp is intentionally propagated
+through a first-party C++ stack because there is no first-party C++ stack.
 
-PostgreSQL API functions are never called through callbacks executed by XGBoost's C++ stack. Dense input is prepared before entering the C API. Once a C API function returns, failures are translated into ereport(ERROR). This avoids PostgreSQL longjmp across upstream C++ RAII frames. CPU cancellation is cooperative between upstream calls, not asynchronous unwinding of C++.
+## Explicit SQL CustomScan
 
-The input-memory cap bounds our dense copy only. The native extension is not an OS-process sandbox. No public arbitrary XGBoost model import endpoint is exposed, because malformed third-party model inputs are not a safe database boundary.
+`LOAD 'pg_db4ai'` registers methods and chains `set_rel_pathlist_hook` before
+planning. Only a simple call to the extension-owned `db4ai.shuffle_scan` with
+eligible constant arguments is replaced. The original function expression is
+retained for plan dependencies, and the custom private data is serializable
+PostgreSQL nodes. Complex/whole-row/LATERAL/ordinality calls retain ordinary
+FunctionScan execution. A SECURITY DEFINER or function-SET modified function is
+not intercepted, preserving normal fmgr semantics.
 
-## Durable model format
+Begin rechecks EXECUTE ACL; Exec lazily runs caller-identity SPI, applies the
+shuffle reader and uses ExecScan for normal qualification/projection. ReScan
+rewinds fixed materialized input. End releases contexts. Explain reports rows,
+spill, seed, epoch and cache capacity; plain EXPLAIN never opens the source.
+Parallel flags are not advertised. The SQL tuple reader and the numerical batch
+shuffle runtime are separate: training does not need to invoke this SQL node.
 
-The table's format_version describes the pg_db4ai artifact envelope contract. Native JSON independently includes version, algorithm, dimensions, weights and optional mean. No raw struct layout, pointer, Datum, OID or byte-order-dependent float memory image is persisted in the native model payload.
+## Catalog and cache
 
-XGBoost bytea contains exactly the result of XGBoosterSaveModelToBuffer with json or ubj format. Metadata separately captures effective training settings, feature order and the library version. Reload uses XGBoosterLoadModelFromBuffer. Runtime snapshots and human-readable dump APIs are not model persistence mechanisms.
+`db4ai.pg_db4ai_models` remains an ordinary WAL-logged extension-owned table with
+role-isolated reads and no direct non-admin artifact writes. Source SQL never
+runs as the extension owner. Only fixed parameterized model writes enter a
+short privileged scope, restoring identity on both success and failure.
+Models are immutable; drop/train inside a transaction replaces one. Predictor
+cache keys include model name, caller role, statement and command boundary;
+model names may vary by row. User label types require compatible names on restore.
 
-pg_extension_config_dump registers both the model relation and identity sequence. Owner regrole values are represented by role names in logical dump data. Required roles must exist at restore time.
+Both table contents and the identity sequence are registered for logical backup.
+Roles must be restored first. Native JSON payload v1 and v2 are read by 0.2;
+upgrade does not mutate old blobs. The table's format envelope is distinct from
+the algorithm-specific JSON payload version. No arbitrary untrusted artifact
+import endpoint is exposed.
+
+## Limits
+
+Max input rows, feature/dictionary sizes, model allocations, spill and algorithm
+budgets are guarded, but these are not hard whole-backend RSS controls. XGBoost
+uses a complete DMatrix and additional internal memory. `max_seconds` is a soft
+training-phase limit; statement_timeout includes source SQL too. Native loops
+check interrupts; an individual upstream XGBoost call may delay cancellation.
+All APIs remain PARALLEL UNSAFE. No implicit distributed/GPU training or automatic
+optimizer cardinality-model lifecycle is introduced.

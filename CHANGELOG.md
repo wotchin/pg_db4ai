@@ -1,0 +1,26 @@
+# Changelog
+
+## 0.2.0 — 2026-10-16
+
+- Complete executing paths for the 11 algorithms in the pinned original registry.
+- Add normalized GD, OVA logistic/SVM, typed classification labels and score APIs.
+- Add persisted Gaussian/polynomial random feature maps and stochastic PCA.
+- Add Random++/KMeans|| seeding paths and all four original norm choices.
+- Add typed Bayes equality/selectivity estimator, graph validation, MCV/bins,
+  sample distinct estimation and Gaussian parent statistics without Boost.
+- Add full/bounded training batch shuffle, row shuffle and stable-input rescans.
+- Add explicit SQL ShuffleScan CustomPath/CustomScan with FunctionScan fallback,
+  ACL/RLS checks and EXPLAIN execution statistics.
+- Add option profiles, original-style aliases, controlled NULL policy and input
+  array support; reject conflicting/inapplicable options.
+- Native JSON payload v2 stores typed labels/maps/PCA estimates; v1 remains readable.
+- Add 0.1-to-0.2 SQL upgrade, numerical reference, security, rescan/spill and
+  restore regressions. No PostgreSQL core or independent-DB ABI introduced.
+- Do not restore legacy XGBoost memory snapshots or chunk-wise warm-start training.
+
+See docs/PORTING.md for the exact original behavior not claimed as equivalent.
+
+## 0.1.0 — 2026-10-15
+
+Initial PostgreSQL-only C extension, simplified native algorithms, vendored
+XGBoost, ordinary role-isolated model table, durable IO and integration tests.

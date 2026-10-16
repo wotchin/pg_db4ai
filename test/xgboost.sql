@@ -20,3 +20,10 @@ SET db4ai.xgboost_max_input_mb=1;
 SELECT public.expect_error($q$SELECT db4ai.train('too_large','xgboost_regression_squarederror','SELECT i::float8,i::float8 FROM generate_series(1,140000) i','{"max_iterations":1}')$q$,'54000');
 RESET db4ai.xgboost_max_input_mb;
 SELECT 'XGBoost tests passed' AS result;
+
+SELECT db4ai.train('xgb_exact','xgboost_regression_squarederror','SELECT y,x,x2 FROM public.regression',
+  '{"n_iterations":15,"eta":0.2,"gamma":0.1,"tree_method":"exact","eval_metric":"mae","booster":"gbtree"}');
+SELECT public.assert_true(db4ai.explain_model('xgb_exact')->'metrics'->>'training_evaluation' LIKE '%train-mae:%','XGBoost metric and aliases');
+SELECT public.expect_error($q$SELECT db4ai.train('bad_metric','xgboost_binary_logistic','SELECT 1,1','{"eval_metric":"auc"}')$q$,'22023');
+SELECT public.expect_error($q$SELECT db4ai.train('bad_tree','xgboost_binary_logistic','SELECT 1,1','{"tree_method":"gpu_hist"}')$q$,'22023');
+SELECT public.expect_error($q$SELECT db4ai.train('bad_alias','xgboost_binary_logistic','SELECT 1,1','{"eta":0.1,"learning_rate":0.2}')$q$,'22023');
