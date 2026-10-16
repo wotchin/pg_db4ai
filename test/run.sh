@@ -19,6 +19,7 @@ trap cleanup EXIT HUP INT TERM
 export PGHOST="$WORK" PGPORT=65432 PGUSER=db4ai_test PGDATABASE=postgres
 "$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/native.sql"
 "$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/extended.sql"
+"$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/shufflescan_boundaries.sql"
 python3 "$ROOT/test/numerical_reference.py"
 "$BIN/createdb" db4ai_upgrade
 "$BIN/psql" -X -d db4ai_upgrade -v ON_ERROR_STOP=1 -f "$ROOT/test/upgrade.sql"

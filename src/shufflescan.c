@@ -131,7 +131,7 @@ open_shuffle(const char *sql, TupleDesc expected, int64 seed, int buffer_rows, i
     s->capacity=Max(1,Min((int64)buffer_rows,Min(Max(s->rows,(int64)1),(int64)(budget/footprint-3))));
     s->cache=palloc0(sizeof(MinimalTuple)*s->capacity);
     tuplestore_rescan(s->input);
-    pg_prng_seed(&s->rng,s->seed^(UINT64CONST(0x9e3779b97f4a7c15)*(uint64)(epoch+1)));
+    pg_prng_seed(&s->rng,s->seed^(UINT64CONST(0x9e3779b97f4a7c15)*((uint64)epoch+1)));
     return s;
 }
 
@@ -178,7 +178,7 @@ rewind_shuffle(TupleShuffle *s)
     for(i=0;i<s->cached;i++) pfree(s->cache[i]);
     s->cached=0; s->emitted=0; s->initialized=false;
     tuplestore_rescan(s->input);
-    pg_prng_seed(&s->rng,s->seed^(UINT64CONST(0x9e3779b97f4a7c15)*(uint64)(s->epoch+1)));
+    pg_prng_seed(&s->rng,s->seed^(UINT64CONST(0x9e3779b97f4a7c15)*((uint64)s->epoch+1)));
 }
 
 static void
