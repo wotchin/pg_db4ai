@@ -1,0 +1,362 @@
+[
+  {
+    "dataset": "breast_cancer",
+    "method": "logistic_gd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "logistic_ngd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "svm_linear",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "svm_gaussian",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "logistic_gd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "logistic_ngd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "svm_linear",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "svm_gaussian",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine",
+    "method": "ova_svm",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine",
+    "method": "ova_logistic",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "digits",
+    "method": "ova_svm",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "digits",
+    "method": "ova_logistic",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "method": "linear_ngd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "method": "linear_gd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "method": "linear_ngd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "method": "linear_gd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "method": "linear_ngd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "method": "linear_gd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "method": "linear_ngd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "method": "linear_gd",
+    "seed": 42,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "logistic_ngd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "svm_linear",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "svm_gaussian",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "logistic_gd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "logistic_ngd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "svm_linear",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "svm_gaussian",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "logistic_gd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine",
+    "method": "ova_svm",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine",
+    "method": "ova_logistic",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "digits",
+    "method": "ova_svm",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "digits",
+    "method": "ova_logistic",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "method": "linear_ngd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "method": "linear_gd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "method": "linear_ngd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "method": "linear_gd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "method": "linear_ngd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "method": "linear_gd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "method": "linear_ngd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "method": "linear_gd",
+    "seed": 2024,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "logistic_gd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "svm_gaussian",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "logistic_ngd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "method": "svm_linear",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "logistic_gd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "svm_gaussian",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "logistic_ngd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "method": "svm_linear",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine",
+    "method": "ova_logistic",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine",
+    "method": "ova_svm",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "digits",
+    "method": "ova_logistic",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "digits",
+    "method": "ova_svm",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "method": "linear_gd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "method": "linear_ngd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "method": "linear_gd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "method": "linear_ngd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "method": "linear_gd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "method": "linear_ngd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "method": "linear_gd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "method": "linear_ngd",
+    "seed": 7,
+    "max_abs_diff": 0.0
+  }
+]

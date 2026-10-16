@@ -1,0 +1,20 @@
+[
+  {
+    "dataset": "breast_cancer",
+    "cached_ms": 20.29,
+    "uncached_ms": 805.276,
+    "uncached_over_cached": 39.688319369147365,
+    "model_md5": "0b1b0eafebf27f9ac6664cd68298e20b",
+    "cached_transform_rows": 455,
+    "uncached_transform_rows": 182000
+  },
+  {
+    "dataset": "banknote",
+    "cached_ms": 34.735,
+    "uncached_ms": 991.009,
+    "uncached_over_cached": 28.53055995393695,
+    "model_md5": "e09c7b869ba86eda4429b05feb43b856",
+    "cached_transform_rows": 1093,
+    "uncached_transform_rows": 437200
+  }
+]
