@@ -1,0 +1,74 @@
+[
+  {
+    "seed": 42,
+    "independently_verified_db_fold_methods": 52,
+    "failed_method_cases": 0,
+    "metric_discrepancies": [],
+    "docker_limits": [
+      {
+        "engine": "pg",
+        "memory_bytes": 4294967296,
+        "cpuset": "0",
+        "nano_cpus": 1000000000,
+        "network": "none"
+      },
+      {
+        "engine": "og",
+        "memory_bytes": 4294967296,
+        "cpuset": "0",
+        "nano_cpus": 1000000000,
+        "network": "none"
+      }
+    ],
+    "scope": "classification accuracy/balanced accuracy/macro F1 and regression RMSE/MAE/R2 from raw DB predictions; not AUC",
+    "ready_with_stated_methodology_caveats": true
+  },
+  {
+    "seed": 2024,
+    "independently_verified_db_fold_methods": 52,
+    "failed_method_cases": 0,
+    "metric_discrepancies": [],
+    "docker_limits": [
+      {
+        "engine": "pg",
+        "memory_bytes": 4294967296,
+        "cpuset": "0",
+        "nano_cpus": 1000000000,
+        "network": "none"
+      },
+      {
+        "engine": "og",
+        "memory_bytes": 4294967296,
+        "cpuset": "0",
+        "nano_cpus": 1000000000,
+        "network": "none"
+      }
+    ],
+    "scope": "classification accuracy/balanced accuracy/macro F1 and regression RMSE/MAE/R2 from raw DB predictions; not AUC",
+    "ready_with_stated_methodology_caveats": true
+  },
+  {
+    "seed": 7,
+    "independently_verified_db_fold_methods": 52,
+    "failed_method_cases": 0,
+    "metric_discrepancies": [],
+    "docker_limits": [
+      {
+        "engine": "pg",
+        "memory_bytes": 4294967296,
+        "cpuset": "0",
+        "nano_cpus": 1000000000,
+        "network": "none"
+      },
+      {
+        "engine": "og",
+        "memory_bytes": 4294967296,
+        "cpuset": "0",
+        "nano_cpus": 1000000000,
+        "network": "none"
+      }
+    ],
+    "scope": "classification accuracy/balanced accuracy/macro F1 and regression RMSE/MAE/R2 from raw DB predictions; not AUC",
+    "ready_with_stated_methodology_caveats": true
+  }
+]

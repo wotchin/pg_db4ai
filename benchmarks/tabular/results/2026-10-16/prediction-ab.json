@@ -1,0 +1,698 @@
+[
+  {
+    "dataset": "banknote",
+    "n_test": 279,
+    "features": 4,
+    "model_sha256": "8beb543c4090c7fc4ef3f1b974280cea2340be1c69ea93dc7499bbd457c24aa8",
+    "prediction_max_abs_diff": 0.0,
+    "before_median_ms": 12.475,
+    "after_median_ms": 5.275,
+    "speedup": 2.3649289099526065,
+    "before_p25_ms": 12.442,
+    "before_p75_ms": 12.556000000000001,
+    "after_p25_ms": 5.2575,
+    "after_p75_ms": 5.2855,
+    "scope": "same CPU, new backend per trial; model load + full test-table predict/sum; excludes client startup",
+    "trials": [
+      {
+        "repeat": 0,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 12.454,
+        "after_ms": 5.257
+      },
+      {
+        "repeat": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 12.458,
+        "after_ms": 5.293
+      },
+      {
+        "repeat": 2,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.256,
+        "before_ms": 12.562
+      },
+      {
+        "repeat": 3,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.278,
+        "before_ms": 12.392
+      },
+      {
+        "repeat": 4,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 12.628,
+        "after_ms": 5.258
+      },
+      {
+        "repeat": 5,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 12.475,
+        "after_ms": 5.273
+      },
+      {
+        "repeat": 6,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.277,
+        "before_ms": 12.55
+      },
+      {
+        "repeat": 7,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.343,
+        "before_ms": 12.562
+      },
+      {
+        "repeat": 8,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.387,
+        "before_ms": 12.542
+      },
+      {
+        "repeat": 9,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.219,
+        "before_ms": 12.37
+      },
+      {
+        "repeat": 10,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 12.43,
+        "after_ms": 5.275
+      }
+    ]
+  },
+  {
+    "dataset": "breast_cancer",
+    "n_test": 114,
+    "features": 30,
+    "model_sha256": "c5b9d52dec1a2174fa4460b5571dc4981bbfdd9d7d8cfa03dac24ee5ff4c7ace",
+    "prediction_max_abs_diff": 0.0,
+    "before_median_ms": 7.213,
+    "after_median_ms": 4.419,
+    "speedup": 1.6322697442860377,
+    "before_p25_ms": 7.2055,
+    "before_p75_ms": 7.2195,
+    "after_p25_ms": 4.368,
+    "after_p75_ms": 4.468,
+    "scope": "same CPU, new backend per trial; model load + full test-table predict/sum; excludes client startup",
+    "trials": [
+      {
+        "repeat": 0,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.22,
+        "after_ms": 4.365
+      },
+      {
+        "repeat": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.213,
+        "after_ms": 4.382
+      },
+      {
+        "repeat": 2,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.483,
+        "before_ms": 7.218
+      },
+      {
+        "repeat": 3,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.351,
+        "before_ms": 7.171
+      },
+      {
+        "repeat": 4,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.209,
+        "after_ms": 4.477
+      },
+      {
+        "repeat": 5,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.196,
+        "after_ms": 4.371
+      },
+      {
+        "repeat": 6,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.435,
+        "before_ms": 7.329
+      },
+      {
+        "repeat": 7,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.488,
+        "before_ms": 7.313
+      },
+      {
+        "repeat": 8,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.341,
+        "before_ms": 7.219
+      },
+      {
+        "repeat": 9,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.419,
+        "before_ms": 7.209
+      },
+      {
+        "repeat": 10,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.202,
+        "after_ms": 4.459
+      }
+    ]
+  },
+  {
+    "dataset": "california",
+    "n_test": 4128,
+    "features": 8,
+    "model_sha256": "a6d1c80e67102b144502cd5c669ca0f2aba8e89b11a708993263329bd3de2c2a",
+    "prediction_max_abs_diff": 0.0,
+    "before_median_ms": 142.951,
+    "after_median_ms": 33.864,
+    "speedup": 4.2213264824001895,
+    "before_p25_ms": 142.82600000000002,
+    "before_p75_ms": 143.9895,
+    "after_p25_ms": 33.730999999999995,
+    "after_p75_ms": 33.935,
+    "scope": "same CPU, new backend per trial; model load + full test-table predict/sum; excludes client startup",
+    "trials": [
+      {
+        "repeat": 0,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 142.817,
+        "after_ms": 33.885
+      },
+      {
+        "repeat": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 142.781,
+        "after_ms": 34.371
+      },
+      {
+        "repeat": 2,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 34.035,
+        "before_ms": 142.945
+      },
+      {
+        "repeat": 3,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 33.669,
+        "before_ms": 144.132
+      },
+      {
+        "repeat": 4,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 143.672,
+        "after_ms": 33.793
+      },
+      {
+        "repeat": 5,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 144.192,
+        "after_ms": 33.871
+      },
+      {
+        "repeat": 6,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 33.82,
+        "before_ms": 143.934
+      },
+      {
+        "repeat": 7,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 33.864,
+        "before_ms": 142.951
+      },
+      {
+        "repeat": 8,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 33.546,
+        "before_ms": 142.558
+      },
+      {
+        "repeat": 9,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 33.388,
+        "before_ms": 142.835
+      },
+      {
+        "repeat": 10,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 144.045,
+        "after_ms": 33.985
+      }
+    ]
+  },
+  {
+    "dataset": "concrete",
+    "n_test": 206,
+    "features": 8,
+    "model_sha256": "7e1c08f55f28eee54b0457b75a6ea04e0f31aa48da4dad8b24eab8b44ca98ff7",
+    "prediction_max_abs_diff": 0.0,
+    "before_median_ms": 11.501,
+    "after_median_ms": 6.136,
+    "speedup": 1.874348109517601,
+    "before_p25_ms": 11.4335,
+    "before_p75_ms": 11.533,
+    "after_p25_ms": 6.0045,
+    "after_p75_ms": 6.157,
+    "scope": "same CPU, new backend per trial; model load + full test-table predict/sum; excludes client startup",
+    "trials": [
+      {
+        "repeat": 0,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 11.454,
+        "after_ms": 6.16
+      },
+      {
+        "repeat": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 11.356,
+        "after_ms": 6.154
+      },
+      {
+        "repeat": 2,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.974,
+        "before_ms": 11.379
+      },
+      {
+        "repeat": 3,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.035,
+        "before_ms": 11.512
+      },
+      {
+        "repeat": 4,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 11.501,
+        "after_ms": 6.136
+      },
+      {
+        "repeat": 5,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 11.655,
+        "after_ms": 5.941
+      },
+      {
+        "repeat": 6,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.951,
+        "before_ms": 11.413
+      },
+      {
+        "repeat": 7,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.124,
+        "before_ms": 11.478
+      },
+      {
+        "repeat": 8,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.184,
+        "before_ms": 11.517
+      },
+      {
+        "repeat": 9,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.172,
+        "before_ms": 11.549
+      },
+      {
+        "repeat": 10,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 11.621,
+        "after_ms": 6.143
+      }
+    ]
+  },
+  {
+    "dataset": "diabetes",
+    "n_test": 89,
+    "features": 10,
+    "model_sha256": "733b471894b08989878c393e380c6b5ba2130b326be466a46d11a00eea8e5c68",
+    "prediction_max_abs_diff": 0.0,
+    "before_median_ms": 7.105,
+    "after_median_ms": 4.996,
+    "speedup": 1.4221377101681345,
+    "before_p25_ms": 7.0655,
+    "before_p75_ms": 7.316,
+    "after_p25_ms": 4.893,
+    "after_p75_ms": 5.1745,
+    "scope": "same CPU, new backend per trial; model load + full test-table predict/sum; excludes client startup",
+    "trials": [
+      {
+        "repeat": 0,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.186,
+        "after_ms": 5.273
+      },
+      {
+        "repeat": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.27,
+        "after_ms": 5.134
+      },
+      {
+        "repeat": 2,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.996,
+        "before_ms": 7.039
+      },
+      {
+        "repeat": 3,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.014,
+        "before_ms": 7.045
+      },
+      {
+        "repeat": 4,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.105,
+        "after_ms": 4.904
+      },
+      {
+        "repeat": 5,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.017,
+        "after_ms": 4.842
+      },
+      {
+        "repeat": 6,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.872,
+        "before_ms": 7.103
+      },
+      {
+        "repeat": 7,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.882,
+        "before_ms": 7.086
+      },
+      {
+        "repeat": 8,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 4.951,
+        "before_ms": 7.362
+      },
+      {
+        "repeat": 9,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 5.366,
+        "before_ms": 7.571
+      },
+      {
+        "repeat": 10,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 7.415,
+        "after_ms": 5.215
+      }
+    ]
+  },
+  {
+    "dataset": "wine_red",
+    "n_test": 320,
+    "features": 11,
+    "model_sha256": "5d2bc13ee52803933c8dc039563ac5530f79d069700e0b307a8ee1e9977c5f0e",
+    "prediction_max_abs_diff": 0.0,
+    "before_median_ms": 15.178,
+    "after_median_ms": 6.849,
+    "speedup": 2.2160899401372465,
+    "before_p25_ms": 15.1645,
+    "before_p75_ms": 15.3035,
+    "after_p25_ms": 6.7275,
+    "after_p75_ms": 6.9725,
+    "scope": "same CPU, new backend per trial; model load + full test-table predict/sum; excludes client startup",
+    "trials": [
+      {
+        "repeat": 0,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 15.162,
+        "after_ms": 7.168
+      },
+      {
+        "repeat": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 15.391,
+        "after_ms": 7.138
+      },
+      {
+        "repeat": 2,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.995,
+        "before_ms": 15.278
+      },
+      {
+        "repeat": 3,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.839,
+        "before_ms": 15.228
+      },
+      {
+        "repeat": 4,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 15.368,
+        "after_ms": 6.735
+      },
+      {
+        "repeat": 5,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 15.167,
+        "after_ms": 6.95
+      },
+      {
+        "repeat": 6,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.862,
+        "before_ms": 15.178
+      },
+      {
+        "repeat": 7,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.72,
+        "before_ms": 15.038
+      },
+      {
+        "repeat": 8,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.693,
+        "before_ms": 15.177
+      },
+      {
+        "repeat": 9,
+        "order": [
+          "after",
+          "before"
+        ],
+        "after_ms": 6.679,
+        "before_ms": 15.142
+      },
+      {
+        "repeat": 10,
+        "order": [
+          "before",
+          "after"
+        ],
+        "before_ms": 15.329,
+        "after_ms": 6.849
+      }
+    ]
+  }
+]

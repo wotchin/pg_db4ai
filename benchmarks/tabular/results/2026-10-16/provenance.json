@@ -1,0 +1,25 @@
+{
+  "measured_commit": "95d0078efae9eff4ae5b6b86fdf6d464cb5730ea",
+  "run_id": 38940991413,
+  "artifacts": [
+    {
+      "seed": 42,
+      "id": 12063108102,
+      "sha256": "84db2b99d6cce4ba15581bf7ab419162bbce4394bed1b58a0a1d035af160d0f2"
+    },
+    {
+      "seed": 2024,
+      "id": 12063183225,
+      "sha256": "10fcb7b29bf27c98b1044ebc997056a9dd57d00827681ea3af0caf54c2b0ef8a"
+    },
+    {
+      "seed": 7,
+      "id": 12063542146,
+      "sha256": "7d6be8920b04129aa78659d0bec6279bf8715a080806b47fb100e172b3d6a2a0"
+    }
+  ],
+  "iteration_audit_run": 38941694021,
+  "iteration_audit_artifact": 12063935863,
+  "canonical_raw_results_sha256": "6c6487b908abd3364c7114f6bba422a0bcebbc55ba78e20272aaa1b8c8408384",
+  "note": "Iteration metadata was recovered in an untimed rerun, not silently substituted into raw timed-run records."
+}

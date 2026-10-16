@@ -1,0 +1,29 @@
+{
+  "records": 744,
+  "successful_fold_methods": 264,
+  "failures": 0,
+  "coverage": [
+    {
+      "engine": "control",
+      "status": "ok",
+      "records": 24
+    },
+    {
+      "engine": "og",
+      "status": "ok",
+      "records": 234
+    },
+    {
+      "engine": "pg",
+      "status": "ok",
+      "records": 234
+    },
+    {
+      "engine": "python",
+      "status": "ok",
+      "records": 252
+    }
+  ],
+  "summary_rule": "quality: mean/sample SD over splits once each; timing: median of within-split medians",
+  "xgboost_checked_cases": 18
+}

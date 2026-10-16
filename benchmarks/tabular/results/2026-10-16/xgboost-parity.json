@@ -1,0 +1,164 @@
+[
+  {
+    "dataset": "breast_cancer",
+    "seed": 42,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "class labels",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "seed": 42,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "class labels",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "seed": 42,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "seed": 42,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "seed": 42,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "seed": 42,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "seed": 2024,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "class labels",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "seed": 2024,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "class labels",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "seed": 2024,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "seed": 2024,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "seed": 2024,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "seed": 2024,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "breast_cancer",
+    "seed": 7,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "class labels",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "banknote",
+    "seed": 7,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "class labels",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "diabetes",
+    "seed": 7,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "wine_red",
+    "seed": 7,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "concrete",
+    "seed": 7,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  },
+  {
+    "dataset": "california",
+    "seed": 7,
+    "independent_training_max_abs_diff": 0.0,
+    "independent_training_scope": "scaled regression values",
+    "sentinel_minus_one_train": 0,
+    "sentinel_minus_one_test": 0,
+    "export_reload_raw_prediction_max_abs_diff": 0.0
+  }
+]
