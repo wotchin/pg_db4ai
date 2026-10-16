@@ -1,0 +1,69 @@
+name: Preserve audited current-only native results
+on:
+  push:
+    branches: [db4ai-corgipile-ddl]
+    paths: [.github/workflows/publish-native-evidence.yml]
+permissions: {contents: write, actions: read}
+jobs:
+  preserve:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify artifact fingerprints and recompute metrics only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m venv /tmp/native-audit
+          /tmp/native-audit/bin/pip install numpy==2.3.3
+          /tmp/native-audit/bin/python - <<'PY'
+          import hashlib,io,json,os,sys,urllib.request,zipfile
+          from pathlib import Path
+          sys.path.insert(0,'benchmarks/native')
+          from summarize import audit
+          def archive(i,digest):
+              req=urllib.request.Request(f'https://api.github.com/repos/wotchin/pg_db4ai/actions/artifacts/{i}/zip')
+              req.add_unredirected_header('Authorization','Bearer '+os.environ['GH_TOKEN'])
+              with urllib.request.urlopen(req,timeout=90) as r:raw=r.read()
+              assert hashlib.sha256(raw).hexdigest()==digest
+              return zipfile.ZipFile(io.BytesIO(raw))
+          root=Path('/tmp/native-evidence');root.mkdir()
+          current=root/'current';current.mkdir()
+          own={'id':12070180256,'sha256':'a7957b06b0681bd6274172ffeb63561b439eaf699642b63152c69d16b8c3742f','run':38953253518}
+          with archive(own['id'],own['sha256']) as z:
+              for f in z.infolist():
+                  p=Path(f.filename);assert not p.is_absolute() and '..' not in p.parts
+              z.extractall(current)
+          frozen=root/'frozen';frozen.mkdir()
+          sources=[(42,12063108102,'84db2b99d6cce4ba15581bf7ab419162bbce4394bed1b58a0a1d035af160d0f2'),
+                   (2024,12063183225,'10fcb7b29bf27c98b1044ebc997056a9dd57d00827681ea3af0caf54c2b0ef8a'),
+                   (7,12063542146,'7d6be8920b04129aa78659d0bec6279bf8715a080806b47fb100e172b3d6a2a0')]
+          for seed,i,digest in sources:
+              with archive(i,digest) as z:
+                  for f in z.namelist():
+                      p=Path(f);assert not p.is_absolute() and '..' not in p.parts
+                      if len(p.parts)<3 or p.parts[0]!='results' or f.endswith('/'):continue
+                      if f.endswith('.npz') or f.endswith('meta.json') or (p.name.startswith('pg_') and p.name.endswith('-predictions.csv')):
+                          target=frozen.joinpath(*p.parts[1:]);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(z.read(f))
+          out=Path('benchmarks/native/results/2026-10-16')
+          result=audit(current,frozen,Path('benchmarks/tabular/results/2026-10-16/summary.csv'),out)
+          assert result['metric_checks']==131 and result['frozen_prediction_exact_matches']==60
+          provenance={'measured_commit':'e3da873258b0942d73b0166cf836599ec4895aad',
+                      'current_artifact':own,'frozen_artifacts':[{'seed':s,'id':i,'sha256':h} for s,i,h in sources],
+                      'external_estimators_executed':0,'old_extension_executed':False,
+                      'analysis':'independent metric recomputation and saved historical threshold comparison only'}
+          (out/'provenance.json').write_text(json.dumps(provenance,indent=2)+'\n')
+          PY
+      - name: Commit only result evidence without changing workflows
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f benchmarks/native/results/2026-10-16
+          git diff --cached --quiet || git commit -m 'Preserve independently audited 122 current cases, nine stress fits and frozen-output parity'
+          git push origin HEAD:db4ai-corgipile-ddl
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audited-native-summary
+          path: benchmarks/native/results/2026-10-16
+          retention-days: 30
