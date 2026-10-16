@@ -17,7 +17,7 @@ import numpy as np
 from common import SOURCES, dump, prepare, metrics
 
 ROOT=Path(__file__).resolve().parents[2]
-OG_IMAGE='enmotech/opengauss@sha256:9bd81380273944e5a02a2139c90954d4f46813b71810f7b23fe8f738014d03b5'
+OG_IMAGE='opengauss-db4ai-benchmark:local'
 PG_IMAGE='pg-db4ai-benchmark:local'
 
 
@@ -32,7 +32,9 @@ def sql(engine, text, out:Path|None=None, timeout=300):
     cli='psql' if engine=='pg' else 'gsql'; user='postgres' if engine=='pg' else 'omm'
     cmd=['docker','exec','-i','-u',user,'bench-'+engine,'bash','-lc',f'{cli} -d postgres -X -q -A -t -v ON_ERROR_STOP=1']
     r=subprocess.run(cmd,input=text,text=True,capture_output=True,timeout=timeout)
-    if out: out.write_text(r.stdout+'\n--- STDERR ---\n'+r.stderr)
+    if out:
+        out.write_text(r.stdout+'\n--- STDERR ---\n'+r.stderr)
+        out.with_suffix('.sql').write_text(text)
     if r.returncode: raise RuntimeError(r.stderr[-4000:]+'\n'+r.stdout[-4000:])
     return r.stdout
 
@@ -64,9 +66,9 @@ def cases_methods(meta):
 def config(method, seed):
     if method=='xgboost':
         return dict(max_iterations=100,learning_rate=0.1,max_depth=6,l2=1,
-                    gamma=0,min_child_weight=1,seed=seed,tree_method='hist',nthread=1)
+                    gamma=0,min_child_weight=1,seed=seed,tree_method='hist',nthread=1,eval_metric='rmse')
     o=dict(profile='opengauss',max_iterations=200,batch_size=128,optimizer='ngd' if method.endswith('ngd') else 'gd',
-           learning_rate=0.8 if method.endswith('ngd') else 0.05,decay=1,tolerance=0,seed=seed,
+           learning_rate=0.8 if method.endswith('ngd') else 0.05,decay=1,tolerance=1e-30,seed=seed,
            max_seconds=0,shuffle='batch',shuffle_buffer_size=128,null_policy='error')
     if method.startswith('svm') or method=='ova_svm': o['lambda']=0.5
     if method=='svm_gaussian': o.update(kernel='gaussian',gamma=0.5,components=128)
@@ -89,8 +91,7 @@ def train_statement(engine, method, meta, name, columns):
         return f'SELECT db4ai.train({quote(name)},{quote(alg)},{quote(query)},{quote(json.dumps(opts))}::jsonb);'
     if method=='xgboost':
         og=dict(n_iter=100,eta=0.1,max_depth=6,gamma=0,min_child_weight=1,seed=meta['seed'],
-                tree_method='hist',nthread=1,verbosity=0,batch_size=meta['n_train'],
-                eval_metric='rmse' if meta['task']=='regression' else 'logloss')
+                tree_method='hist',nthread=1,verbosity=0,batch_size=meta['n_train'],eval_metric='rmse')
     else:
         og={k:v for k,v in opts.items() if k not in ('profile','shuffle','shuffle_buffer_size','null_policy')}
     param=', '.join(f'{k}={quote(v) if isinstance(v,str) else v}' for k,v in og.items())
@@ -237,5 +238,8 @@ def main():
     flat=[{k:v for k,v in row.items() if not isinstance(v,(dict,list))} for row in records]
     pd.DataFrame(flat).to_csv(root/'results.csv',index=False)
     print('BENCHMARK FINISHED',root,len(records),'records',flush=True)
+    failures=[r for r in records if r['status']!='ok']
+    dump(root/'completion.json',dict(records=len(records),failed_cases=len(failures),complete=not failures))
+    if failures: raise SystemExit(f'{len(failures)} engine/method cases failed; raw errors retained in results.json')
 
 if __name__=='__main__': main()

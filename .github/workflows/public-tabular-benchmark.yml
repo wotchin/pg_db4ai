@@ -30,17 +30,33 @@ jobs:
           build-args: PG_IMAGE=${{ steps.base.outputs.image }}
           cache-from: type=gha,scope=db4ai-tabular
           cache-to: type=gha,mode=max,scope=db4ai-tabular
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: benchmarks/tabular/Dockerfile.opengauss
+          load: true
+          tags: opengauss-db4ai-benchmark:local
+          cache-from: type=gha,scope=db4ai-tabular-og
+          cache-to: type=gha,mode=max,scope=db4ai-tabular-og
+      - name: Verify complete extension regression suite
+        run: |
+          mkdir -p /tmp/db4ai-benchmark/regression
+          chmod 777 /tmp/db4ai-benchmark/regression
+          docker run --rm --user postgres --entrypoint bash \
+            -v "$PWD/test:/src/test:ro" -v /tmp/db4ai-benchmark/regression:/test-logs \
+            pg-db4ai-benchmark:local -lc \
+            'set -o pipefail; cd /src; PG_CONFIG=/usr/lib/postgresql/18/bin/pg_config WITH_XGBOOST=1 sh test/run.sh 2>&1 | tee /test-logs/full.log'
       - name: Host data preparation environment
         run: |
           python3 -m venv /tmp/bench-host
           /tmp/bench-host/bin/pip install numpy==2.3.3 scipy==1.16.2 pandas==2.3.3 scikit-learn==1.7.2 xlrd==2.0.2
-      - name: Pilot measured run
+      - name: Three-seed measured run
         env:
           OPENBLAS_NUM_THREADS: '1'
           OMP_NUM_THREADS: '1'
         run: |
           set -o pipefail
-          /tmp/bench-host/bin/python benchmarks/tabular/run.py --out /tmp/db4ai-benchmark/pilot --seeds 42 --repeats 1 2>&1 | tee /tmp/db4ai-benchmark/run.log
+          /tmp/bench-host/bin/python benchmarks/tabular/run.py --out /tmp/db4ai-benchmark/results --seeds 42,2024,7 --repeats 3 2>&1 | tee /tmp/db4ai-benchmark/run.log
       - name: Capture inspectable code and environment
         if: always()
         run: |
@@ -50,6 +66,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: public-tabular-benchmark-pilot
+          name: public-tabular-benchmark-full
           path: /tmp/db4ai-benchmark
           retention-days: 30
