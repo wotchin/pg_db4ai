@@ -1,0 +1,54 @@
+name: Benchmark environment probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [benchmark-public-tabular]
+    paths: [.github/workflows/benchmark-probe.yml]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture repository and environment
+        run: |
+          mkdir -p /tmp/probe
+          git archive --format=tar.gz HEAD > /tmp/probe/pg_db4ai-current.tar.gz
+          lscpu > /tmp/probe/lscpu.txt
+          docker version > /tmp/probe/docker.txt
+          python - <<'PY'
+          import json, urllib.request
+          for repo in ['opengauss/opengauss','opengauss/opengauss-server','enmotech/opengauss']:
+              try:
+                  data=json.load(urllib.request.urlopen('https://hub.docker.com/v2/repositories/'+repo+'/tags?page_size=30'))
+                  print(repo,[(x['name'],[y['architecture'] for y in x.get('images',[])]) for x in data['results']])
+              except Exception as e: print(repo,str(e))
+          PY
+      - name: Start and inspect an actual openGauss image
+        run: |
+          set -o pipefail
+          for image in opengauss/opengauss:6.0.0 enmotech/opengauss:6.0.0 opengauss/opengauss:latest; do
+            if docker pull "$image"; then echo "$image" > /tmp/probe/image.txt; break; fi
+          done
+          image=$(cat /tmp/probe/image.txt)
+          docker image inspect "$image" > /tmp/probe/image-inspect.json
+          docker run -d --name og-probe --memory=4g --shm-size=1g --cap-add=SYS_PTRACE --security-opt seccomp=unconfined -e GS_PASSWORD='BenchOnly_2026!' "$image"
+          for i in $(seq 1 90); do
+            if docker exec -u omm og-probe bash -lc 'gsql -d postgres -Atc "SELECT version()"' > /tmp/probe/version.txt 2>/tmp/probe/connect-error.txt; then break; fi
+            sleep 2
+          done
+          cat /tmp/probe/version.txt
+          docker logs og-probe > /tmp/probe/server.log 2>&1
+          docker exec -u omm og-probe bash -lc "gsql -d postgres -Atc 'SELECT proname FROM pg_proc WHERE proname LIKE '\''%predict%'\'' ORDER BY 1'" > /tmp/probe/functions.txt
+          docker exec -u omm og-probe bash -lc "gsql -d postgres -c '\\h CREATE MODEL'" > /tmp/probe/create-model-help.txt
+          docker exec og-probe bash -lc 'find / -iname "*xgboost*" 2>/dev/null' > /tmp/probe/xgboost-files.txt
+          docker exec -u omm og-probe bash -lc 'gsql -d postgres -v ON_ERROR_STOP=1 -c "CREATE TABLE bench_probe AS SELECT i::float8 AS x,(1+2*i)::float8 AS y FROM generate_series(1,20)i; CREATE MODEL probe_linear USING linear_regression FEATURES x TARGET y FROM bench_probe WITH max_iterations=10, learning_rate=0.01; SELECT id FROM (SELECT 1 AS id) s;"' > /tmp/probe/train-probe.txt 2>&1 || true
+          cat /tmp/probe/train-probe.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-environment-probe
+          path: /tmp/probe
+          retention-days: 14
