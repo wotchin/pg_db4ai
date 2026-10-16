@@ -26,7 +26,10 @@ jobs:
           from summarize import summarize
           base='https://api.github.com/repos/wotchin/pg_db4ai'
           def fetch(path):
-              req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              req=urllib.request.Request(base+path,headers={'Accept':'application/vnd.github+json'})
+              # GitHub redirects to a SAS-signed Azure URL. Do not forward the
+              # GitHub bearer token to that different origin.
+              req.add_unredirected_header('Authorization','Bearer '+os.environ['GH_TOKEN'])
               with urllib.request.urlopen(req,timeout=90) as r:return r.read()
           def artifact(i,sha,dst):
               data=fetch('/actions/artifacts/'+str(i)+'/zip')
