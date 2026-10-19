@@ -1,0 +1,24 @@
+{
+  "supervised_cases": 60,
+  "modes_per_case": 3,
+  "timing_repetitions": 7,
+  "warmups": 1,
+  "all_trained_predictions_equal": true,
+  "same_model_max_abs_difference": 1.0658141036401503e-14,
+  "native_numeric_tests_per_build": 39519,
+  "full_pg18_native_auto": "passed",
+  "full_pg18_native_off": "passed",
+  "full_pg18_build_with_simd_0": "passed",
+  "gcc14_kernels": "passed",
+  "clang17_kernels": "passed",
+  "asan_ubsan_kernels": "passed",
+  "measured_so_sha256": "9aa03c834c0f333a62b8e067529d73672bf04b6a77fcf3bd3acc058df6a90c17",
+  "external_baselines_executed": 0,
+  "notes": [
+    "OFF retains compiler auto-vectorization.",
+    "End-to-end prediction includes model lookup/load, table scan and SUM.",
+    "Primary models fixed 200-epoch budget, 8 frozen public datasets and 3 seeds.",
+    "Training output equality means labels for classification and values for regression, not byte-identical learned weights.",
+    "Native CPU-only PG18.0 local measurement, not a production concurrency or cross-hardware claim."
+  ]
+}

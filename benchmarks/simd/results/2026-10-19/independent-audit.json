@@ -1,0 +1,8 @@
+{
+  "cases":60,
+  "independently_checked_mode_results":180,
+  "summary_groups":20,
+  "all_trained_outputs_equal":true,
+  "same_model_max_abs_difference":1.0658141036401503e-14,
+  "external_baselines_executed":0
+}

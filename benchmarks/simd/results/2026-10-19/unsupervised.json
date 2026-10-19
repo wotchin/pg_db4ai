@@ -1,0 +1,30 @@
+[
+  {
+    "algorithm":"kmeans","parameters":{"num_centroids":10,"seeding_function":"Random++","max_iterations":20,"tolerance":0,"seed":42},
+    "dataset":"digits","seed":42,"features":64,
+    "train_X_sha256":"f520ccec9d6c19f59d9292831c5a3c905ecae2d0cb62877946d60aa1061ea9c9",
+    "prediction_max_abs_diff":{"off":0.0,"portable":0.0,"auto":0.0},
+    "fit_off_ms":[23.061,23.864,22.901,24.504,23.764,23.48,22.571],
+    "fit_portable_ms":[21.466,17.96,18.067,18.848,17.705,17.686,18.303],
+    "fit_auto_ms":[14.747,15.748,14.838,15.242,14.638,14.971,14.664],
+    "fit_auto_speedup":1.5637756831898013,
+    "predict_off_ms":[0.815,1.084,0.852,0.894,0.868,0.844,0.845],
+    "predict_portable_ms":[0.876,0.814,0.82,0.782,0.888,0.89,0.788],
+    "predict_auto_ms":[0.743,0.811,0.752,0.831,0.902,0.892,0.726],
+    "predict_auto_speedup":1.0969044414535665
+  },
+  {
+    "algorithm":"pca","parameters":{"number_components":8,"pca_solver":"stochastic","center":true,"max_iterations":20,"tolerance":0,"batch_size":128,"seed":42},
+    "dataset":"digits","seed":42,"features":64,
+    "train_X_sha256":"f520ccec9d6c19f59d9292831c5a3c905ecae2d0cb62877946d60aa1061ea9c9",
+    "prediction_max_abs_diff":{"off":0.0,"portable":5.329070518200751e-15,"auto":7.105427357601002e-15},
+    "fit_off_ms":[29.575,29.741,28.767,28.293,28.431,28.383,28.759],
+    "fit_portable_ms":[23.388,21.815,22.556,22.355,26.298,25.49,22.477],
+    "fit_auto_ms":[18.302,16.941,17.598,19.304,17.498,17.403,17.714],
+    "fit_auto_speedup":1.62481426448737,
+    "predict_off_ms":[0.974,0.914,0.868,0.842,0.825,0.875,0.905],
+    "predict_portable_ms":[0.81,0.807,0.999,0.807,0.838,0.8,0.851],
+    "predict_auto_ms":[0.872,0.789,0.817,0.768,0.741,0.771,0.952],
+    "predict_auto_speedup":1.1133603238866396
+  }
+]
