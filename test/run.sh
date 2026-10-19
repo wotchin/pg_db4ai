@@ -23,6 +23,8 @@ export PGHOST="$WORK" PGPORT=65432 PGUSER=db4ai_test PGDATABASE=postgres
 "$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/corgipile_ddl.sql"
 python3 "$ROOT/test/numerical_reference.py"
 python3 "$ROOT/test/partial_batch_reference.py"
+"$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/simd.sql"
+sh "$ROOT/test/run_numeric.sh"
 "$BIN/createdb" db4ai_upgrade
 "$BIN/psql" -X -d db4ai_upgrade -v ON_ERROR_STOP=1 -f "$ROOT/test/upgrade.sql"
 if [ "${WITH_XGBOOST:-1}" = 1 ]; then

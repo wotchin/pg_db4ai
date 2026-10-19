@@ -20,8 +20,7 @@ logistic(double z)
 static double
 linear_score(const double *w, const double *x, int n)
 {
-    double value=0; int i;
-    for(i=0;i<n;i++) value+=w[i]*x[i];
+    double value=db4ai_dot(w,x,n);
     if (unlikely(!isfinite(value))) db4ai_check_finite(value);
     return value;
 }
@@ -93,7 +92,7 @@ update_batch(Db4aiNative *m, const Db4aiOptions *o, const double *features,
                 error=target*z<1?(-target*2*o->svm_lambda):0;
             }
             else error=classifier?logistic(z)-y:z-y;
-            if (error!=0.0) for(j=0;j<n;j++) grad[j]+=error*x[j];
+            if (error!=0.0) db4ai_axpy(grad,x,error,n);
         }
         for(j=0;j<n;j++)
         {
@@ -280,9 +279,8 @@ orthonormalize(double *w, int n, int k)
         double norm;
         for(pass=0;pass<2;pass++) for(p=0;p<c;p++)
         {
-            double dot=0;
-            for(j=0;j<n;j++) dot+=w[(Size)c*n+j]*w[(Size)p*n+j];
-            for(j=0;j<n;j++) w[(Size)c*n+j]-=dot*w[(Size)p*n+j];
+            double dot=db4ai_dot(w+(Size)c*n,w+(Size)p*n,n);
+            db4ai_axpy(w+(Size)c*n,w+(Size)p*n,-dot,n);
         }
         norm=0; for(j=0;j<n;j++) norm=hypot(norm,w[(Size)c*n+j]);
         if(norm<DBL_EPSILON)
@@ -342,7 +340,7 @@ db4ai_stochastic_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
                 {
                     double dot=linear_score(m->weights+(Size)c*n,row,n);
                     m->eigenvalues[c]+=dot*dot;
-                    for(j=0;j<n;j++) gradient[(Size)c*n+j]+=row[j]*dot;
+                    db4ai_axpy(gradient+(Size)c*n,row,dot,n);
                 }
             }
             for(c=0;c<k;c++) total+=m->eigenvalues[c];

@@ -43,6 +43,7 @@ _PG_init(void)
     DefineCustomIntVariable("db4ai.max_model_mb", "Maximum serialized model size, in MB.", NULL,
                             &db4ai_max_model_mb, 64, 1, 512, PGC_SUSET, 0, NULL, NULL, NULL);
     db4ai_shuffle_init();
+    db4ai_numeric_init();
     DefineCustomIntVariable("db4ai.max_rows", "Maximum training input rows per call.", NULL,
                             &db4ai_max_rows, 10000000, 1, 100000000, PGC_SUSET, 0, NULL, NULL, NULL);
 }
@@ -450,6 +451,7 @@ pg_db4ai_build_info(PG_FUNCTION_ARGS)
     char *info=psprintf("{\"extension_version\":\"0.3.0\",\"postgres_major\":%d,"
         "\"xgboost\":%s,\"openmp\":%s,\"training_corgipile\":true,"
         "\"dense_replay\":true,\"model_ddl\":\"explicit execute_ddl entrypoint\","
-        "\"native_create_model_grammar\":false}",PG_VERSION_NUM/10000,xgboost,openmp);
+        "\"native_create_model_grammar\":false,\"simd_compiled\":%s,\"simd_backend\":\"%s\",\"simd_fp_reassociation\":\"local reductions only\"}",PG_VERSION_NUM/10000,xgboost,openmp,
+        db4ai_numeric_compiled()?"true":"false",db4ai_numeric->name);
     PG_RETURN_DATUM(DirectFunctionCall1(jsonb_in,CStringGetDatum(info)));
 }

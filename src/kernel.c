@@ -72,16 +72,20 @@ db4ai_kernel_prepare(Db4aiNative *m, const Db4aiOptions *o)
 void
 db4ai_kernel_transform(const Db4aiNative *m, const double *input, double *out)
 {
-    int c,j;
+    int c;
     out[0]=1.0;
     if(!m->kernel) { memcpy(out+1,input,m->nfeatures*sizeof(double)); return; }
     if(m->kernel==1)
+    {
+        double scale=sqrt(2.0/m->kernel_components);
+        db4ai_numeric->gaussian(out+1,input,m->kernel_weights,m->kernel_offsets,
+                                 m->nfeatures,m->kernel_components);
         for(c=0;c<m->kernel_components;c++)
         {
-            double v=m->kernel_offsets[c];
-            for(j=0;j<m->nfeatures;j++) v+=input[j]*m->kernel_weights[(Size)j*m->kernel_components+c];
-            db4ai_check_finite(v); out[c+1]=cos(v)*sqrt(2.0/m->kernel_components);
+            double v=out[c+1];
+            db4ai_check_finite(v); out[c+1]=cos(v)*scale;
         }
+    }
     else
     {
         int row=0;
@@ -90,8 +94,7 @@ db4ai_kernel_transform(const Db4aiNative *m, const double *input, double *out)
             int r; double product=1;
             for(r=0;r<(int)m->kernel_repetitions[c];r++,row++)
             {
-                double value=0;
-                for(j=0;j<m->nfeatures;j++) value+=input[j]*m->kernel_weights[(Size)row*m->nfeatures+j];
+                double value=db4ai_dot(input,m->kernel_weights+(Size)row*m->nfeatures,m->nfeatures);
                 product*=value;
             }
             out[c+1]=product*m->kernel_coefs[c]/sqrt((double)m->kernel_components);
