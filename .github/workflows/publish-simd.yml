@@ -1,0 +1,64 @@
+name: Apply verified SIMD integration
+on:
+  push:
+    branches: [db4ai-simd-kernels]
+    paths: [.github/workflows/publish-simd.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact locally tested source and patch
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,subprocess
+          from pathlib import Path
+          def blob(path):
+              b=Path(path).read_bytes()
+              return hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()
+          old={
+              'src/db4ai.h':'369efcc8210531c738c2540bcbc7310c8a2d23bb',
+              'src/pg_db4ai.c':'951a5081a810254726c67f5a5cb90efe1039dc00',
+              'src/gradient.c':'e3f498751559a97c6bf12e5fd3dc2a7e7d9c7f39',
+              'src/kernel.c':'e7d57f32aebccca9e99c1b683cb3acbf60e1d535',
+              'src/native.c':'48c0eb6ff16560dc5d867e435aae5a81b471a722',
+              'test/run.sh':'6ddc1d4f48aefd1f73d08a83590fd1db9a3e7799'}
+          new={
+              'src/db4ai.h':'47c238f065f88a6d40224d842743119514fdafcb',
+              'src/pg_db4ai.c':'3db86c67096f276207be9be813388990d286bc2c',
+              'src/gradient.c':'ce59734cf457bbf7736a6226274ff464b2b18c9d',
+              'src/kernel.c':'25d88b99d95471895cec0ab9c4f4e96944184097',
+              'src/native.c':'82baa9dc14ecd455f1a393572dda685bd04ba6c6',
+              'test/run.sh':'221ec83b27c033bc168f45e584e55ccb804f520f',
+              'Makefile':'f91d410a2f2a185690ddb9acdd5eb91670072b4d',
+              'src/numeric.h':'c364d262be5dc794d955e94e597023d2c5272b72',
+              'src/numeric.c':'70eceaf5e366b6142af86980e45cd6af6b00220a',
+              'src/numeric_impl.h':'ec51a05b9188c44ad27314b5a03eebafccf24dd9',
+              'src/numeric_pg.c':'838588deb3fcfb89ad1e5d51071fc06f1e822193',
+              'test/numeric_simd.c':'6b506c400a27e969a9692495ac9eac1a9f4d502e',
+              'test/run_numeric.sh':'be7ec2faf037a3a597ee120895025cae79bd5bfa',
+              'test/simd.sql':'c7bd07e447f07e3bf5b083ba3f2fd624bea35509'}
+          for p,h in old.items():assert blob(p)==h, ('base mismatch',p,blob(p))
+          subprocess.run(['git','apply','--check','.source-simd/integration.patch'],check=True)
+          subprocess.run(['git','apply','.source-simd/integration.patch'],check=True)
+          for p,h in new.items():assert blob(p)==h, ('tested source mismatch',p,blob(p),h)
+          Path('/tmp/simd-source-integrity.json').write_text(json.dumps(new,indent=2)+'\n')
+          Path('.source-simd/integration.patch').unlink()
+          print('Verified all 14 source/build/test files against locally tested Git blobs.')
+          PY
+      - name: Commit without overwriting concurrent edits
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src test Makefile .source-simd
+          git commit -m 'Wire verified runtime SIMD kernels into PG training and prediction'
+          git push origin HEAD:db4ai-simd-kernels
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simd-source-integrity
+          path: /tmp/simd-source-integrity.json
+          retention-days: 30
