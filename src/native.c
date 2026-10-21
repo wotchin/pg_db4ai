@@ -32,15 +32,7 @@ sigmoid(double x)
 static double
 distance_metric(const double *a, const double *b, int n, int metric)
 {
-    double sum=0; int j;
-    for(j=0;j<n;j++)
-    {
-        double d=fabs(a[j]-b[j]);
-        if(metric==0) sum+=d;
-        else if(metric==3) sum=Max(sum,d);
-        else sum+=d*d;
-    }
-    if(metric==1) sum=sqrt(sum);
+    double sum=db4ai_numeric->distance(a,b,n,metric);
     db4ai_check_finite(sum); return sum;
 }
 
@@ -619,12 +611,12 @@ db4ai_native_load(const Db4aiModel *model)
 double
 db4ai_native_predict(const Db4aiNative *m, const double *features)
 {
-    double *v,z=0; int j;
+    double *v,z;
     if(m->algorithm==DB4AI_PCA) ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("use db4ai.transform for PCA models")));
     if(m->algorithm==DB4AI_KMEANS) return closest(m,features,NULL)+1;
     if(m->algorithm==DB4AI_MULTICLASS) return db4ai_native_class(m,features);
     v=palloc(m->ncoefficients*sizeof(double)); db4ai_kernel_transform(m,features,v);
-    for(j=0;j<m->ncoefficients;j++) z+=v[j]*m->weights[j];
+    z=db4ai_dot(v,m->weights,m->ncoefficients);
     pfree(v); db4ai_check_finite(z);
     return m->algorithm==DB4AI_LOGISTIC?sigmoid(z):z;
 }
@@ -632,14 +624,13 @@ db4ai_native_predict(const Db4aiNative *m, const double *features)
 void
 db4ai_native_transform(const Db4aiNative *m, const double *features, double *out)
 {
-    int c, j;
+    int c;
     if (m->algorithm != DB4AI_PCA)
         ereport(ERROR, (errcode(ERRCODE_DATATYPE_MISMATCH), errmsg("transform requires a PCA model")));
     for (c = 0; c < m->noutputs; c++)
     {
-        out[c] = 0;
-        for (j = 0; j < m->nfeatures; j++)
-            out[c] += (features[j] - m->mean[j]) * m->weights[c * m->nfeatures + j];
+        out[c] = db4ai_numeric->centered_dot(features,m->mean,
+                        m->weights+(Size)c*m->nfeatures,m->nfeatures);
         db4ai_check_finite(out[c]);
     }
 }

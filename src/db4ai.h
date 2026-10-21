@@ -2,6 +2,9 @@
 #ifndef PG_DB4AI_H
 #define PG_DB4AI_H
 
+#include "numeric.h"
+void db4ai_numeric_init(void);
+
 #include "postgres.h"
 #include "fmgr.h"
 #include "executor/tuptable.h"

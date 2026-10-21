@@ -1,0 +1,16 @@
+{
+  "base_commit":"9053edbe6154ed116565d762e41d7abeb9941d9e",
+  "source_ci_commit":"6234b3aa7000648ea952027920f03cdf9d434193",
+  "source_ci_run":39323747126,
+  "measured_so_sha256":"9aa03c834c0f333a62b8e067529d73672bf04b6a77fcf3bd3acc058df6a90c17",
+  "compiler":"GCC 14.2.0",
+  "postgresql":"18.0",
+  "cpu":"AMD EPYC 9V74, postmaster and benchmark pinned to CPU 0",
+  "build":"current native-only WITH_XGBOOST=0 WITH_SIMD=1",
+  "mode_selection":{"off":"off","portable":"portable","auto":"avx2"},
+  "evidence_file":"pg-db4ai-simd-evidence.zip",
+  "evidence_zip_sha256":"3348382b7350e7bcd83ba73c6978f096e3c7a30d3d8f0a4580d3601f584a640e",
+  "raw_cases_sha256":"4f1bf48b1e50469d50c7966ae508748512470072386a61a29a2ef3fcbda1b8ca",
+  "paired_trials_csv_sha256":"7717a1d3c5634f23fa2cb4bfe056eff236c6304296ebc1f8bf392ca300b871cb",
+  "note":"Full raw SQL, predictions, per-trial timings, frozen inputs, compiler remarks and disassembly are in the conversation's evidence ZIP. The repository retains source, audit scripts and summaries. Off is a same-current-code ablation, not execution of the old release, and compiler auto-vectorization is not disabled."
+}

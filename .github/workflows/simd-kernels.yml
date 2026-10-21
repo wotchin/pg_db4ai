@@ -1,0 +1,49 @@
+name: SIMD compiler and numerical checks
+on:
+  pull_request:
+    paths: ['src/**', 'test/**', 'Makefile', '.github/workflows/simd-kernels.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  numeric:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enabled and disabled kernels
+        run: |
+          mkdir -p simd-evidence
+          set -o pipefail
+          CC=${{ matrix.cc }} WITH_SIMD=1 sh test/run_numeric.sh | tee simd-evidence/enabled.log
+          CC=${{ matrix.cc }} WITH_SIMD=0 sh test/run_numeric.sh | tee simd-evidence/disabled.log
+      - name: Address and undefined-behavior sanitizers
+        run: |
+          ${{ matrix.cc }} -std=c11 -O2 -g -ffp-contract=off -fopenmp-simd -DDB4AI_WITH_SIMD=1 \
+            -fsanitize=address,undefined -fno-sanitize-recover=all -I src \
+            src/numeric.c test/numeric_simd.c -lm -o /tmp/numeric-sanitized
+          set -o pipefail
+          ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 \
+            /tmp/numeric-sanitized | tee simd-evidence/sanitized.log
+      - name: Compiler remarks, code generation and runtime dependencies
+        run: |
+          if test '${{ matrix.cc }}' = clang; then
+            flags='-Rpass=loop-vectorize -Rpass-missed=loop-vectorize'
+          else
+            flags='-fopt-info-vec-all'
+          fi
+          ${{ matrix.cc }} --version > simd-evidence/compiler.txt
+          ${{ matrix.cc }} -std=c11 -O3 -ffp-contract=off -fopenmp-simd -DDB4AI_WITH_SIMD=1 \
+            -I src $flags -c src/numeric.c -o /tmp/numeric.o 2> simd-evidence/vectorization.txt
+          objdump -d /tmp/numeric.o > simd-evidence/disassembly.txt
+          grep -Eq 'v(add|mul)pd' simd-evidence/disassembly.txt
+          ldd /tmp/numeric-sanitized > simd-evidence/dependencies.txt
+          ! grep -E 'libgomp|libomp' simd-evidence/dependencies.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simd-${{ matrix.cc }}
+          path: simd-evidence
