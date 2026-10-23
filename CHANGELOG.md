@@ -1,5 +1,15 @@
 # 0.4.0
 
+## 0.5.0
+
+- Budget-bounded sequential AutoML for classification/regression with shared source replay.
+- Training-only numeric imputation/scaling, bounded categorical encoding and durable pipeline inference.
+- Group-safe random, entity-group or chronological train/validation/test partitions; honest non-publication outcomes.
+- Internal typed XGBoost multiclass softprob; native fallback without extra dependencies.
+- Caller training/RLS checks, deadline cleanup, model upgrade/restore and independent prediction tests.
+- Whole-pipeline reports, finite-portfolio controls and explicitly documented memory/timeout limitations.
+
+
 - Replace internal ABO-oriented Bayes estimation with supervised Gaussian Naive Bayes.
 - Typed binary/multiclass prediction, normalized probabilities and log probabilities.
 - Stable moments, variance smoothing/floor and common-tail log-odds cancellation guard.

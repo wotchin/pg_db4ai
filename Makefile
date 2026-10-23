@@ -1,8 +1,8 @@
 .DEFAULT_GOAL := all
 EXTENSION = pg_db4ai
 MODULE_big = pg_db4ai
-OBJS = src/pg_db4ai.o src/options.o src/data.o src/models.o src/native.o src/xgboost.o src/categories.o src/shuffle.o src/kernel.o src/gradient.o src/naive_bayes.o src/shufflescan.o src/rowstore.o src/model_ddl.o src/numeric.o src/numeric_pg.o
-DATA = sql/pg_db4ai--0.4.0.sql sql/pg_db4ai--0.3.0--0.4.0.sql sql/pg_db4ai--0.3.0.sql sql/pg_db4ai--0.2.0--0.3.0.sql sql/pg_db4ai--0.1.0.sql sql/pg_db4ai--0.2.0.sql sql/pg_db4ai--0.1.0--0.2.0.sql
+OBJS = src/pg_db4ai.o src/options.o src/data.o src/models.o src/native.o src/xgboost.o src/categories.o src/shuffle.o src/kernel.o src/gradient.o src/naive_bayes.o src/shufflescan.o src/rowstore.o src/model_ddl.o src/numeric.o src/numeric_pg.o src/automl.o src/automl_data.o src/automl_budget.o src/pipeline.o
+DATA = sql/pg_db4ai--0.5.0.sql sql/pg_db4ai--0.4.0--0.5.0.sql sql/pg_db4ai--0.4.0.sql sql/pg_db4ai--0.3.0--0.4.0.sql sql/pg_db4ai--0.3.0.sql sql/pg_db4ai--0.2.0--0.3.0.sql sql/pg_db4ai--0.1.0.sql sql/pg_db4ai--0.2.0.sql sql/pg_db4ai--0.1.0--0.2.0.sql
 PGFILEDESC = "pg_db4ai - PostgreSQL-native machine learning"
 PG_CONFIG ?= pg_config
 WITH_XGBOOST ?= 1
@@ -49,7 +49,7 @@ PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
 # First-party header changes and build switches must invalidate every object.
-$(OBJS) $(OBJS:.o=.bc): src/db4ai.h src/extended.h src/numeric.h build/extension-config
+$(OBJS) $(OBJS:.o=.bc): src/db4ai.h src/extended.h src/numeric.h src/automl.h build/extension-config
 src/numeric.o src/numeric.bc: src/numeric_impl.h
 # Optimize only audited pure numerical kernels; no fast-math or native ISA.
 src/numeric.o: override CFLAGS += -O3 $(SIMD_CFLAGS) -ffp-contract=off

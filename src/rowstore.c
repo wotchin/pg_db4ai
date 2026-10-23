@@ -89,7 +89,7 @@ spill(Db4aiRowStore *s)
     for (i = 0; i < s->nchunks; i++)
     {
         int count = (int) Min((int64) s->chunk_rows, s->nrows - (int64) i * s->chunk_rows);
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         BufFileWrite(s->file, s->chunks[i], (Size) count * s->rowbytes);
         s->bytes_written += (Size) count * s->rowbytes;
         pfree(s->chunks[i]);
@@ -186,7 +186,7 @@ db4ai_rows_slice(Db4aiRowStore *s, int64 start, int maximum, const double **rows
             off_t position = (off_t) (chunk * s->chunkbytes);
             s->read_rows = (int) Min((int64) s->chunk_rows, s->nrows - chunk * s->chunk_rows);
             length = (Size) s->read_rows * s->rowbytes;
-            CHECK_FOR_INTERRUPTS();
+            db4ai_automl_check();
             if (BufFileSeek(s->file, 0, position, SEEK_SET) != 0)
                 ereport(ERROR, (errcode_for_file_access(), errmsg("cannot seek DB4AI replay file")));
             if (BufFileRead(s->file, s->readbuf, length) != length)
@@ -213,7 +213,7 @@ db4ai_rows_read(Db4aiRowStore *s, int64 start, int maximum, double *out)
     {
         int count = (int) Min((int64) maximum, s->nrows - start);
         Size length = (Size) count * s->rowbytes;
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         if (BufFileSeek(s->file, 0, (off_t) (start * s->rowbytes), SEEK_SET) != 0)
             ereport(ERROR, (errcode_for_file_access(), errmsg("cannot seek DB4AI replay range")));
         if (BufFileRead(s->file, out, length) != length)

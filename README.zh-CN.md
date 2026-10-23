@@ -1,5 +1,16 @@
 # pg_db4ai：PostgreSQL 原生机器学习扩展
 
+## 0.5：轻量 AutoML
+
+新增 `db4ai.automl(name, task, source_sql, options)`：一次取数，训练/选模验证/最终测试
+分离，训练集拟合数值填补/缩放和有界类别编码，少量线性与 XGBoost 候选、分阶段搜索，
+在墙钟预算内保留已完成候选。合格结果作为一份可复用 pipeline 保存，
+`db4ai.predict(name, jsonb)` 直接接收原始字段。
+
+`ready` 表示验证超过简单参照，不等于业务验收通过；内存参数不是进程 RSS 硬上限，
+源查询或最终阶段超时会失败且不发布半成品。详见 [AutoML 使用与限制](docs/AUTOML.md)。
+
+
 ## 0.4：把内部 Bayes 替换为用户级分类器
 
 新增 **`gaussian_naive_bayes`**，支持二分类/多分类、原始类型标签、

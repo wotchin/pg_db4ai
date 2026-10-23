@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MulanPSL-2.0 */
 #include "postgres.h"
 #include "db4ai.h"
+#include "automl.h"
+#include <math.h>
+#include "utils/json.h"
 #include "access/xact.h"
 #include "catalog/pg_type_d.h"
 #include "common/shortest_dec.h"
@@ -77,6 +80,8 @@ pg_db4ai_train(PG_FUNCTION_ARGS)
     name = model_name(fcinfo);
     query = text_to_cstring(PG_GETARG_TEXT_PP(2));
     algorithm = db4ai_algorithm(text_to_cstring(PG_GETARG_TEXT_PP(1)));
+    if (algorithm == DB4AI_AUTOML || algorithm == DB4AI_XGB_MULTICLASS)
+        ereport(ERROR,(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),errmsg("use db4ai.automl for automatic pipelines and typed multiclass XGBoost")));
     db4ai_options(PG_GETARG_JSONB_P(3), algorithm, &options);
     format = PG_ARGISNULL(4) ? (db4ai_is_xgboost(algorithm) ? "ubj" : "json") : text_to_cstring(PG_GETARG_TEXT_PP(4));
     if ((strcmp(format, "json") != 0 && strcmp(format, "ubj") != 0) ||
@@ -207,6 +212,7 @@ typedef struct Db4aiCache
     Db4aiModel *model;
     Db4aiNative *native;
     void *xgb;
+    Db4aiPipeline *pipeline;
 } Db4aiCache;
 
 static Db4aiCache *
@@ -238,7 +244,10 @@ get_predictor(FunctionCallInfo fcinfo)
         cache->model = db4ai_model_load(name, role);
         cache->native = NULL;
         cache->xgb = NULL;
-        if (db4ai_is_xgboost(cache->model->algorithm))
+        cache->pipeline = NULL;
+        if (cache->model->algorithm == DB4AI_AUTOML)
+            cache->pipeline = db4ai_pipeline_load(cache->model);
+        else if (db4ai_is_xgboost(cache->model->algorithm))
             cache->xgb = db4ai_xgb_load(cache->model);
         else if (cache->model->algorithm == DB4AI_RETIRED_BAYES)
             ereport(ERROR,(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -268,6 +277,12 @@ predict(Db4aiCache *cache, ArrayType *array)
 {
     double *features;
     double result;
+    if (cache->pipeline)
+    {
+        features = db4ai_pipeline_array(cache->pipeline, array);
+        result = db4ai_pipeline_value(cache->pipeline, features);
+        pfree(features); return result;
+    }
     features = db4ai_features(array, cache->model->nfeatures);
     result = cache->xgb != NULL ? db4ai_xgb_predict(cache->xgb, features, cache->model->nfeatures) :
                                         db4ai_native_predict(cache->native, features);
@@ -288,6 +303,16 @@ pg_db4ai_predict_bool(PG_FUNCTION_ARGS)
     Db4aiCache *cache = get_predictor(fcinfo);
     Db4aiAlgorithm algorithm = cache->model->algorithm;
     double result;
+    if (cache->pipeline)
+    {
+        Db4aiPipeline *p=cache->pipeline;
+        double *x;
+        int index;
+        if(!p->classification || p->nclasses!=2 || p->labels->type!=BOOLOID)
+            ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("pipeline predict_bool requires boolean training labels")));
+        x=db4ai_pipeline_array(p,PG_GETARG_ARRAYTYPE_P(1)); index=db4ai_pipeline_class(p,x); pfree(x);
+        PG_RETURN_BOOL(DatumGetBool(p->labels->values[index]));
+    }
     if (algorithm != DB4AI_LOGISTIC && algorithm != DB4AI_SVM && algorithm != DB4AI_XGB_BINARY && algorithm != DB4AI_GAUSSIAN_NB)
         ereport(ERROR, (errcode(ERRCODE_DATATYPE_MISMATCH), errmsg("predict_bool requires a binary classifier")));
     if (algorithm == DB4AI_GAUSSIAN_NB &&
@@ -358,6 +383,11 @@ classifier_predictor(FunctionCallInfo fcinfo)
     if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
         ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED), errmsg("model and features must not be NULL")));
     cache=get_predictor(fcinfo);
+    if (cache->pipeline)
+    {
+        if(!cache->pipeline->classification) ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("pipeline is not a classifier")));
+        return cache;
+    }
     if (!db4ai_classifier(cache->model->algorithm) || cache->native->labels == NULL)
         ereport(ERROR, (errcode(ERRCODE_DATATYPE_MISMATCH), errmsg("model has no typed classification dictionary")));
     return cache;
@@ -367,13 +397,13 @@ Datum
 pg_db4ai_predict_label(PG_FUNCTION_ARGS)
 {
     Db4aiCache *cache=classifier_predictor(fcinfo);
-    Db4aiDictionary *d=cache->native->labels;
-    double *features=db4ai_features(PG_GETARG_ARRAYTYPE_P(1), cache->model->nfeatures);
+    Db4aiDictionary *d=cache->pipeline?cache->pipeline->labels:cache->native->labels;
+    double *features=cache->pipeline?db4ai_pipeline_array(cache->pipeline,PG_GETARG_ARRAYTYPE_P(1)):db4ai_features(PG_GETARG_ARRAYTYPE_P(1), cache->model->nfeatures);
     Oid rettype=get_fn_expr_rettype(fcinfo->flinfo);
     int index;
     if (rettype != d->type)
         ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("classification label type is %s, not %s",format_type_be(d->type),format_type_be(rettype))));
-    index=db4ai_native_class(cache->native,features); pfree(features);
+    index=cache->pipeline?db4ai_pipeline_class(cache->pipeline,features):db4ai_native_class(cache->native,features); pfree(features);
     PG_RETURN_DATUM(datumCopy(d->values[index],d->typbyval,d->typlen));
 }
 
@@ -381,9 +411,9 @@ Datum
 pg_db4ai_predict_text(PG_FUNCTION_ARGS)
 {
     Db4aiCache *cache=classifier_predictor(fcinfo);
-    double *features=db4ai_features(PG_GETARG_ARRAYTYPE_P(1),cache->model->nfeatures);
-    int index=db4ai_native_class(cache->native,features);
-    char *label=db4ai_dictionary_text(cache->native->labels,index);
+    double *features=cache->pipeline?db4ai_pipeline_array(cache->pipeline,PG_GETARG_ARRAYTYPE_P(1)):db4ai_features(PG_GETARG_ARRAYTYPE_P(1),cache->model->nfeatures);
+    int index=cache->pipeline?db4ai_pipeline_class(cache->pipeline,features):db4ai_native_class(cache->native,features);
+    char *label=db4ai_dictionary_text(cache->pipeline?cache->pipeline->labels:cache->native->labels,index);
     pfree(features);
     PG_RETURN_TEXT_P(cstring_to_text(label));
 }
@@ -392,12 +422,13 @@ Datum
 pg_db4ai_predict_scores(PG_FUNCTION_ARGS)
 {
     Db4aiCache *cache=classifier_predictor(fcinfo);
-    int n=cache->native->nclasses,i;
-    double *features=db4ai_features(PG_GETARG_ARRAYTYPE_P(1),cache->model->nfeatures);
+    int n=cache->pipeline?cache->pipeline->nclasses:cache->native->nclasses,i;
+    double *features=cache->pipeline?db4ai_pipeline_array(cache->pipeline,PG_GETARG_ARRAYTYPE_P(1)):db4ai_features(PG_GETARG_ARRAYTYPE_P(1),cache->model->nfeatures);
     double *scores=palloc(sizeof(double)*n);
     Datum *values=palloc(sizeof(Datum)*n);
     ArrayType *result;
-    db4ai_native_scores(cache->native,features,scores);
+    if(cache->pipeline) db4ai_pipeline_proba(cache->pipeline,features,scores);
+    else db4ai_native_scores(cache->native,features,scores);
     for(i=0;i<n;i++) { db4ai_check_finite(scores[i]); values[i]=Float8GetDatum(scores[i]); }
     result=construct_array(values,n,FLOAT8OID,sizeof(float8),FLOAT8PASSBYVAL,TYPALIGN_DOUBLE);
     pfree(features); pfree(scores); pfree(values);
@@ -410,9 +441,11 @@ pg_db4ai_class_labels(PG_FUNCTION_ARGS)
     Db4aiCache *cache=get_predictor(fcinfo);
     Db4aiDictionary *d;
     Datum *values; ArrayType *result; int i;
-    if(!cache->native || !cache->native->labels)
+    if(cache->pipeline && !cache->pipeline->classification)
+        ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("pipeline is not a classifier")));
+    if(!cache->pipeline && (!cache->native || !cache->native->labels))
         ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("model has no classification dictionary")));
-    d=cache->native->labels; values=palloc(sizeof(Datum)*d->count);
+    d=cache->pipeline?cache->pipeline->labels:cache->native->labels; values=palloc(sizeof(Datum)*d->count);
     for(i=0;i<d->count;i++) values[i]=CStringGetTextDatum(db4ai_dictionary_text(d,i));
     result=construct_array(values,d->count,TEXTOID,-1,false,TYPALIGN_INT);
     PG_RETURN_ARRAYTYPE_P(result);
@@ -437,13 +470,18 @@ predict_nb_probabilities(FunctionCallInfo fcinfo, bool logarithmic)
     double *features, scores[256];
     Datum values[256];
     ArrayType *result;
-    if(cache->model->algorithm!=DB4AI_GAUSSIAN_NB)
+    if(!cache->pipeline && cache->model->algorithm!=DB4AI_GAUSSIAN_NB)
         ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),
                        errmsg("predict_proba/log_proba currently require gaussian_naive_bayes"),
                        errhint("Use predict_scores for OVA/SVM scores, which are not normalized posteriors.")));
-    n=cache->native->nclasses;
-    features=db4ai_features(PG_GETARG_ARRAYTYPE_P(1),cache->model->nfeatures);
-    if(logarithmic) db4ai_nb_log_proba(cache->native,features,scores);
+    n=cache->pipeline?cache->pipeline->nclasses:cache->native->nclasses;
+    features=cache->pipeline?db4ai_pipeline_array(cache->pipeline,PG_GETARG_ARRAYTYPE_P(1)):db4ai_features(PG_GETARG_ARRAYTYPE_P(1),cache->model->nfeatures);
+    if(cache->pipeline)
+    {
+        db4ai_pipeline_proba(cache->pipeline,features,scores);
+        if(logarithmic) for(i=0;i<n;i++) scores[i]=scores[i]>0?log(scores[i]):-HUGE_VAL;
+    }
+    else if(logarithmic) db4ai_nb_log_proba(cache->native,features,scores);
     else db4ai_nb_proba(cache->native,features,scores);
     for(i=0;i<n;i++) values[i]=Float8GetDatum(scores[i]);
     result=construct_array(values,n,FLOAT8OID,sizeof(float8),FLOAT8PASSBYVAL,TYPALIGN_DOUBLE);
@@ -471,10 +509,38 @@ pg_db4ai_build_info(PG_FUNCTION_ARGS)
 #else
     const char *openmp="false";
 #endif
-    char *info=psprintf("{\"extension_version\":\"0.4.0\",\"postgres_major\":%d,"
+    char *info=psprintf("{\"extension_version\":\"0.5.0\",\"automl\":true,\"postgres_major\":%d,"
         "\"xgboost\":%s,\"openmp\":%s,\"training_corgipile\":true,"
         "\"dense_replay\":true,\"model_ddl\":\"explicit execute_ddl entrypoint\","
         "\"native_create_model_grammar\":false,\"simd_compiled\":%s,\"simd_backend\":\"%s\",\"simd_fp_reassociation\":\"local reductions only\"}",PG_VERSION_NUM/10000,xgboost,openmp,
         db4ai_numeric_compiled()?"true":"false",db4ai_numeric->name);
     PG_RETURN_DATUM(DirectFunctionCall1(jsonb_in,CStringGetDatum(info)));
+}
+
+
+/* Named raw inputs; extra keys are ignored so to_jsonb(table_alias) is usable.
+ * Required input keys must exist, with explicit JSON null for imputation. */
+PG_FUNCTION_INFO_V1(pg_db4ai_predict);
+Datum
+pg_db4ai_predict(PG_FUNCTION_ARGS)
+{
+    Db4aiCache *cache=get_predictor(fcinfo);
+    Db4aiPipeline *p=cache->pipeline;
+    StringInfoData s;
+    double *features;
+    if(!p) ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("named JSON prediction requires an AutoML pipeline")));
+    features=db4ai_pipeline_json(p,PG_GETARG_JSONB_P(1)); initStringInfo(&s);
+    if(p->classification)
+    {
+        double probabilities[256]; int c,best=0;
+        db4ai_pipeline_proba(p,features,probabilities);
+        for(c=1;c<p->nclasses;c++) if(probabilities[c]>probabilities[best]) best=c;
+        appendStringInfoString(&s,"{\"prediction\":"); escape_json(&s,db4ai_dictionary_text(p->labels,best));
+        appendStringInfo(&s,",\"class_index\":%d,\"classes\":[",best);
+        for(c=0;c<p->nclasses;c++) { if(c) appendStringInfoChar(&s,','); escape_json(&s,db4ai_dictionary_text(p->labels,c)); }
+        appendStringInfoString(&s,"],\"probabilities\":"); db4ai_write_array(&s,probabilities,p->nclasses); appendStringInfoChar(&s,'}');
+    }
+    else appendStringInfo(&s,"{\"prediction\":%.17g}",db4ai_pipeline_value(p,features));
+    pfree(features);
+    PG_RETURN_DATUM(DirectFunctionCall1(jsonb_in,CStringGetDatum(s.data)));
 }

@@ -51,7 +51,7 @@ static int
 read_unit(Db4aiShuffle *s, double *out)
 {
     int n;
-    CHECK_FOR_INTERRUPTS();
+    db4ai_automl_check();
     n=db4ai_rows_read(s->data->dense,s->data->position,s->unit,out);
     s->data->position+=n;
     return n;
@@ -171,7 +171,7 @@ static int
 next_unit(Db4aiShuffle *s, const double **rows)
 {
     int n=0;
-    CHECK_FOR_INTERRUPTS();
+    db4ai_automl_check();
     if(s->full)
     {
         if(s->cursor<s->capacity)
@@ -216,7 +216,7 @@ corgipile_next(Db4aiShuffle *s, const double **rows)
             {
                 int64 start=s->blocks[s->next_block++]*s->block_rows;
                 int n;
-                CHECK_FOR_INTERRUPTS();
+                db4ai_automl_check();
                 n=db4ai_rows_read(s->data->dense,start,s->block_rows,
                                  s->window+(Size)s->window_count*width);
                 if(n<1) elog(ERROR,"CorgiPile encountered an empty block");

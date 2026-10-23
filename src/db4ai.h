@@ -4,6 +4,7 @@
 
 #include "numeric.h"
 void db4ai_numeric_init(void);
+void db4ai_automl_check(void);
 
 #include "postgres.h"
 #include "fmgr.h"
@@ -21,7 +22,7 @@ typedef enum Db4aiAlgorithm
 {
     DB4AI_LINEAR, DB4AI_LOGISTIC, DB4AI_SVM, DB4AI_KMEANS, DB4AI_PCA,
     DB4AI_XGB_SQUARED, DB4AI_XGB_BINARY, DB4AI_XGB_LOGISTIC, DB4AI_XGB_GAMMA,
-    DB4AI_MULTICLASS, DB4AI_RETIRED_BAYES, DB4AI_GAUSSIAN_NB
+    DB4AI_MULTICLASS, DB4AI_RETIRED_BAYES, DB4AI_GAUSSIAN_NB, DB4AI_XGB_MULTICLASS, DB4AI_AUTOML
 } Db4aiAlgorithm;
 
 typedef struct Db4aiOptions

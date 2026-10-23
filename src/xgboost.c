@@ -7,6 +7,7 @@
 #include <math.h>
 #include <stdint.h>
 #include "db4ai.h"
+#include "automl.h"
 #include "common/shortest_dec.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
@@ -27,6 +28,7 @@ typedef struct Db4aiXgb
     DMatrixHandle proxy;
     bool inplace;
     int nfeatures;
+    int noutputs;
     float *prediction_row;
     char *array_interface;
 } Db4aiXgb;
@@ -95,6 +97,7 @@ objective(Db4aiAlgorithm algorithm)
         case DB4AI_XGB_BINARY: return "binary:logistic";
         case DB4AI_XGB_LOGISTIC: return "reg:logistic";
         case DB4AI_XGB_GAMMA: return "reg:gamma";
+        case DB4AI_XGB_MULTICLASS: return "multi:softprob";
         default: elog(ERROR, "invalid XGBoost algorithm");
     }
     return NULL;
@@ -134,7 +137,7 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
     db4ai_data_rewind(data);
     while (db4ai_data_next(data, row))
     {
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         for (j = 0; j < data->ncolumns; j++)
             if (fabs(row[j]) > FLT_MAX)
                 ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE), errmsg("XGBoost input exceeds float32 range")));
@@ -156,6 +159,12 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
     pfree(features); pfree(labels); pfree(row);
     xgb_check(XGBoosterCreate(&r->matrix, 1, &r->booster));
     xgb_check(XGBoosterSetParam(r->booster, "objective", objective(algorithm)));
+    if (algorithm == DB4AI_XGB_MULTICLASS)
+    {
+        if (!data->labels || data->labels->count < 2 || data->labels->count > 256)
+            ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE), errmsg("multiclass XGBoost requires an AutoML label dictionary")));
+        set_integer(r->booster, "num_class", data->labels->count);
+    }
     xgb_check(XGBoosterSetParam(r->booster, "tree_method", o->tree_method));
     xgb_check(XGBoosterSetParam(r->booster, "booster", o->booster));
     if(*o->eval_metric) xgb_check(XGBoosterSetParam(r->booster, "eval_metric", o->eval_metric));
@@ -173,7 +182,7 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
     /* Every tree is trained on the complete DMatrix, not on independent chunks. */
     for (epoch = 0; epoch < o->iterations; epoch++)
     {
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         xgb_check(XGBoosterUpdateOneIter(r->booster, epoch, r->matrix));
         completed=epoch+1;
         if(o->max_seconds && TimestampDifferenceExceeds(started,GetCurrentTimestamp(),o->max_seconds*1000)) break;
@@ -183,7 +192,7 @@ db4ai_xgb_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions *o
                 &model_size, &model_data));
     out->data = db4ai_bytes(model_data, model_size);
     out->format = pstrdup(format);
-    out->noutputs = 1;
+    out->noutputs = algorithm == DB4AI_XGB_MULTICLASS ? data->labels->count : 1;
     xgb_check(XGBoosterEvalOneIter(r->booster, completed - 1, &r->matrix, eval_names, 1, &evaluation));
     XGBoostVersion(&major, &minor, &patch);
     initStringInfo(&metrics);
@@ -244,6 +253,7 @@ db4ai_xgb_load(const Db4aiModel *model)
     if (nfeatures != model->nfeatures)
         ereport(ERROR, (errcode(ERRCODE_DATA_CORRUPTED), errmsg("XGBoost feature schema does not match model metadata")));
     r->nfeatures = model->nfeatures;
+    r->noutputs = model->noutputs;
     r->prediction_row = palloc(r->nfeatures * sizeof(float));
     r->inplace = xgb_supports_inplace(r->booster);
     if (r->inplace)
@@ -264,17 +274,17 @@ db4ai_xgb_load(const Db4aiModel *model)
     return r;
 }
 
-double
-db4ai_xgb_predict(void *predictor, const double *features, int nfeatures)
+void
+db4ai_xgb_predict_vector(void *predictor, const double *features, int nfeatures, double *out, int noutputs)
 {
     Db4aiXgb *r = (Db4aiXgb *) predictor;
     float *row = r->prediction_row;
     const bst_ulong *shape;
     bst_ulong ndim;
     const float *result;
-    volatile double out = 0;
+
     int i;
-    if (nfeatures != r->nfeatures)
+    if (nfeatures != r->nfeatures || noutputs != r->noutputs)
         ereport(ERROR, (errcode(ERRCODE_DATATYPE_MISMATCH), errmsg("XGBoost feature count changed")));
     for (i = 0; i < nfeatures; i++)
     {
@@ -282,7 +292,7 @@ db4ai_xgb_predict(void *predictor, const double *features, int nfeatures)
             ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE), errmsg("XGBoost feature exceeds float32 range")));
         row[i] = (float) features[i];
     }
-    CHECK_FOR_INTERRUPTS();
+    db4ai_automl_check();
     PG_TRY();
     {
         if (r->inplace)
@@ -296,9 +306,9 @@ db4ai_xgb_predict(void *predictor, const double *features, int nfeatures)
                       "{\"type\":0,\"training\":false,\"iteration_begin\":0,\"iteration_end\":0,\"strict_shape\":true}",
                       &shape, &ndim, &result));
         }
-        if (ndim != 2 || shape[0] != 1 || shape[1] != 1)
+        if (ndim != 2 || shape[0] != 1 || shape[1] != (bst_ulong)noutputs)
             ereport(ERROR, (errcode(ERRCODE_DATA_CORRUPTED), errmsg("unexpected XGBoost prediction shape")));
-        out = result[0];
+        for (i = 0; i < noutputs; i++) { out[i] = result[i]; db4ai_check_finite(out[i]); }
         if (r->matrix != NULL)
         {
             xgb_check(XGDMatrixFree(r->matrix));
@@ -315,8 +325,14 @@ db4ai_xgb_predict(void *predictor, const double *features, int nfeatures)
         PG_RE_THROW();
     }
     PG_END_TRY();
-    db4ai_check_finite(out);
-    return out;
+}
+
+double
+db4ai_xgb_predict(void *predictor, const double *features, int nfeatures)
+{
+    double result;
+    db4ai_xgb_predict_vector(predictor, features, nfeatures, &result, 1);
+    return result;
 }
 #else
 static void
@@ -329,4 +345,5 @@ unavailable(void)
 void db4ai_xgb_train(Db4aiData *d, Db4aiAlgorithm a, const Db4aiOptions *o, const char *f, Db4aiModel *m) { unavailable(); }
 void *db4ai_xgb_load(const Db4aiModel *m) { unavailable(); return NULL; }
 double db4ai_xgb_predict(void *p, const double *f, int n) { unavailable(); return 0; }
+void db4ai_xgb_predict_vector(void *p, const double *f, int n, double *o, int k) { unavailable(); }
 #endif

@@ -1,0 +1,12 @@
+{
+  "base_commit": "a131fbebc2c9c70916033073fa3f084497510a35",
+  "runtime_commit": "94a86935c8fd8783e2e64be490e9f3a5ef706eb9",
+  "source_payload_sha256": "eb89415a011a59d9ee4a8a157c1d860dd5d625c72a0b959214be8e1eb8e8577f",
+  "library_sha256": "6ae292799643ca68bb1c203e449e251191c960a067f29c770b85310e2488e18a",
+  "raw_results_sha256": "601e082a6d66275cfc2e5ba02ddea2763ffbd37e9d72acd5a7e65b44b1423164",
+  "environment": {"postgresql":"18.0", "compiler":"GCC 14.2", "cpu":"AMD EPYC 9V74", "pinned_cpu":0, "xgboost":true, "openmp":false, "simd":"avx2", "threads":1, "memory_note":"128 MiB admission/individual buffers, no measured peak RSS or cgroup hard cap"},
+  "audit": {"cases":24,"successful_cases":24,"selection_and_budget_reports_checked":96,"outer_predictions_metric_checked":16598,"native_preprocess_and_inference_rows_checked":1526,"no_estimator_or_database_executed":true,"passed":true},
+  "protocol": "current-only; 24 frozen outer splits; only outer TRAIN supplied to internal 60/20/20 AutoML; untouched outer TEST evaluated after selection; 2-second budget, one warmup and three measured fits per case",
+  "supplementary_budgets": [{"seconds":0.05,"seed":42,"completed":6,"cases":8,"incomplete":["california","digits"]},{"seconds":0.25,"seed":42,"completed":7,"cases":8,"incomplete":["digits"]}],
+  "limitations": ["No external or old-binary baseline rerun", "No full-data refit", "Small public numeric data, not GB/TB or concurrency qualification", "Exploratory mixed-affinity timing excluded", "Raw model/prediction/log evidence is in the conversation ZIP, not claimed stored in Git", "No independent XGBoost tree-traversal audit claim"]
+}

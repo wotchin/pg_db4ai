@@ -27,12 +27,18 @@ python3 "$ROOT/test/numerical_reference.py"
 python3 "$ROOT/test/partial_batch_reference.py"
 "$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/simd.sql"
 sh "$ROOT/test/run_numeric.sh"
+"$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/automl.sql"
+python3 "$ROOT/test/automl_reference.py"
+python3 "$ROOT/test/automl_budget.py"
+"$BIN/createdb" db4ai_automl_upgrade
+"$BIN/psql" -X -d db4ai_automl_upgrade -v ON_ERROR_STOP=1 -f "$ROOT/test/automl_upgrade.sql"
 "$BIN/createdb" db4ai_upgrade
 "$BIN/psql" -X -d db4ai_upgrade -v ON_ERROR_STOP=1 -f "$ROOT/test/upgrade.sql"
 "$BIN/createdb" db4ai_bayes_upgrade
 "$BIN/psql" -X -d db4ai_bayes_upgrade -v ON_ERROR_STOP=1 -f "$ROOT/test/naive_bayes_upgrade.sql"
 if [ "${WITH_XGBOOST:-1}" = 1 ]; then
   "$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/xgboost.sql"
+  "$BIN/psql" -X -v ON_ERROR_STOP=1 -f "$ROOT/test/automl_xgboost.sql"
 fi
 # A new backend must load the durable model, rather than use an in-process pointer.
 "$BIN/psql" -X -v ON_ERROR_STOP=1 -c "SELECT public.assert_true(abs(db4ai.predict_float8('reg',ARRAY[0.25,0.0625])-1.3125)<0.001,'new backend reload');"
@@ -59,9 +65,11 @@ SELECT public.assert_true(db4ai.predict_text('ova_svm_ngd',ARRAY[0.0,1.0,0.0])='
 SQL
 if [ "${WITH_XGBOOST:-1}" = 1 ]; then
   "$BIN/psql" -X -d db4ai_restored -v ON_ERROR_STOP=1 -c "SELECT public.assert_true(abs(db4ai.predict_float8('xgb_ubj',ARRAY[0.25,0.0625])-1.3125)<0.3,'restored XGBoost predictor');"
+  "$BIN/psql" -X -d db4ai_restored -v ON_ERROR_STOP=1 -c "SELECT public.assert_true(db4ai.predict_text('am_xgb_three',ARRAY[2.0,0.1])='2','restored AutoML multiclass XGBoost');"
 fi
 # Both kernel maps and PCA bases must remain exactly usable after a new backend
 # and logical restore, independently of in-memory handles.
 PGDATABASE=db4ai_restored python3 "$ROOT/test/numerical_reference.py"
 PGDATABASE=db4ai_restored python3 "$ROOT/test/naive_bayes_reference.py"
+PGDATABASE=db4ai_restored python3 "$ROOT/test/automl_reference.py"
 printf '\nAll integration tests passed (PostgreSQL: %s; WITH_XGBOOST=%s).\n' "$("$BIN/pg_config" --version)" "${WITH_XGBOOST:-1}"

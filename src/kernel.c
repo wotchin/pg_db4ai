@@ -38,7 +38,7 @@ db4ai_kernel_prepare(Db4aiNative *m, const Db4aiOptions *o)
         while(n<count)
         {
             double u,v,mag;
-            CHECK_FOR_INTERRUPTS();
+            db4ai_automl_check();
             do { u=uniform48(&rng); } while(u<=FLT_EPSILON);
             v=2.0*M_PI*uniform48(&rng); mag=sigma*sqrt(-2.0*log(u));
             m->kernel_weights[n++]=mag*cos(v);
