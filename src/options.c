@@ -12,7 +12,7 @@ static const char *const names[] = {
     "linear_regression", "logistic_regression", "svm_classification", "kmeans", "pca",
     "xgboost_regression_squarederror", "xgboost_binary_logistic",
     "xgboost_regression_logistic", "xgboost_regression_gamma",
-    "multiclass", "bayes_net_internal"
+    "multiclass", "bayes_net_internal", "gaussian_naive_bayes"
 };
 
 Db4aiAlgorithm
@@ -30,14 +30,14 @@ db4ai_algorithm(const char *name)
 const char *
 db4ai_algorithm_name(Db4aiAlgorithm algorithm)
 {
-    Assert(algorithm >= DB4AI_LINEAR && algorithm <= DB4AI_BAYES);
+    Assert(algorithm >= DB4AI_LINEAR && algorithm <= DB4AI_GAUSSIAN_NB);
     return names[algorithm];
 }
 
 bool
 db4ai_supervised(Db4aiAlgorithm algorithm)
 {
-    return algorithm != DB4AI_KMEANS && algorithm != DB4AI_PCA && algorithm != DB4AI_BAYES;
+    return algorithm != DB4AI_KMEANS && algorithm != DB4AI_PCA && algorithm != DB4AI_RETIRED_BAYES;
 }
 
 bool
@@ -49,7 +49,7 @@ db4ai_is_xgboost(Db4aiAlgorithm algorithm)
 bool
 db4ai_classifier(Db4aiAlgorithm a)
 {
-    return a == DB4AI_LOGISTIC || a == DB4AI_SVM || a == DB4AI_MULTICLASS;
+    return a == DB4AI_LOGISTIC || a == DB4AI_SVM || a == DB4AI_MULTICLASS || a == DB4AI_GAUSSIAN_NB;
 }
 
 void
@@ -113,14 +113,14 @@ typedef struct OptionKey
 #define XGB (A(DB4AI_XGB_SQUARED)|A(DB4AI_XGB_BINARY)|A(DB4AI_XGB_LOGISTIC)|A(DB4AI_XGB_GAMMA))
 #define KM A(DB4AI_KMEANS)
 #define PCA A(DB4AI_PCA)
-#define BAYES A(DB4AI_BAYES)
-#define ALL (GD|XGB|KM|PCA|BAYES)
+#define NB A(DB4AI_GAUSSIAN_NB)
+#define ALL (GD|XGB|KM|PCA|NB)
 static const OptionKey keys[] = {
-    {"profile", ALL}, {"max_iterations",ALL & ~BAYES}, {"n_iterations",XGB},
-    {"batch_size",ALL}, {"seed", ALL & ~BAYES}, {"verbose",ALL & ~BAYES},
+    {"profile", ALL & ~NB}, {"max_iterations",ALL & ~NB}, {"n_iterations",XGB},
+    {"batch_size",ALL}, {"seed", ALL & ~NB}, {"verbose",ALL & ~NB},
     {"learning_rate",GD|XGB}, {"eta",XGB}, {"l2",GD|XGB},
     {"tolerance",GD|PCA|KM}, {"decay",GD}, {"optimizer",GD},
-    {"max_seconds",GD|PCA|KM|XGB}, {"null_policy",GD|KM|PCA|XGB},
+    {"max_seconds",GD|PCA|KM|XGB}, {"null_policy",GD|KM|PCA|XGB|NB},
     {"shuffle",GD|PCA}, {"shuffle_first_epoch",GD|PCA}, {"shuffle_buffer_size",GD|PCA},
     {"shuffle_block_rows",GD|PCA}, {"shuffle_window_blocks",GD|PCA}, {"kernel_cache",GD},
     {"kernel",SVM}, {"components",SVM}, {"gamma",SVM|XGB}, {"degree",SVM}, {"coef0",SVM},
@@ -130,8 +130,7 @@ static const OptionKey keys[] = {
     {"n_components",PCA}, {"number_components",PCA}, {"pca_solver",PCA}, {"center",PCA},
     {"max_depth",XGB}, {"min_child_weight",XGB}, {"subsample",XGB}, {"colsample_bytree",XGB},
     {"nthread",XGB}, {"verbosity",XGB}, {"booster",XGB}, {"tree_method",XGB}, {"eval_metric",XGB},
-    {"edges_of_network",BAYES}, {"num_edges",BAYES}, {"num_nodes",BAYES},
-    {"num_bins",BAYES}, {"num_mcvs",BAYES}, {"num_sample_rows",BAYES}, {"num_total_rows",BAYES}
+    {"var_smoothing",NB}, {"variance_floor",NB}, {"fit_prior",NB}
 };
 
 char *
@@ -198,6 +197,11 @@ db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *o)
     unsigned int bit=A(algorithm);
     bool legacy;
     memset(o,0,sizeof(*o));
+    if (algorithm == DB4AI_RETIRED_BAYES)
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                        errmsg("bayes_net_internal has been retired"),
+                        errhint("Train gaussian_naive_bayes with a label column followed by numeric features. Old joint-estimator models can still be exported or dropped, not converted.")));
+
     if (!JB_ROOT_IS_OBJECT(json))
         ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("hyperparameters must be a JSON object")));
     it=JsonbIteratorInit(&json->root);
@@ -211,6 +215,16 @@ db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *o)
             if (!found) ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("unknown or inapplicable hyperparameter: %s",key)));
             pfree(key);
         }
+    if (algorithm == DB4AI_GAUSSIAN_NB)
+    {
+        o->batch_size=bounded(json,"batch_size",1024,1,1048576,true);
+        o->var_smoothing=bounded(json,"var_smoothing",1e-9,0,1,false);
+        o->variance_floor=bounded(json,"variance_floor",1e-12,1e-300,1e100,false);
+        o->fit_prior=db4ai_json_boolean(json,"fit_prior",true);
+        o->null_policy=choice(json,"null_policy","error","error","legacy",NULL,NULL);
+        /* Deliberately no epochs, shuffle, seed or learning-rate: closed-form fit. */
+        return;
+    }
     o->legacy_profile=choice(json,"profile","stable","stable","opengauss",NULL,NULL)==1;
     legacy=o->legacy_profile;
     o->iterations=bounded(json,aliased(json,"max_iterations",xgb?"n_iterations":NULL),(legacy && algorithm==DB4AI_KMEANS)?10:100,1,100000,true);
@@ -259,14 +273,6 @@ db4ai_options(Jsonb *json, Db4aiAlgorithm algorithm, Db4aiOptions *o)
         else o->verbose=db4ai_json_boolean(json,"verbose",false);
     }
     o->num_features=bounded(json,"num_features",0,0,DB4AI_MAX_FEATURES,true);
-    o->num_nodes=bounded(json,"num_nodes",0,0,64,true);
-    o->num_edges=db4ai_json_field(json,"num_edges",false)?bounded(json,"num_edges",0,0,2016,true):-1;
-    o->num_bins=bounded(json,"num_bins",0,0,4096,true);
-    o->num_mcvs=bounded(json,"num_mcvs",0,0,4096,true);
-    /* Restrict exactly representable integers rather than round an int64 through double. */
-    o->num_sample_rows=(int64)bounded(json,"num_sample_rows",0,0,9007199254740991.0,true);
-    o->num_total_rows=(int64)bounded(json,"num_total_rows",0,0,9007199254740991.0,true);
-    o->edges=db4ai_json_string(json,"edges_of_network","");
     o->eval_metric=db4ai_json_string(json,"eval_metric","");
     o->tree_method=db4ai_json_string(json,"tree_method","hist");
     o->booster=db4ai_json_string(json,"booster","gbtree");
@@ -318,8 +324,17 @@ db4ai_options_json(const Db4aiOptions *o, Db4aiAlgorithm a)
     bool xgb=db4ai_is_xgboost(a);
     bool gd=a<=DB4AI_SVM || a==DB4AI_MULTICLASS;
     initStringInfo(&b);
+    if (a == DB4AI_GAUSSIAN_NB)
+    {
+        appendStringInfo(&b,"{\"batch_size\":%d,\"fit_prior\":%s",o->batch_size,o->fit_prior?"true":"false");
+        option_number(&b,"var_smoothing",o->var_smoothing);
+        option_number(&b,"variance_floor",o->variance_floor);
+        option_string(&b,"null_policy",o->null_policy?"legacy":"error");
+        appendStringInfoChar(&b,'}');
+        return DatumGetJsonbP(DirectFunctionCall1(jsonb_in,CStringGetDatum(b.data)));
+    }
     appendStringInfo(&b,"{\"profile\":\"%s\",\"batch_size\":%d",o->legacy_profile?"opengauss":"stable",o->batch_size);
-    if (a!=DB4AI_BAYES) { option_number(&b,"max_iterations",o->iterations); option_number(&b,"seed",o->seed); }
+    { option_number(&b,"max_iterations",o->iterations); option_number(&b,"seed",o->seed); }
     if (gd || xgb) { option_number(&b,"learning_rate",o->learning_rate); option_number(&b,"l2",o->l2); }
     if (gd || a==DB4AI_PCA || a==DB4AI_KMEANS) option_number(&b,"tolerance",o->tolerance);
     if (gd) { option_string(&b,"optimizer",o->optimizer?"ngd":"gd"); option_number(&b,"decay",o->decay); }
@@ -363,15 +378,9 @@ db4ai_options_json(const Db4aiOptions *o, Db4aiAlgorithm a)
         option_number(&b,"gamma",o->gamma); option_number(&b,"nthread",o->nthread);
         option_string(&b,"eval_metric",o->eval_metric); option_string(&b,"tree_method",o->tree_method); option_string(&b,"booster",o->booster);
     }
-    if(a==DB4AI_BAYES)
-    {
-        option_string(&b,"edges_of_network",o->edges); option_number(&b,"num_nodes",o->num_nodes);
-        if(o->num_edges>=0) option_number(&b,"num_edges",o->num_edges);
-        option_number(&b,"num_bins",o->num_bins); option_number(&b,"num_mcvs",o->num_mcvs);
-        option_number(&b,"num_sample_rows",o->num_sample_rows); option_number(&b,"num_total_rows",o->num_total_rows);
-    }
-    else { option_string(&b,"null_policy",o->null_policy?"legacy":"error"); option_number(&b,"max_seconds",o->max_seconds); }
-    if(a!=DB4AI_BAYES) appendStringInfo(&b,",\"verbose\":%s",o->verbose?"true":"false");
+    option_string(&b,"null_policy",o->null_policy?"legacy":"error");
+    option_number(&b,"max_seconds",o->max_seconds);
+    appendStringInfo(&b,",\"verbose\":%s",o->verbose?"true":"false");
     appendStringInfoChar(&b,'}');
     return DatumGetJsonbP(DirectFunctionCall1(jsonb_in,CStringGetDatum(b.data)));
 }

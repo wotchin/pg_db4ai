@@ -28,8 +28,14 @@ linear_score(const double *w, const double *x, int n)
 void
 db4ai_native_scores(const Db4aiNative *m, const double *x, double *scores)
 {
-    double *v=palloc(sizeof(double)*m->ncoefficients);
+    double *v;
     int c;
+    if(m->algorithm==DB4AI_GAUSSIAN_NB)
+    {
+        db4ai_nb_proba(m,x,scores);
+        return;
+    }
+    v=palloc(sizeof(double)*m->ncoefficients);
     db4ai_kernel_transform(m,x,v);
     if(m->algorithm==DB4AI_MULTICLASS)
         for(c=0;c<m->nclasses;c++)
@@ -51,8 +57,9 @@ db4ai_native_class(const Db4aiNative *m, const double *x)
 {
     double scores[256]; int best=0,c;
     if(!db4ai_classifier(m->algorithm)) ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("model is not a classifier")));
-    db4ai_native_scores(m,x,scores);
-    if(m->nclasses==2 && m->algorithm!=DB4AI_MULTICLASS) return scores[1]>=scores[0]?1:0;
+    if(m->algorithm==DB4AI_GAUSSIAN_NB) db4ai_nb_log_proba(m,x,scores);
+    else db4ai_native_scores(m,x,scores);
+    if(m->nclasses==2 && m->algorithm!=DB4AI_MULTICLASS && m->algorithm!=DB4AI_GAUSSIAN_NB) return scores[1]>=scores[0]?1:0;
     for(c=1;c<m->nclasses;c++) if(scores[c]>scores[best]) best=c;
     return best;
 }

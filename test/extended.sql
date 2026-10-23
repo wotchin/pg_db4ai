@@ -138,43 +138,7 @@ SELECT db4ai.train('shuffle_other_seed','linear_regression',
     '{"max_iterations":4,"batch_size":8,"shuffle_buffer_size":2,"tolerance":0,"learning_rate":0.1,"seed":43}');
 SELECT public.assert_true(db4ai.export_model('shuffle_bounded')<>db4ai.export_model('shuffle_other_seed'),'different shuffle seed changes training trajectory');
 
--- Bayes joint/selectivity estimation, categorical DAG and Gaussian parent.
-SELECT db4ai.train('bayes_chain','bayes_net_internal',
-    'SELECT x,y FROM (VALUES(0,0),(0,0),(0,1),(1,1))t(x,y)',
-    '{"edges_of_network":"0,1","num_edges":1,"num_nodes":2}');
-SELECT public.assert_true(abs(db4ai.predict_joint('bayes_chain',0,0)-0.5)<1e-14 AND
-                         abs(db4ai.predict_joint('bayes_chain',0,1)-0.25)<1e-14 AND
-                         db4ai.predict_joint('bayes_chain',1,0)=0,'Bayes analytical joint');
-SELECT db4ai.train('bayes_mixed','bayes_net_internal',
-    $$SELECT x,y FROM (VALUES ('yes'::text,true),('yes',true),(NULL::text,false),('no',false))t(x,y)$$,
-    '{"edges_of_network":"0,1"}');
-SELECT public.assert_true(abs(db4ai.predict_joint('bayes_mixed',NULL::text,false)-0.25)<1e-14,'Bayes NULL is observed category');
-SELECT public.expect_error($q$SELECT db4ai.predict_joint('bayes_mixed',1,false)$q$,'42804');
-SELECT db4ai.train('bayes_gaussian','bayes_net_internal',
-    $$SELECT x,y,z FROM (VALUES ('a'::text,1,0.0::float8),('a',1,1.0::float8),('b',0,2.0::float8),('b',0,NULL::float8))t(x,y,z)$$,
-    '{"edges_of_network":"0,1,2,1","num_edges":2}');
-SELECT public.assert_true(abs(db4ai.predict_joint('bayes_gaussian','a'::text,1,0.0::float8)-0.17067237303427146)<1e-12 AND
-                         abs(db4ai.predict_joint('bayes_gaussian','b'::text,0,NULL::float8)-0.25)<1e-14,'Gaussian parent CDF and NULL fraction');
-SELECT db4ai.train('bayes_diamond','bayes_net_internal',
-    'SELECT a,b,c,d FROM generate_series(0,1)a CROSS JOIN generate_series(0,1)b CROSS JOIN generate_series(0,1)c CROSS JOIN generate_series(0,1)d',
-    '{"edges_of_network":"0,1,0,2,1,3,2,3","num_edges":4}');
-SELECT public.assert_true(abs(db4ai.predict_joint('bayes_diamond',1,0,1,0)-0.0625)<1e-14,'diamond DAG is not a cycle');
-SELECT db4ai.train('bayes_mcv','bayes_net_internal', $$SELECT CASE WHEN i<=8 THEN 'common' ELSE 'rare_'||i END FROM generate_series(1,10)i$$,
-    '{"num_mcvs":1}');
-SELECT public.assert_true(abs(db4ai.predict_joint('bayes_mcv','common'::text)-0.8)<1e-14 AND
-                         abs(db4ai.predict_joint('bayes_mcv','rare_9'::text)-0.1)<1e-14,'MCV and other bucket distinct correction');
-SELECT db4ai.train('bayes_bins','bayes_net_internal','SELECT i FROM generate_series(1,100)i', '{"num_bins":5}');
-SELECT public.assert_true(abs(db4ai.predict_joint('bayes_bins',40)-0.01)<1e-14 AND db4ai.predict_joint('bayes_bins',101)=0,'numeric bins and outside-domain prediction');
-SELECT db4ai.train('bayes_sample','bayes_net_internal','SELECT i FROM generate_series(1,100)i',
-    '{"num_bins":5,"num_sample_rows":100,"num_total_rows":1000}');
-SELECT public.assert_true(abs(db4ai.predict_joint('bayes_sample',10)-0.001)<1e-14,'Haas-Stokes sample distinct estimate');
-SELECT db4ai.train('bayes_int64','bayes_net_internal','SELECT 9007199254740992::bigint UNION ALL SELECT 9007199254740993::bigint');
-SELECT public.assert_true(db4ai.predict_joint('bayes_int64',9007199254740993::bigint)=0.5,'Bayes int64 identity');
-SELECT public.expect_error($q$SELECT db4ai.train('cycle','bayes_net_internal','SELECT 0,1','{"edges_of_network":"0,1,1,0"}')$q$,'22023');
-SELECT public.expect_error($q$SELECT db4ai.train('edge','bayes_net_internal','SELECT 0,1','{"edges_of_network":"0,1,0,1"}')$q$,'22023');
-SELECT public.expect_error($q$SELECT db4ai.train('edge','bayes_net_internal','SELECT 0,1','{"edges_of_network":"0,2"}')$q$,'22023');
-SELECT public.expect_error($q$SELECT db4ai.train('edge','bayes_net_internal','SELECT 0,1','{"edges_of_network":"0,1","num_edges":0}')$q$,'22023');
-SELECT public.expect_error($q$SELECT db4ai.predict_float8('bayes_chain',ARRAY[0.0,1.0])$q$,'42804');
+-- Retired ABO estimator is replaced by supervised Gaussian NB; see naive_bayes.sql.
 
 -- Real CustomScan, not a cosmetically renamed FunctionScan.
 SELECT public.assert_true((public.plan_json($q$SELECT x*2 FROM db4ai.shuffle_scan('SELECT i FROM generate_series(1,30)i',42,3,1)s(x int) WHERE x>10$q$)->0->'Plan'->>'Custom Plan Provider')='ShuffleScan','CustomScan provider');

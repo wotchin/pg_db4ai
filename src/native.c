@@ -454,6 +454,8 @@ db4ai_native_train(Db4aiData *data, Db4aiAlgorithm algorithm, const Db4aiOptions
         if(options->pca_solver) db4ai_stochastic_pca(model,data,options);
         else train_pca(model, data, options);
     }
+    else if (algorithm == DB4AI_GAUSSIAN_NB)
+        db4ai_nb_train(model, data, options);
     else
         db4ai_gradient_train(model, data, options);
     native_diagnostics(model,data);
@@ -483,6 +485,7 @@ db4ai_native_save(const Db4aiNative *m)
     StringInfoData b;
     bool gd=m->algorithm<=DB4AI_SVM || m->algorithm==DB4AI_MULTICLASS;
     int count=gd?m->ncoefficients*(m->algorithm==DB4AI_MULTICLASS?m->nclasses:1):m->nfeatures*m->noutputs;
+    if (m->algorithm == DB4AI_GAUSSIAN_NB) return db4ai_nb_save(m);
     initStringInfo(&b);
     appendStringInfoString(&b,"{\"format_version\":2,\"algorithm\":");
     escape_json(&b,db4ai_algorithm_name(m->algorithm));
@@ -548,12 +551,17 @@ model_integer(Jsonb *json, const char *key, int def, int low, int high)
 Db4aiNative *
 db4ai_native_load(const Db4aiModel *model)
 {
-    char *text=pnstrdup(VARDATA_ANY(model->data),VARSIZE_ANY_EXHDR(model->data));
-    Jsonb *json=DatumGetJsonbP(DirectFunctionCall1(jsonb_in,CStringGetDatum(text)));
-    JsonbValue *algorithm=db4ai_json_field(json,"algorithm",true);
-    Db4aiNative *m=palloc0(sizeof(*m));
+    char *text;
+    Jsonb *json;
+    JsonbValue *algorithm;
+    Db4aiNative *m;
     bool gd=model->algorithm<=DB4AI_SVM || model->algorithm==DB4AI_MULTICLASS;
     int count; JsonbValue *v;
+    if (model->algorithm == DB4AI_GAUSSIAN_NB) return db4ai_nb_load(model);
+    text=pnstrdup(VARDATA_ANY(model->data),VARSIZE_ANY_EXHDR(model->data));
+    json=DatumGetJsonbP(DirectFunctionCall1(jsonb_in,CStringGetDatum(text)));
+    algorithm=db4ai_json_field(json,"algorithm",true);
+    m=palloc0(sizeof(*m));
     (void)model_integer(json,"format_version",-1,1,2);
     if(db4ai_json_number(json,"n_features",-1)!=model->nfeatures || db4ai_json_number(json,"n_outputs",-1)!=model->noutputs ||
        algorithm->type!=jbvString || db4ai_algorithm(pnstrdup(algorithm->val.string.val,algorithm->val.string.len))!=model->algorithm)
@@ -612,6 +620,14 @@ double
 db4ai_native_predict(const Db4aiNative *m, const double *features)
 {
     double *v,z;
+    if(m->algorithm==DB4AI_GAUSSIAN_NB)
+    {
+        double probabilities[256];
+        if(m->nclasses!=2)
+            ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("multiclass Gaussian NB requires predict_label or predict_proba")));
+        db4ai_nb_proba(m,features,probabilities);
+        return probabilities[1];
+    }
     if(m->algorithm==DB4AI_PCA) ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("use db4ai.transform for PCA models")));
     if(m->algorithm==DB4AI_KMEANS) return closest(m,features,NULL)+1;
     if(m->algorithm==DB4AI_MULTICLASS) return db4ai_native_class(m,features);

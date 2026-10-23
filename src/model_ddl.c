@@ -157,7 +157,8 @@ parameters(ModelDdl *d, int index)
     initStringInfo(&out);
     /* DDL defaults select the original-style profile; an explicit profile is
      * allowed to override it. Duplicate user-supplied keys remain an error. */
-    appendStringInfoString(&out,"{\"profile\":\"opengauss\"");
+    appendStringInfoString(&out,db4ai_algorithm(d->algorithm)==DB4AI_GAUSSIAN_NB ?
+                           "{\"batch_size\":1024" : "{\"profile\":\"opengauss\"");
     while(index<d->count)
     {
         char *key=identifier(d,index++);

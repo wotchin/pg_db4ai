@@ -21,7 +21,7 @@ typedef enum Db4aiAlgorithm
 {
     DB4AI_LINEAR, DB4AI_LOGISTIC, DB4AI_SVM, DB4AI_KMEANS, DB4AI_PCA,
     DB4AI_XGB_SQUARED, DB4AI_XGB_BINARY, DB4AI_XGB_LOGISTIC, DB4AI_XGB_GAMMA,
-    DB4AI_MULTICLASS, DB4AI_BAYES
+    DB4AI_MULTICLASS, DB4AI_RETIRED_BAYES, DB4AI_GAUSSIAN_NB
 } Db4aiAlgorithm;
 
 typedef struct Db4aiOptions
@@ -64,13 +64,9 @@ typedef struct Db4aiOptions
     bool verbose;
     bool legacy_profile;
     int num_features;
-    int num_nodes;
-    int num_edges;
-    int num_bins;
-    int num_mcvs;
-    int64 num_sample_rows;
-    int64 num_total_rows;
-    char *edges;
+    double var_smoothing;     /* relative Gaussian NB variance smoothing */
+    double variance_floor;    /* strictly positive absolute variance floor */
+    bool fit_prior;           /* empirical class frequencies, otherwise uniform */
     char *eval_metric;
     char *tree_method;
     char *booster;
@@ -87,7 +83,6 @@ typedef struct Db4aiData
     int64 nrows;
     char **feature_names;
     struct Db4aiDictionary *labels;
-    struct Db4aiDictionary **domains;  /* Bayes variables, including numeric ones */
     int64 discarded;
     int64 passes;
     bool spilled;
@@ -132,6 +127,13 @@ typedef struct Db4aiNative
     double *eigenvalues;
     double *eigen_stddev;
     Jsonb *diagnostics;
+    /* Gaussian NB parameters are class-major and stored as explicit JSON. */
+    double *nb_priors;
+    double *nb_counts;
+    double *nb_means;
+    double *nb_variances;
+    double *nb_log_normalizer; /* derived at load/train, not serialized */
+    double nb_epsilon;
 
 } Db4aiNative;
 
