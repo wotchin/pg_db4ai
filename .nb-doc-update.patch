@@ -1,0 +1,186 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 3092def..f470e67 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1 +1,9 @@
++# 0.4.0
++
++- Replace internal ABO-oriented Bayes estimation with supervised Gaussian Naive Bayes.
++- Typed binary/multiclass prediction, normalized probabilities and log probabilities.
++- Stable moments, variance smoothing/floor and common-tail log-odds cancellation guard.
++- Remove predict_joint with dependency-safe SQL upgrade; preserve old artifacts for export/delete.
++- New numerical, security, spill, corrupt-model and upgrade/restore tests.
++
+ # 0.3.0
+ diff --git a/README.md b/README.md
+index f723d60..2c8ae6e 100644
+--- a/README.md
++++ b/README.md
+@@ -1,2 +1,14 @@
+-# pg_db4ai 0.3 update
++# pg_db4ai 0.4: a user-facing Bayes classifier
++
++`gaussian_naive_bayes` replaces the retired internal joint-selectivity estimator.
++It supports typed binary/multiclass labels and normalized `predict_proba` /
++`predict_log_proba` outputs, with numeric/array features and versioned JSON.
++The old `bayes_net_internal` trainer and `predict_joint` API are removed; existing
++artifacts remain exportable/deletable and are not converted. Upgrade with
++`ALTER EXTENSION pg_db4ai UPDATE TO '0.4.0'` after installing and reconnecting.
++See [usage, assumptions and migration](docs/NAIVE_BAYES.md).
++
++## Earlier 0.3 changes
++
++
+ 
+@@ -80,3 +92,3 @@ This does not import old openGauss binary model blobs.
+ | `pca` | Original-family matrix-free stochastic updates; optional Jacobi | `transform` |
+-| `bayes_net_internal` | Typed DAG equality/selectivity estimator, MCV/bins and Gaussian parents | `predict_joint` |
++| `gaussian_naive_bayes` | Supervised Gaussian NB with typed binary/multiclass labels | `predict_label`, `predict_proba`, `predict_log_proba` |
+ | `xgboost_regression_squarederror` | `reg:squarederror` | `predict_float8` |
+@@ -87,3 +99,3 @@ This does not import old openGauss binary model blobs.
+ Supervised input is **label first, then features**. KMeans/PCA receive only
+-features; Bayes receives all graph variables without a distinguished label.
++features. Gaussian NB also uses the first column as its supervised label.
+ Features support numeric/boolean scalars and fixed-width `float4[]`/`float8[]`
+@@ -93,3 +105,3 @@ text, enum, integer and numeric values beyond float8 precision. Domain label typ
+ are flattened to their base types. Pseudo-types and anonymous records are not
+-supported. Bayes NULL is an observed category, not an unobserved variable.
++supported. Gaussian NB uses the explicit error/legacy numeric NULL policy.
+ 
+ diff --git a/README.zh-CN.md b/README.zh-CN.md
+index 7d1bf14..350937e 100644
+--- a/README.zh-CN.md
++++ b/README.zh-CN.md
+@@ -2,3 +2,14 @@
+ 
+-## 0.3 更新
++## 0.4：把内部 Bayes 替换为用户级分类器
++
++新增 **`gaussian_naive_bayes`**，支持二分类/多分类、原始类型标签、
++`predict_proba` 和 `predict_log_proba`。输入为第一列标签、后续数值特征。
++这是真正的高斯朴素贝叶斯分类器，不是给原选择率估计器换名字。
++
++移除 `bayes_net_internal` 训练/推理和新安装的 `predict_joint`；旧模型保留导出/删除，
++不会自动变成分类模型，也不会在升级时删除。安装新库并重新连接后升级到 **0.4.0**。
++概率是模型后验，不是已经校准的置信度；文本类别特征和通用贝叶斯网络不在支持范围。
++[使用、统计假设和升级说明](docs/NAIVE_BAYES.md)
++
++## 历史 0.3 更新
+ 
+@@ -15,3 +26,3 @@
+ 
+-0.2 已实现固定版本 openGauss DB4AI 注册表中的 **11 个算法入口**，补入
++历史 0.2 曾覆盖固定版本 openGauss DB4AI 注册表中的 **11 个算法入口**（0.4 已将内部 Bayes 替换），补入
+ NGD、One-vs-All 多分类、Gaussian/Polynomial 核特征映射、随机 PCA、KMeans
+@@ -124,21 +135,14 @@ KMeans 支持 `seeding_function:"Random++"/"KMeans||"/"reservoir"`、
+ 
+-## 4. Bayes network 联合概率/选择率
+-
+-这里是原版 `bayes_net_internal` 的联合选择率估计路线，**不是 Naive Bayes 分类器**。
+-包括离散条件统计、MCV、数值分箱、样本 distinct 估计、浮点父变量的条件 Gaussian
+-统计和 DAG 传播；Gaussian CDF 用 C 的 `erfc`，不新增 Boost 依赖。
++## 4. Gaussian Naive Bayes 分类
+ 
+ ```sql
+-SELECT db4ai.train('joint', 'bayes_net_internal',
+-  'SELECT x,y FROM (VALUES(0,0),(0,0),(0,1),(1,1))t(x,y)',
+-  '{"edges_of_network":"0,1","num_edges":1,"num_nodes":2}');
+-SELECT db4ai.predict_joint('joint',0,0); -- 0.5
+-SELECT db4ai.predict_joint('joint',0,1); -- 0.25
+-SELECT db4ai.predict_joint('joint',1,0); -- 0
++SELECT db4ai.train('classifier', 'gaussian_naive_bayes',
++  'SELECT label,x,z FROM public.training_data');
++SELECT db4ai.predict_label('classifier', ARRAY[1.0,2.0], NULL::text);
++SELECT db4ai.class_labels('classifier'),
++       db4ai.predict_proba('classifier', ARRAY[1.0,2.0]);
+ ```
+ 
+-边以从 0 开始的 `parent,child` 对编码，拒绝环、重复边、自环、越界和错误边数。
+-NULL 表示真实观察到的 NULL 类别，不表示缺失证据或通配符。
+-此 API 提供等值联合估计，不自动接管 PG 优化器，不提供任意范围/边缘化推理接口；
+-一般图上的估计不应当被解释为精确且必然归一化的贝叶斯网络推理。
++类别顺序用 `class_labels` 查询；后验概率之和为1，但不能当作已校准置信度。
++原生算法代码仍是 C11，使用现有 PG 权限、事务、类型系统和 SIMD 内核。
+ 
+ diff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md
+index 9519cfd..e02b0e8 100644
+--- a/docs/ARCHITECTURE.md
++++ b/docs/ARCHITECTURE.md
+@@ -1 +1,10 @@
++# 0.4 Bayes architecture update
++
++The old ABO-oriented joint estimator is removed. `src/naive_bayes.c` provides
++supervised Gaussian NB through the shared typed-label and dense numeric input
++path, using explicit JSON parameters and normalized posterior prediction.
++No per-feature Bayes category dictionaries or graph inference remain. The
++historical architecture below otherwise describes the 0.3 foundation.
++See [current Bayes contract](NAIVE_BAYES.md).
++
+ # PostgreSQL-only architecture (0.2)
+@@ -15,3 +24,3 @@
+ | `src/native.c` | KMeans, Jacobi PCA, native serialization and prediction |
+-| `src/bayes.c` | Typed marginal/conditional statistics and original-family joint-selectivity propagation |
++| `src/naive_bayes.c` | Supervised class-conditional Gaussian statistics and posterior prediction |
+ | `src/shufflescan.c` | Explicit SQL CustomPath/CustomScan plus FunctionScan fallback |
+@@ -29,3 +38,3 @@ fetches batches; raw tuples are materialized for reliable array-shape/label
+ inspection. Accepted data is normalized into another spillable tuplestore.
+-GD/NGD/OVA/PCA read it through the shuffle runtime; KMeans/Bayes perform their
++GD/NGD/OVA/PCA read it through the shuffle runtime; KMeans/Gaussian NB perform their
+ required passes. No epoch reruns source SQL. The two stores and shuffle cache
+ diff --git a/docs/FUNCTIONAL_COVERAGE.md b/docs/FUNCTIONAL_COVERAGE.md
+index 704445e..a9cde1b 100644
+--- a/docs/FUNCTIONAL_COVERAGE.md
++++ b/docs/FUNCTIONAL_COVERAGE.md
+@@ -1,2 +1,2 @@
+-# DB4AI functional coverage audit (0.3)
++# DB4AI functional coverage audit (0.4)
+ 
+@@ -10,3 +10,3 @@ not identical source, RNG sequence or bitwise solver internals.
+ |---|---|
+-| All 11 registered algorithms | Linear/logistic/SVM/PCA/KMeans, four XGBoost objectives, multiclass OVA, internal Bayes estimator (0.2 retained) |
++| Public modeling algorithms | Linear/logistic/SVM/PCA/KMeans, four XGBoost objectives, multiclass OVA, plus supervised Gaussian NB replacing the internal estimator |
+ | GD/NGD and OVA | Normalized GD, independent solver state, decay, typed labels, raw scores and typed prediction |
+@@ -37,2 +37,10 @@ Resource caps and unsupported input types are documented, not silently accepted.
+ 
++## Bayes changed from internal integration to a public predictive model
++
++0.4 removes the internal joint-selectivity estimator and predict_joint. The new
++Gaussian NB classifier is a different supervised model with typed labels and
++normalized posterior APIs; old artifacts can only be exported/deleted/explained.
++This is an intentional product-scope change, not a claim of one-to-one Bayes-network
++compatibility. See NAIVE_BAYES.md.
++
+ ## Excluded by scope
+ diff --git a/docs/PORTING.md b/docs/PORTING.md
+index edf84ba..b9115d1 100644
+--- a/docs/PORTING.md
++++ b/docs/PORTING.md
+@@ -1 +1,6 @@
++> **0.4 scope change:** the internal Bayes joint estimator described in this
++> historical 0.2/0.3 record has been removed, and replaced by supervised
++> `gaussian_naive_bayes`. New behavior and tests are in [NAIVE_BAYES.md](NAIVE_BAYES.md).
++> Historical benchmark evidence is not rewritten.
++
+ # Scope update for 0.3
+ diff --git a/docs/SIMD.md b/docs/SIMD.md
+index 956e601..15c4319 100644
+--- a/docs/SIMD.md
++++ b/docs/SIMD.md
+@@ -59,3 +59,5 @@ XGBoost's vendored C++ implementation is unchanged. These switches do not change
+ XGBoost tree traversal or add AVX2 requirements to the upstream library.
+-Branch-heavy trees and Bayes graph traversal are not dense vector operations.
++Branch-heavy trees are not dense vector operations. In 0.4 the internal Bayes
++graph estimator is removed; Gaussian NB uses the squared-norm helper and a
++stable remote-tail log-odds fallback.
+ 
+ diff --git a/docs/VALIDATION.md b/docs/VALIDATION.md
+index 19c327e..356313d 100644
+--- a/docs/VALIDATION.md
++++ b/docs/VALIDATION.md
+@@ -1 +1,6 @@
++> **0.4 scope change:** the internal Bayes joint estimator described in this
++> historical 0.2/0.3 record has been removed, and replaced by supervised
++> `gaussian_naive_bayes`. New behavior and tests are in [NAIVE_BAYES.md](NAIVE_BAYES.md).
++> Historical benchmark evidence is not rewritten.
++
+ # Validation record
