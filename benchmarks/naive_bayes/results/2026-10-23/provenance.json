@@ -1,0 +1,18 @@
+{
+  "base_commit": "5381da588b1e61615d3455054ecae4ef2f654152",
+  "runtime_tested_pr_head": "c9844d07966d7ff318664efc7a99a7d0861b4a19",
+  "runtime_payload_sha256": "b7e2d64e58e74b2a9e60c0e3128457dd0903629df25abdb797abdcfc45eac76c",
+  "files": {
+    "src/naive_bayes.c": "930bb805e974210f6178b1bbf5eb59beda270788c09523994fd445aad28711dd",
+    "test/naive_bayes_reference.py": "32e4cceb441a7e5bd798d8bfc75ccf6f4f4becfd5d5074ab4b5c7e1dd2ca067b",
+    "benchmarks/naive_bayes/validate.py": "cfe7b95d113b4460e5656abf35991b26a9fc8dad318d0a4e4fd21b8c9aa5f3b9",
+    "raw/results.json": "a1ad7eb68997fc02d3d115c8ba902759dce0072a680a79d4c228fccd17d0e736",
+    "raw/environment.json": "9f74c572f1445ed9442b779f8762b7f5c98f704c1ea24ea158d7a435598b65e4"
+  },
+  "cases": 12,
+  "external_estimators_executed": 0,
+  "local_full_integration": "PostgreSQL18.0 WITH_XGBOOST=0 PASS",
+  "independent_numeric_oracle_comparisons": 792,
+  "raw_evidence_location": "Conversation artifact, not all raw predictions stored in git",
+  "statistical_caveat": "Gaussian NB posterior is not calibrated; retain poor Digits log loss"
+}
