@@ -57,7 +57,9 @@ remain ordinary libm operations, not silently replaced by approximate math.
 
 XGBoost's vendored C++ implementation is unchanged. These switches do not change
 XGBoost tree traversal or add AVX2 requirements to the upstream library.
-Branch-heavy trees and Bayes graph traversal are not dense vector operations.
+Branch-heavy trees are not dense vector operations. In 0.4 the internal Bayes
+graph estimator is removed; Gaussian NB uses the squared-norm helper and a
+stable remote-tail log-odds fallback.
 
 ## Build, inspect, control
 

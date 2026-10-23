@@ -1,6 +1,17 @@
 # pg_db4ai：PostgreSQL 原生机器学习扩展
 
-## 0.3 更新
+## 0.4：把内部 Bayes 替换为用户级分类器
+
+新增 **`gaussian_naive_bayes`**，支持二分类/多分类、原始类型标签、
+`predict_proba` 和 `predict_log_proba`。输入为第一列标签、后续数值特征。
+这是真正的高斯朴素贝叶斯分类器，不是给原选择率估计器换名字。
+
+移除 `bayes_net_internal` 训练/推理和新安装的 `predict_joint`；旧模型保留导出/删除，
+不会自动变成分类模型，也不会在升级时删除。安装新库并重新连接后升级到 **0.4.0**。
+概率是模型后验，不是已经校准的置信度；文本类别特征和通用贝叶斯网络不在支持范围。
+[使用、统计假设和升级说明](docs/NAIVE_BAYES.md)
+
+## 历史 0.3 更新
 
 新增 CorgiPile 两级训练混排、连续数值重扫与可溢写的特征预计算缓存；补齐模型 DDL 显式解析入口、KMeans/PCA 诊断、小数 max_seconds，以及可选 `WITH_OPENMP=1` 的 XGBoost 多线程训练。
 
@@ -13,7 +24,7 @@
 [功能核查](docs/FUNCTIONAL_COVERAGE.md) · [DDL 边界](docs/MODEL_DDL.md) · [论文与 CorgiPile 实现](docs/CORGIPILE.md) · [仅测本插件的实验](benchmarks/native/README.md)
 
 
-0.2 已实现固定版本 openGauss DB4AI 注册表中的 **11 个算法入口**，补入
+历史 0.2 曾覆盖固定版本 openGauss DB4AI 注册表中的 **11 个算法入口**（0.4 已将内部 Bayes 替换），补入
 NGD、One-vs-All 多分类、Gaussian/Polynomial 核特征映射、随机 PCA、KMeans
 两类初始化与四种距离、类型化标签、Bayes network 和训练 shuffle cache；
 另提供真正的 **PG CustomScan `ShuffleScan`**。
@@ -122,25 +133,18 @@ Jacobi 不执行训练乱序，显式提供 shuffle 参数会报错，避免参�
 KMeans 支持 `seeding_function:"Random++"/"KMeans||"/"reservoir"`、
 `distance_function:"L1"/"L2"/"L2_Squared"/"Linf"`，以及 `num_centroids`。
 
-## 4. Bayes network 联合概率/选择率
-
-这里是原版 `bayes_net_internal` 的联合选择率估计路线，**不是 Naive Bayes 分类器**。
-包括离散条件统计、MCV、数值分箱、样本 distinct 估计、浮点父变量的条件 Gaussian
-统计和 DAG 传播；Gaussian CDF 用 C 的 `erfc`，不新增 Boost 依赖。
+## 4. Gaussian Naive Bayes 分类
 
 ```sql
-SELECT db4ai.train('joint', 'bayes_net_internal',
-  'SELECT x,y FROM (VALUES(0,0),(0,0),(0,1),(1,1))t(x,y)',
-  '{"edges_of_network":"0,1","num_edges":1,"num_nodes":2}');
-SELECT db4ai.predict_joint('joint',0,0); -- 0.5
-SELECT db4ai.predict_joint('joint',0,1); -- 0.25
-SELECT db4ai.predict_joint('joint',1,0); -- 0
+SELECT db4ai.train('classifier', 'gaussian_naive_bayes',
+  'SELECT label,x,z FROM public.training_data');
+SELECT db4ai.predict_label('classifier', ARRAY[1.0,2.0], NULL::text);
+SELECT db4ai.class_labels('classifier'),
+       db4ai.predict_proba('classifier', ARRAY[1.0,2.0]);
 ```
 
-边以从 0 开始的 `parent,child` 对编码，拒绝环、重复边、自环、越界和错误边数。
-NULL 表示真实观察到的 NULL 类别，不表示缺失证据或通配符。
-此 API 提供等值联合估计，不自动接管 PG 优化器，不提供任意范围/边缘化推理接口；
-一般图上的估计不应当被解释为精确且必然归一化的贝叶斯网络推理。
+类别顺序用 `class_labels` 查询；后验概率之和为1，但不能当作已校准置信度。
+原生算法代码仍是 C11，使用现有 PG 权限、事务、类型系统和 SIMD 内核。
 
 ## 5. 可以被 EXPLAIN 看到的 ShuffleScan
 
