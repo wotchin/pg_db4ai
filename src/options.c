@@ -12,7 +12,7 @@ static const char *const names[] = {
     "linear_regression", "logistic_regression", "svm_classification", "kmeans", "pca",
     "xgboost_regression_squarederror", "xgboost_binary_logistic",
     "xgboost_regression_logistic", "xgboost_regression_gamma",
-    "multiclass", "bayes_net_internal", "gaussian_naive_bayes"
+    "multiclass", "bayes_net_internal", "gaussian_naive_bayes", "xgboost_multiclass", "automl"
 };
 
 Db4aiAlgorithm
@@ -30,7 +30,7 @@ db4ai_algorithm(const char *name)
 const char *
 db4ai_algorithm_name(Db4aiAlgorithm algorithm)
 {
-    Assert(algorithm >= DB4AI_LINEAR && algorithm <= DB4AI_GAUSSIAN_NB);
+    Assert(algorithm >= DB4AI_LINEAR && algorithm <= DB4AI_AUTOML);
     return names[algorithm];
 }
 
@@ -43,7 +43,7 @@ db4ai_supervised(Db4aiAlgorithm algorithm)
 bool
 db4ai_is_xgboost(Db4aiAlgorithm algorithm)
 {
-    return algorithm >= DB4AI_XGB_SQUARED && algorithm <= DB4AI_XGB_GAMMA;
+    return (algorithm >= DB4AI_XGB_SQUARED && algorithm <= DB4AI_XGB_GAMMA) || algorithm == DB4AI_XGB_MULTICLASS;
 }
 
 bool
@@ -110,7 +110,7 @@ typedef struct OptionKey
 #define A(x) (1U << (x))
 #define GD (A(DB4AI_LINEAR)|A(DB4AI_LOGISTIC)|A(DB4AI_SVM)|A(DB4AI_MULTICLASS))
 #define SVM (A(DB4AI_SVM)|A(DB4AI_MULTICLASS))
-#define XGB (A(DB4AI_XGB_SQUARED)|A(DB4AI_XGB_BINARY)|A(DB4AI_XGB_LOGISTIC)|A(DB4AI_XGB_GAMMA))
+#define XGB (A(DB4AI_XGB_SQUARED)|A(DB4AI_XGB_BINARY)|A(DB4AI_XGB_LOGISTIC)|A(DB4AI_XGB_GAMMA)|A(DB4AI_XGB_MULTICLASS))
 #define KM A(DB4AI_KMEANS)
 #define PCA A(DB4AI_PCA)
 #define NB A(DB4AI_GAUSSIAN_NB)

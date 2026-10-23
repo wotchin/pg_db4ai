@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP 1
 -- Functional audit additions: explicit DDL, diagnostics, dense replay and CorgiPile.
-SELECT public.assert_true((SELECT extversion='0.4.0' FROM pg_extension WHERE extname='pg_db4ai'),'0.4 installed');
+SELECT public.assert_true((SELECT extversion='0.5.0' FROM pg_extension WHERE extname='pg_db4ai'),'0.5 installed');
 SELECT db4ai.execute_ddl($ddl$
  CREATE /* nested /* comments */ remain lexical */ MODEL "模型 DDL" USING linear_regression
  FEATURES x, x*x TARGET y FROM public.regression ORDER BY x

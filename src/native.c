@@ -96,7 +96,7 @@ seed_kmeans(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
     while(db4ai_data_next(data,row))
     {
         int target=o->seeding==1?1:cap;
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         if(seen<target) memcpy(points+(Size)seen*d,row,d*sizeof(double));
         else { uint64 pos=pg_prng_uint64_range(&rng,0,seen); if(pos<(uint64)target) memcpy(points+(Size)pos*d,row,d*sizeof(double)); }
         seen++;
@@ -109,14 +109,14 @@ seed_kmeans(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
             int original=nc;
             db4ai_data_rewind(data);
             while(db4ai_data_next(data,row))
-            { double v; CHECK_FOR_INTERRUPTS(); candidate_closest(points,original,row,d,o->distance,&v); total+=v; }
+            { double v; db4ai_automl_check(); candidate_closest(points,original,row,d,o->distance,&v); total+=v; }
             db4ai_check_finite(total);
             if(total==0) break;
             db4ai_data_rewind(data);
             while(db4ai_data_next(data,row))
             {
                 double v;
-                CHECK_FOR_INTERRUPTS(); candidate_closest(points,original,row,d,o->distance,&v);
+                db4ai_automl_check(); candidate_closest(points,original,row,d,o->distance,&v);
                 if(pg_prng_double(&rng)<Min(1.0,(double)o->oversampling*k*v/total))
                 {
                     if(nc==cap)
@@ -144,7 +144,7 @@ seed_kmeans(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
     if(o->seeding==1)
     {
         db4ai_data_rewind(data);
-        while(db4ai_data_next(data,row)) { CHECK_FOR_INTERRUPTS(); weight[candidate_closest(points,nc,row,d,o->distance,NULL)]+=1; }
+        while(db4ai_data_next(data,row)) { db4ai_automl_check(); weight[candidate_closest(points,nc,row,d,o->distance,NULL)]+=1; }
     }
     if(o->seeding==2) memcpy(m->weights,points,(Size)k*d*sizeof(double));
     else for(c=0;c<k;c++)
@@ -198,7 +198,7 @@ train_kmeans(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
         while (db4ai_data_next(data, row))
         {
             double distance;
-            CHECK_FOR_INTERRUPTS();
+            db4ai_automl_check();
             c = closest(m, row, &distance);
             objective += distance;
             counts[c]++;
@@ -233,7 +233,7 @@ train_kmeans(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
     while (db4ai_data_next(data, row))
     {
         double d;
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         (void) closest(m, row, &d);
         m->loss += d;
     }
@@ -270,7 +270,7 @@ train_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
     /* Welford covariance. The input is centered, not standardized. */
     while (db4ai_data_next(data, row))
     {
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         count++;
         for (i = 0; i < n; i++)
         {
@@ -296,7 +296,7 @@ train_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
     {
         double off = 0;
         double scale = 0;
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         if(o->max_seconds && TimestampDifferenceExceeds(started,GetCurrentTimestamp(),o->max_seconds*1000)) break;
         for (i = 0; i < n; i++)
         {
@@ -390,7 +390,7 @@ native_diagnostics(Db4aiNative *m, Db4aiData *data)
         while(db4ai_data_next(data,row))
         {
             double distance,delta;
-            CHECK_FOR_INTERRUPTS();
+            db4ai_automl_check();
             c=closest(m,row,&distance);
             delta=distance-mean[c];
             mean[c]+=delta/(++count[c]);

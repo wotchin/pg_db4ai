@@ -97,7 +97,7 @@ db4ai_nb_log_proba(const Db4aiNative *m, const double *x, double *out)
     {
         const double *mean = m->nb_means + (Size)c * n;
         const double *variance = m->nb_variances + (Size)c * n;
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         for (j = 0; j < n; j++)
             residual[j] = (x[j] - mean[j]) / sqrt(variance[j]);
         /* Reuse the audited runtime-dispatched SIMD squared-norm kernel.
@@ -168,7 +168,7 @@ db4ai_nb_train(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
     db4ai_data_rewind(data);
     while (db4ai_data_next(data, row))
     {
-        CHECK_FOR_INTERRUPTS();
+        db4ai_automl_check();
         c = (int) row[0];
         Assert(c >= 0 && c < k);
         seen++;

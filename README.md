@@ -1,5 +1,15 @@
 # pg_db4ai 0.4: a user-facing Bayes classifier
 
+## Lightweight AutoML (0.5)
+
+`db4ai.automl(name, task, source_sql, options)` fits a bounded sequential portfolio,
+with train-only numerical/categorical preprocessing, separate validation/final test,
+explicit time/admission budgets and one durable fitted pipeline. Use
+`db4ai.predict(name, jsonb)` for original named features, or existing typed APIs
+for numeric-only inputs. See [AutoML contracts and examples](docs/AUTOML.md).
+This is not a hard process-memory limit or a universal SOTA guarantee.
+
+
 `gaussian_naive_bayes` replaces the retired internal joint-selectivity estimator.
 It supports typed binary/multiclass labels and normalized `predict_proba` /
 `predict_log_proba` outputs, with numeric/array features and versioned JSON.

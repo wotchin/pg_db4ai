@@ -92,7 +92,7 @@ update_batch(Db4aiNative *m, const Db4aiOptions *o, const double *features,
             double y=classifier?(m->algorithm==DB4AI_MULTICLASS?(label==c?1.0:0.0):label):label;
             double z=linear_score(w,x,n);
             double error;
-            CHECK_FOR_INTERRUPTS();
+            db4ai_automl_check();
             if(svm)
             {
                 double target=2*y-1;
@@ -132,7 +132,7 @@ prepare_rows(Db4aiNative *m, Db4aiData *source, Db4aiData *prepared)
         for(i=0;i<count;i++)
         {
             const double *raw=rows+(Size)i*source->ncolumns;
-            CHECK_FOR_INTERRUPTS();
+            db4ai_automl_check();
             row[0]=raw[0];
             db4ai_kernel_transform(m,raw+1,row+1);
             db4ai_rows_append(prepared->dense,row);
@@ -234,7 +234,7 @@ db4ai_gradient_train(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
                 const double *raw=rows+(Size)r*train->ncolumns;
                 const double *x=raw+1;
                 int c;
-                CHECK_FOR_INTERRUPTS();
+                db4ai_automl_check();
                 if(!o->kernel_cache)
                 {
                     db4ai_kernel_transform(m,raw+1,v); x=v;
@@ -325,7 +325,7 @@ db4ai_stochastic_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
     if(o->center)
     {
         db4ai_data_rewind(data);
-        while(db4ai_data_next(data,row)) { CHECK_FOR_INTERRUPTS(); seen++; for(j=0;j<n;j++) m->mean[j]+=(row[j]-m->mean[j])/seen; }
+        while(db4ai_data_next(data,row)) { db4ai_automl_check(); seen++; for(j=0;j<n;j++) m->mean[j]+=(row[j]-m->mean[j])/seen; }
     }
     pg_prng_seed(&rng,(uint64)o->seed ^ UINT64CONST(0x274066db9441e851));
     for(c=0;c<k;c++) for(j=0;j<n;j++) m->weights[(Size)c*n+j]=pg_prng_double(&rng);
@@ -341,7 +341,7 @@ db4ai_stochastic_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
             memset(gradient,0,(Size)n*k*sizeof(double)); memset(m->eigenvalues,0,k*sizeof(double));
             for(i=0;i<count;i++)
             {
-                CHECK_FOR_INTERRUPTS();
+                db4ai_automl_check();
                 for(j=0;j<n;j++) row[j]=rows[(Size)i*n+j]-m->mean[j];
                 for(c=0;c<k;c++)
                 {
@@ -371,7 +371,7 @@ db4ai_stochastic_pca(Db4aiNative *m, Db4aiData *data, const Db4aiOptions *o)
     memset(m->eigenvalues,0,k*sizeof(double)); db4ai_data_rewind(data);
     while(db4ai_data_next(data,row))
     {
-        CHECK_FOR_INTERRUPTS(); for(j=0;j<n;j++) row[j]-=m->mean[j];
+        db4ai_automl_check(); for(j=0;j<n;j++) row[j]-=m->mean[j];
         for(c=0;c<k;c++) { double dot=linear_score(m->weights+(Size)c*n,row,n); m->eigenvalues[c]+=dot*dot/data->nrows; }
     }
     for(c=0;c<k;c++)
