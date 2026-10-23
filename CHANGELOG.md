@@ -1,3 +1,11 @@
+# 0.4.0
+
+- Replace internal ABO-oriented Bayes estimation with supervised Gaussian Naive Bayes.
+- Typed binary/multiclass prediction, normalized probabilities and log probabilities.
+- Stable moments, variance smoothing/floor and common-tail log-odds cancellation guard.
+- Remove predict_joint with dependency-safe SQL upgrade; preserve old artifacts for export/delete.
+- New numerical, security, spill, corrupt-model and upgrade/restore tests.
+
 # 0.3.0
 
 - CorgiPile randomized logical blocks and row mixing within bounded windows.

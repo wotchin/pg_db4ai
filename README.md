@@ -1,4 +1,16 @@
-# pg_db4ai 0.3 update
+# pg_db4ai 0.4: a user-facing Bayes classifier
+
+`gaussian_naive_bayes` replaces the retired internal joint-selectivity estimator.
+It supports typed binary/multiclass labels and normalized `predict_proba` /
+`predict_log_proba` outputs, with numeric/array features and versioned JSON.
+The old `bayes_net_internal` trainer and `predict_joint` API are removed; existing
+artifacts remain exportable/deletable and are not converted. Upgrade with
+`ALTER EXTENSION pg_db4ai UPDATE TO '0.4.0'` after installing and reconnecting.
+See [usage, assumptions and migration](docs/NAIVE_BAYES.md).
+
+## Earlier 0.3 changes
+
+
 
 PostgreSQL-only C11. New: dense numerical replay, prepared-feature caching,
 CorgiPile block/window row shuffle, explicit model-DDL interpreter, richer model
@@ -78,20 +90,20 @@ This does not import old openGauss binary model blobs.
 | `multiclass` | One-vs-All logistic / SVM, GD / NGD | typed labels, class-ordered scores |
 | `kmeans` | Random++, KMeans\|\|, optional reservoir; L1/L2/L2_Squared/Linf | `predict_cluster` (1-based) |
 | `pca` | Original-family matrix-free stochastic updates; optional Jacobi | `transform` |
-| `bayes_net_internal` | Typed DAG equality/selectivity estimator, MCV/bins and Gaussian parents | `predict_joint` |
+| `gaussian_naive_bayes` | Supervised Gaussian NB with typed binary/multiclass labels | `predict_label`, `predict_proba`, `predict_log_proba` |
 | `xgboost_regression_squarederror` | `reg:squarederror` | `predict_float8` |
 | `xgboost_binary_logistic` | `binary:logistic` | `predict_float8`, `predict_bool` |
 | `xgboost_regression_logistic` | `reg:logistic` | `predict_float8` |
 | `xgboost_regression_gamma` | `reg:gamma` | `predict_float8` |
 
 Supervised input is **label first, then features**. KMeans/PCA receive only
-features; Bayes receives all graph variables without a distinguished label.
+features. Gaussian NB also uses the first column as its supervised label.
 Features support numeric/boolean scalars and fixed-width `float4[]`/`float8[]`
 columns, flattened in query-column order. Prediction uses the same flat order.
 Native classification uses PG hash/equality and concrete label types, including
 text, enum, integer and numeric values beyond float8 precision. Domain label types
 are flattened to their base types. Pseudo-types and anonymous records are not
-supported. Bayes NULL is an observed category, not an unobserved variable.
+supported. Gaussian NB uses the explicit error/legacy numeric NULL policy.
 
 ```sql
 SELECT db4ai.train('price', 'linear_regression',

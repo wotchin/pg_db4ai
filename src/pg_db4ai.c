@@ -95,8 +95,6 @@ pg_db4ai_train(PG_FUNCTION_ARGS)
         model.nfeatures = data->nfeatures;
         if (db4ai_is_xgboost(algorithm))
             db4ai_xgb_train(data, algorithm, &options, format, &model);
-        else if (algorithm == DB4AI_BAYES)
-            db4ai_bayes_train(data, &options, &model);
         else
         {
             StringInfoData metrics;
@@ -209,7 +207,6 @@ typedef struct Db4aiCache
     Db4aiModel *model;
     Db4aiNative *native;
     void *xgb;
-    Db4aiBayes *bayes;
 } Db4aiCache;
 
 static Db4aiCache *
@@ -241,11 +238,12 @@ get_predictor(FunctionCallInfo fcinfo)
         cache->model = db4ai_model_load(name, role);
         cache->native = NULL;
         cache->xgb = NULL;
-        cache->bayes = NULL;
         if (db4ai_is_xgboost(cache->model->algorithm))
             cache->xgb = db4ai_xgb_load(cache->model);
-        else if (cache->model->algorithm == DB4AI_BAYES)
-            cache->bayes = db4ai_bayes_load(cache->model);
+        else if (cache->model->algorithm == DB4AI_RETIRED_BAYES)
+            ereport(ERROR,(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                           errmsg("this model is a retired bayes_net_internal joint estimator"),
+                           errhint("Export or drop the old model; retrain a supervised gaussian_naive_bayes model to predict labels.")));
         else
             cache->native = db4ai_native_load(cache->model);
         cache->role = role;
@@ -270,8 +268,6 @@ predict(Db4aiCache *cache, ArrayType *array)
 {
     double *features;
     double result;
-    if (cache->bayes != NULL)
-        ereport(ERROR, (errcode(ERRCODE_DATATYPE_MISMATCH), errmsg("use predict_joint for Bayes models")));
     features = db4ai_features(array, cache->model->nfeatures);
     result = cache->xgb != NULL ? db4ai_xgb_predict(cache->xgb, features, cache->model->nfeatures) :
                                         db4ai_native_predict(cache->native, features);
@@ -292,8 +288,11 @@ pg_db4ai_predict_bool(PG_FUNCTION_ARGS)
     Db4aiCache *cache = get_predictor(fcinfo);
     Db4aiAlgorithm algorithm = cache->model->algorithm;
     double result;
-    if (algorithm != DB4AI_LOGISTIC && algorithm != DB4AI_SVM && algorithm != DB4AI_XGB_BINARY)
+    if (algorithm != DB4AI_LOGISTIC && algorithm != DB4AI_SVM && algorithm != DB4AI_XGB_BINARY && algorithm != DB4AI_GAUSSIAN_NB)
         ereport(ERROR, (errcode(ERRCODE_DATATYPE_MISMATCH), errmsg("predict_bool requires a binary classifier")));
+    if (algorithm == DB4AI_GAUSSIAN_NB &&
+        (cache->native->nclasses != 2 || cache->native->labels->type != BOOLOID))
+        ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("Gaussian NB predict_bool requires boolean training labels; use predict_label for other types")));
     if (cache->native != NULL && cache->native->labels != NULL && cache->native->labels->type == BOOLOID)
     {
         double *features = db4ai_features(PG_GETARG_ARRAYTYPE_P(1), cache->model->nfeatures);
@@ -419,19 +418,43 @@ pg_db4ai_class_labels(PG_FUNCTION_ARGS)
     PG_RETURN_ARRAYTYPE_P(result);
 }
 
+/* Keep the old C symbol only for already-installed 0.2/0.3 SQL catalogs.
+ * 0.4 does not install this SQL function. Never reinterpret old model bytes. */
 Datum
 pg_db4ai_predict_joint(PG_FUNCTION_ARGS)
 {
-    Db4aiCache *cache;
-    Datum values[64]; bool nulls[64]; Oid types[64]; int i,n=PG_NARGS()-1;
-    if(PG_ARGISNULL(0)) PG_RETURN_NULL();
-    if(n<1 || n>64) ereport(ERROR,(errcode(ERRCODE_INVALID_PARAMETER_VALUE),errmsg("Bayes expects 1..64 variables")));
-    cache=get_predictor(fcinfo);
-    if(!cache->bayes) ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("predict_joint requires a bayes_net_internal model")));
-    for(i=0;i<n;i++)
-    { values[i]=PG_GETARG_DATUM(i+1); nulls[i]=PG_ARGISNULL(i+1); types[i]=get_fn_expr_argtype(fcinfo->flinfo,i+1); }
-    PG_RETURN_FLOAT8(db4ai_bayes_predict(cache->bayes,values,nulls,types,n));
+    ereport(ERROR,(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                   errmsg("predict_joint and bayes_net_internal have been retired"),
+                   errhint("Use gaussian_naive_bayes and predict_label/predict_proba for supervised classification. Old artifacts remain exportable.")));
+    PG_RETURN_NULL();
 }
+
+static Datum
+predict_nb_probabilities(FunctionCallInfo fcinfo, bool logarithmic)
+{
+    Db4aiCache *cache=classifier_predictor(fcinfo);
+    int n,i;
+    double *features, scores[256];
+    Datum values[256];
+    ArrayType *result;
+    if(cache->model->algorithm!=DB4AI_GAUSSIAN_NB)
+        ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),
+                       errmsg("predict_proba/log_proba currently require gaussian_naive_bayes"),
+                       errhint("Use predict_scores for OVA/SVM scores, which are not normalized posteriors.")));
+    n=cache->native->nclasses;
+    features=db4ai_features(PG_GETARG_ARRAYTYPE_P(1),cache->model->nfeatures);
+    if(logarithmic) db4ai_nb_log_proba(cache->native,features,scores);
+    else db4ai_nb_proba(cache->native,features,scores);
+    for(i=0;i<n;i++) values[i]=Float8GetDatum(scores[i]);
+    result=construct_array(values,n,FLOAT8OID,sizeof(float8),FLOAT8PASSBYVAL,TYPALIGN_DOUBLE);
+    pfree(features);
+    return PointerGetDatum(result);
+}
+
+PG_FUNCTION_INFO_V1(pg_db4ai_predict_proba);
+Datum pg_db4ai_predict_proba(PG_FUNCTION_ARGS) { return predict_nb_probabilities(fcinfo,false); }
+PG_FUNCTION_INFO_V1(pg_db4ai_predict_log_proba);
+Datum pg_db4ai_predict_log_proba(PG_FUNCTION_ARGS) { return predict_nb_probabilities(fcinfo,true); }
 
 /* Compilation capabilities; this does not promise a compatible top-level SQL grammar. */
 PG_FUNCTION_INFO_V1(pg_db4ai_build_info);
@@ -448,7 +471,7 @@ pg_db4ai_build_info(PG_FUNCTION_ARGS)
 #else
     const char *openmp="false";
 #endif
-    char *info=psprintf("{\"extension_version\":\"0.3.0\",\"postgres_major\":%d,"
+    char *info=psprintf("{\"extension_version\":\"0.4.0\",\"postgres_major\":%d,"
         "\"xgboost\":%s,\"openmp\":%s,\"training_corgipile\":true,"
         "\"dense_replay\":true,\"model_ddl\":\"explicit execute_ddl entrypoint\","
         "\"native_create_model_grammar\":false,\"simd_compiled\":%s,\"simd_backend\":\"%s\",\"simd_fp_reassociation\":\"local reductions only\"}",PG_VERSION_NUM/10000,xgboost,openmp,

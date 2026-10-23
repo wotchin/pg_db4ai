@@ -1,3 +1,12 @@
+# 0.4 Bayes architecture update
+
+The old ABO-oriented joint estimator is removed. `src/naive_bayes.c` provides
+supervised Gaussian NB through the shared typed-label and dense numeric input
+path, using explicit JSON parameters and normalized posterior prediction.
+No per-feature Bayes category dictionaries or graph inference remain. The
+historical architecture below otherwise describes the 0.3 foundation.
+See [current Bayes contract](NAIVE_BAYES.md).
+
 # PostgreSQL-only architecture (0.2)
 
 ## Components
@@ -13,7 +22,7 @@
 | `src/gradient.c` | GD, normalized GD, OVA and matrix-free stochastic PCA |
 | `src/kernel.c` | Gaussian Fourier / polynomial Maclaurin random feature maps |
 | `src/native.c` | KMeans, Jacobi PCA, native serialization and prediction |
-| `src/bayes.c` | Typed marginal/conditional statistics and original-family joint-selectivity propagation |
+| `src/naive_bayes.c` | Supervised class-conditional Gaussian statistics and posterior prediction |
 | `src/shufflescan.c` | Explicit SQL CustomPath/CustomScan plus FunctionScan fallback |
 | `src/xgboost.c` | C API handles, full-DMatrix CPU training and JSON/UBJSON model IO |
 
@@ -27,7 +36,7 @@ vendored XGBoost is C++ behind a C ABI and does not call PG from worker threads.
 and consumes exactly one read-only SELECT under the caller's identity. SPI
 fetches batches; raw tuples are materialized for reliable array-shape/label
 inspection. Accepted data is normalized into another spillable tuplestore.
-GD/NGD/OVA/PCA read it through the shuffle runtime; KMeans/Bayes perform their
+GD/NGD/OVA/PCA read it through the shuffle runtime; KMeans/Gaussian NB perform their
 required passes. No epoch reruns source SQL. The two stores and shuffle cache
 have separate budgets, not a shared RSS cap.
 

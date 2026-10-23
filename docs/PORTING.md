@@ -1,3 +1,8 @@
+> **0.4 scope change:** the internal Bayes joint estimator described in this
+> historical 0.2/0.3 record has been removed, and replaced by supervised
+> `gaussian_naive_bayes`. New behavior and tests are in [NAIVE_BAYES.md](NAIVE_BAYES.md).
+> Historical benchmark evidence is not rewritten.
+
 # Scope update for 0.3
 
 The detailed numerical differences below are accepted implementation choices,

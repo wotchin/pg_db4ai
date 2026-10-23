@@ -44,7 +44,6 @@ extern int db4ai_rows_read(Db4aiRowStore *store, int64 start, int maximum, doubl
 extern bool db4ai_rows_spilled(Db4aiRowStore *store);
 extern void db4ai_rows_stats(Db4aiRowStore *store, uint64 *read, uint64 *written, uint64 *seeks);
 extern void db4ai_rows_free(Db4aiRowStore *store);
-typedef struct Db4aiBayes Db4aiBayes;
 
 extern bool db4ai_classifier(Db4aiAlgorithm a);
 extern char *db4ai_json_string(Jsonb *json, const char *key, const char *def);
@@ -67,7 +66,9 @@ extern void db4ai_kernel_prepare(Db4aiNative *model, const Db4aiOptions *options
 extern void db4ai_kernel_transform(const Db4aiNative *model, const double *input, double *output);
 extern int db4ai_native_class(const Db4aiNative *model, const double *features);
 extern void db4ai_native_scores(const Db4aiNative *model, const double *features, double *scores);
-extern void db4ai_bayes_train(Db4aiData *data, const Db4aiOptions *options, Db4aiModel *model);
-extern Db4aiBayes *db4ai_bayes_load(const Db4aiModel *model);
-extern double db4ai_bayes_predict(Db4aiBayes *model, Datum *values, bool *nulls, Oid *types, int count);
+extern void db4ai_nb_train(Db4aiNative *model, Db4aiData *data, const Db4aiOptions *options);
+extern bytea *db4ai_nb_save(const Db4aiNative *model);
+extern Db4aiNative *db4ai_nb_load(const Db4aiModel *model);
+extern void db4ai_nb_log_proba(const Db4aiNative *model, const double *features, double *scores);
+extern void db4ai_nb_proba(const Db4aiNative *model, const double *features, double *scores);
 #endif

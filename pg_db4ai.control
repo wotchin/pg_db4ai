@@ -1,5 +1,5 @@
 comment = 'PostgreSQL-native DB4AI training and prediction'
-default_version = '0.3.0'
+default_version = '0.4.0'
 module_pathname = '$libdir/pg_db4ai'
 relocatable = false
 schema = 'db4ai'

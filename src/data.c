@@ -79,7 +79,6 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
     int source_cols, first_feature=db4ai_supervised(algorithm)?1:0;
     int i, nf=0;
     int64 seen=0;
-    bool bayes=algorithm==DB4AI_BAYES;
     bool categorical=db4ai_classifier(algorithm);
     raw=raw_parser(query,RAW_PARSE_DEFAULT);
     if(list_length(raw)!=1 || !IsA(((RawStmt *)linitial(raw))->stmt,SelectStmt) ||
@@ -101,7 +100,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
     portal=SPI_cursor_open(NULL,plan,NULL,NULL,true);
     MemoryContextSwitchTo(context);
     desc=CreateTupleDescCopy(portal->tupDesc); source_cols=desc->natts;
-    if(source_cols<first_feature+1 || source_cols>DB4AI_MAX_FEATURES+first_feature || (bayes && source_cols>64))
+    if(source_cols<first_feature+1 || source_cols>DB4AI_MAX_FEATURES+first_feature)
         ereport(ERROR,(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),errmsg("invalid number of training columns")));
     width=palloc0(sizeof(int)*source_cols);
     input=tuplestore_begin_heap(true,false,db4ai_work_mem);
@@ -116,7 +115,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
             CHECK_FOR_INTERRUPTS();
             if(seen++>=db4ai_max_rows) ereport(ERROR,(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),errmsg("training input exceeds db4ai.max_rows")));
             tuplestore_puttuple(input,SPI_tuptable->vals[r]);
-            for(i=first_feature;i<source_cols && !bayes;i++)
+            for(i=first_feature;i<source_cols;i++)
             {
                 Oid type=getBaseType(TupleDescAttr(desc,i)->atttypid);
                 if(type==FLOAT8ARRAYOID || type==FLOAT4ARRAYOID)
@@ -143,16 +142,6 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
     }
     SPI_cursor_close(portal); SPI_freeplan(plan); SPI_finish(); MemoryContextSwitchTo(context);
     if(!seen) ereport(ERROR,(errcode(ERRCODE_NO_DATA_FOUND),errmsg("training query returned no rows")));
-    if(bayes)
-    {
-        data->domains=palloc0(sizeof(Db4aiDictionary *)*source_cols);
-        for(i=0;i<source_cols;i++)
-        {
-            Form_pg_attribute attr=TupleDescAttr(desc,i);
-            data->domains[i]=db4ai_dictionary_new(attr->atttypid,attr->atttypmod,attr->attcollation,65536);
-            width[i]=1;
-        }
-    }
     for(i=first_feature;i<source_cols;i++)
     {
         if(width[i]==0) ereport(ERROR,(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),errmsg("cannot infer the shape of an entirely NULL feature array")));
@@ -164,7 +153,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
     if(categorical)
     {
         Form_pg_attribute label=TupleDescAttr(desc,0);
-        data->labels=db4ai_dictionary_new(label->atttypid,label->atttypmod,label->attcollation,algorithm==DB4AI_MULTICLASS?256:2);
+        data->labels=db4ai_dictionary_new(label->atttypid,label->atttypmod,label->attcollation,(algorithm==DB4AI_MULTICLASS || algorithm==DB4AI_GAUSSIAN_NB)?256:2);
     }
     else if(first_feature && !numeric_type(getBaseType(TupleDescAttr(desc,0)->atttypid)))
         ereport(ERROR,(errcode(ERRCODE_DATATYPE_MISMATCH),errmsg("regression label must be numeric")));
@@ -190,7 +179,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
         if(first_feature && slot->tts_isnull[0] && options->null_policy) discard=true;
         /* Reject/skip the complete row before inserting its classification label.
          * Otherwise a skipped NULL-array row could create a phantom category. */
-        if(options->null_policy && !bayes)
+        if(options->null_policy)
             for(i=first_feature;i<source_cols;i++)
             {
                 Oid t=getBaseType(TupleDescAttr(desc,i)->atttypid);
@@ -200,14 +189,7 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
         {
             Datum v=slot->tts_values[i]; bool isnull=slot->tts_isnull[i];
             Oid type=getBaseType(TupleDescAttr(desc,i)->atttypid);
-            if(bayes)
-            {
-                if(!isnull && (type==FLOAT4OID || type==FLOAT8OID)) (void)as_double(v,type);
-                if(!isnull && type==NUMERICOID && (numeric_is_nan(DatumGetNumeric(v)) || numeric_is_inf(DatumGetNumeric(v))))
-                    ereport(ERROR,(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),errmsg("non-finite Bayes numeric category")));
-                values[column++]=(double)db4ai_dictionary_index(data->domains[i],v,isnull,true);
-            }
-            else if(categorical && i==0)
+            if(categorical && i==0)
             {
                 if(isnull) ereport(ERROR,(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),errmsg("NULL training label")));
                 if(type==FLOAT4OID || type==FLOAT8OID) (void)as_double(v,type);
@@ -239,13 +221,6 @@ db4ai_data_open(const char *query, Db4aiAlgorithm algorithm, const Db4aiOptions 
             }
         }
         MemoryContextSwitchTo(context);
-        if(bayes)
-        {
-            Size bytes=0;
-            for(i=0;i<source_cols;i++) bytes+=data->domains[i]->bytes;
-            if(bytes>(Size)db4ai_max_model_mb*1024*1024)
-                ereport(ERROR,(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),errmsg("combined Bayes dictionaries exceed db4ai.max_model_mb")));
-        }
         if(discard) data->discarded++;
         else { db4ai_rows_append(data->dense,values); data->nrows++; }
         ExecClearTuple(slot); MemoryContextReset(rowcontext);

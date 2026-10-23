@@ -1,4 +1,4 @@
-# DB4AI functional coverage audit (0.3)
+# DB4AI functional coverage audit (0.4)
 
 Source registry: openGauss commit `8f33f38a306dd4b155b6e77d1bc15554b1afcf8f`,
 `catalog/aifuncs.cpp` and public DB4AI headers/commands. Coverage is functionality,
@@ -8,7 +8,7 @@ not identical source, RNG sequence or bitwise solver internals.
 
 | Capability | Implementation/status |
 |---|---|
-| All 11 registered algorithms | Linear/logistic/SVM/PCA/KMeans, four XGBoost objectives, multiclass OVA, internal Bayes estimator (0.2 retained) |
+| Public modeling algorithms | Linear/logistic/SVM/PCA/KMeans, four XGBoost objectives, multiclass OVA, plus supervised Gaussian NB replacing the internal estimator |
 | GD/NGD and OVA | Normalized GD, independent solver state, decay, typed labels, raw scores and typed prediction |
 | Nonlinear feature maps | Gaussian Fourier / polynomial Maclaurin; deterministic actual maps persisted |
 | KMeans/PCA options | Both seeding families, four distances, stochastic PCA; Jacobi as additional choice |
@@ -34,6 +34,14 @@ new durable serialization and PG-native memory/error management may differ.
 Full original memory blobs need not be loadable. These are deliberate choices;
 regression, mathematical and real-data prediction checks guard actual behavior.
 Resource caps and unsupported input types are documented, not silently accepted.
+
+## Bayes changed from internal integration to a public predictive model
+
+0.4 removes the internal joint-selectivity estimator and predict_joint. The new
+Gaussian NB classifier is a different supervised model with typed labels and
+normalized posterior APIs; old artifacts can only be exported/deleted/explained.
+This is an intentional product-scope change, not a claim of one-to-one Bayes-network
+compatibility. See NAIVE_BAYES.md.
 
 ## Excluded by scope
 

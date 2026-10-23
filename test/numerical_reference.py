@@ -92,9 +92,4 @@ for name in ['pca', 'stochastic_pca', 'stochastic_center']:
     compare(actual,expected,name+' exported PCA inference')
     print('PASS:',name,'orthonormality and independent inference')
 
-# Gaussian-parent example: P(a)=1/2, target=1; N(0.5,0.5), delta=0.5.
-expected = .5 * (.5*(1+math.erf((.5-.5)/(.5*math.sqrt(2)))) - .5*(1+math.erf((0-.5)/(.5*math.sqrt(2)))))
-actual = float(sql("SELECT db4ai.predict_joint('bayes_gaussian','a'::text,1,0.0::float8)"))
-close(actual,expected,'Bayes Gaussian-parent analytic CDF')
-print('PASS: independent Gaussian-parent CDF')
-print('All independent numerical reference checks passed.')
+print('All retained independent numerical reference checks passed.')

@@ -36,3 +36,8 @@ DO $$ BEGIN
 END $$;
 SELECT db4ai.execute_ddl('CREATE MODEL after_v03 USING linear_regression FEATURES x TARGET y FROM (SELECT 2.0 AS y,1.0 AS x)t WITH max_iterations=2');
 SELECT '0.2 to 0.3 upgrade passed' result;
+
+ALTER EXTENSION pg_db4ai UPDATE TO '0.4.0';
+DO $$ BEGIN
+ IF db4ai.predict_float8('v01_linear',ARRAY[3.0])<>7 THEN RAISE EXCEPTION '0.4 old linear model regression'; END IF;
+END $$;
