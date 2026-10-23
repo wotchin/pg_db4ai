@@ -1,0 +1,42 @@
+name: Publish reviewed Bayes documentation
+on:
+  push:
+    branches: [user-facing-gaussian-naive-bayes]
+    paths: [.github/workflows/apply-bayes-docs.yml]
+permissions: {contents: write}
+jobs:
+  docs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply only verified documentation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,subprocess
+          p=Path('.nb-doc-update.patch')
+          raw=p.read_text().replace('\n diff --git ','\ndiff --git ').encode()
+          assert hashlib.sha256(raw).hexdigest()=='024f96a83eff37260138d44d23b592eb51b2b128678488603ce14e31668d25c5'
+          p.write_bytes(raw)
+          subprocess.run(['git','apply','--check',str(p)],check=True)
+          subprocess.run(['git','apply',str(p)],check=True)
+          expected={'CHANGELOG.md':'f470e674cd8176dd5b49e6657c2b69351d7516fa',
+                    'README.md':'2c8ae6ea087c4b8d14596f8dfbb528f0f0651314',
+                    'README.zh-CN.md':'350937ee72e6f95d6024d20568f0cc20709a3efc',
+                    'docs/ARCHITECTURE.md':'e02b0e810bccec98050fdd5fbc801bc16cb2c68c',
+                    'docs/FUNCTIONAL_COVERAGE.md':'a9cde1bbb1a3b44dbab1bb2d38e3a058e8494192',
+                    'docs/PORTING.md':'b9115d1fdeb572b9c4fdc77d0e97ba45cb2747d0',
+                    'docs/VALIDATION.md':'356313d4917586ed7a7c6b174376250debce2c9b',
+                    'docs/SIMD.md':'15c4319e70f5506d3108b7a3bf8e883d043fcfaf'}
+          for name,sha in expected.items():
+              b=Path(name).read_bytes()
+              assert hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()==sha,name
+          p.unlink()
+          print('Verified eight documentation files; historical benchmark evidence unchanged')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- CHANGELOG.md README.md README.zh-CN.md docs .nb-doc-update.patch
+          git commit -m 'Update public algorithm coverage and migration documentation for supervised Bayes'
+          git push origin HEAD:user-facing-gaussian-naive-bayes
