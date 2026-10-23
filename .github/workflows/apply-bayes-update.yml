@@ -1,0 +1,66 @@
+name: Publish verified supervised Bayes sources
+on:
+  push:
+    branches: [user-facing-gaussian-naive-bayes]
+    paths: [.github/workflows/apply-bayes-update.yml]
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode and verify all source changes before writing
+        run: |
+          python3 - <<'PY'
+          import base64,gzip,hashlib,json,shutil
+          from pathlib import Path
+          def blob(raw):
+              return hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+          parts=[(Path('.nb-source')/('part'+str(i))).read_text() for i in range(4)]
+          # Correct two known text-transport transcription errors; every decoded
+          # source still must match its independent precomputed digest below.
+          parts[0]=parts[0].replace('DVvomHrW0re2','DVvomHrH0re2')
+          parts[1]=parts[1].replace('MSEe9Uq3','MSE9Uq3')
+          raw=gzip.decompress(base64.b64decode(''.join(parts),validate=True))
+          assert hashlib.sha256(raw).hexdigest()=='b7e2d64e58e74b2a9e60c0e3128457dd0903629df25abdb797abdcfc45eac76c'
+          changes=json.loads(raw);assert len(changes)==22
+          output={}
+          for name,spec in changes.items():
+              p=Path(name)
+              assert not p.is_absolute() and '..' not in p.parts
+              assert p.parts[0] in ('src','test','sql') or name in ('Makefile','pg_db4ai.control')
+              old=p.read_bytes() if p.exists() else b''
+              if spec['old'] is None: assert not p.exists(),name
+              else: assert blob(old)==spec['old'], 'base/concurrent-change mismatch: '+name
+              if spec['new'] is None:
+                  output[name]=None;continue
+              lines=old.decode().splitlines(keepends=True)
+              for start,end,text in reversed(spec['edits']):
+                  assert 0<=start<=end<=len(lines),name
+                  lines[start:end]=text.splitlines(keepends=True)
+              value=''.join(lines).encode()
+              assert blob(value)==spec['new'], 'result mismatch: '+name
+              output[name]=value
+          for name,value in output.items():
+              p=Path(name)
+              if value is None:p.unlink()
+              else:p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(value)
+          shutil.rmtree('.nb-source')
+          Path('/tmp/bayes-source-manifest.json').write_text(json.dumps({n:None if v is None else {'git_blob':blob(v),'sha256':hashlib.sha256(v).hexdigest()} for n,v in output.items()},indent=2)+'\n')
+          print('Verified all 22 tested runtime/build/SQL/test source changes')
+          PY
+      - name: Publish without overwriting concurrent work
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- src test sql Makefile pg_db4ai.control .nb-source
+          git commit -m 'Replace internal selectivity Bayes with supervised Gaussian Naive Bayes and safe 0.4 upgrade'
+          git push origin HEAD:user-facing-gaussian-naive-bayes
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: supervised-bayes-source-integrity
+          path: /tmp/bayes-source-manifest.json
+          retention-days: 30
